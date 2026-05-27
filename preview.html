@@ -1,0 +1,2943 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chcupracu.cz | MVP náhled</title>
+    <style>
+      :root {
+        --bg: #f6f8fb;
+        --panel: #fff;
+        --ink: #111827;
+        --muted: #5f6b7a;
+        --brand: #0f5fa8;
+        --brand-strong: #0a4378;
+        --accent: #f59e0b;
+        --danger: #b91c1c;
+        --line: #d8e0ea;
+        --radius: 8px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      a { color: inherit; text-decoration: none; }
+      button, input, select, textarea { font: inherit; }
+      .site-header { background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+      .bar { align-items: center; display: flex; gap: 18px; justify-content: space-between; margin: 0 auto; max-width: 1180px; padding: 16px 20px; }
+      .logo { color: var(--brand); font-size: 26px; font-weight: 800; }
+      .nav { align-items: center; display: flex; gap: 14px; }
+      .hero { background: radial-gradient(circle at 82% 18%, rgba(245, 158, 11, .34), transparent 28%), linear-gradient(135deg, #072f55, #0f5fa8 62%, #0a4378); color: white; padding: 46px 20px 38px; position: relative; overflow: hidden; }
+      .hero::after { background: linear-gradient(135deg, rgba(255,255,255,.28), transparent), repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 1px, transparent 1px 16px); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; content: ""; height: 210px; opacity: .7; position: absolute; right: max(20px, calc((100vw - 1180px) / 2)); top: 42px; transform: rotate(-2deg); width: 330px; }
+      .hero-inner, .container { margin: 0 auto; max-width: 1180px; }
+      .hero-inner { position: relative; z-index: 1; }
+      .hero h1 { font-size: clamp(36px, 5vw, 64px); line-height: 1.02; margin: 0 0 14px; max-width: 760px; }
+      .hero p { color: #dbeafe; font-size: 19px; margin: 0 0 28px; max-width: 660px; }
+      .search-box { background: white; border: 1px solid rgba(255,255,255,.4); border-radius: 8px; box-shadow: 0 22px 60px rgba(0, 0, 0, .22); color: var(--ink); display: grid; gap: 12px; grid-template-columns: 1.2fr 1fr auto; max-width: 920px; padding: 12px; }
+      .suggest-wrap { position: relative; }
+      .suggest-menu { background: white; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 18px 48px rgba(15, 47, 85, .18); display: none; left: 0; overflow: hidden; position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; }
+      .suggest-menu.is-open { display: block; }
+      .suggest-item { align-items: center; background: white; border: 0; border-bottom: 1px solid #edf2f7; color: var(--ink); cursor: pointer; display: flex; gap: 12px; justify-content: space-between; padding: 12px 14px; text-align: left; width: 100%; }
+      .suggest-item:hover { background: #eef5fc; }
+      .suggest-kind { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+      .field, .select, .textarea { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); min-height: 48px; padding: 12px 14px; width: 100%; }
+      .select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--brand) 50%), linear-gradient(135deg, var(--brand) 50%, transparent 50%); background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px; background-repeat: no-repeat; background-size: 6px 6px, 6px 6px; padding-right: 38px; }
+      .filter-field { display: grid; gap: 6px; }
+      .filter-field span { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+      .filter-field .select, .filter-field .field { background-color: #f8fafc; border-color: #cbd5e1; box-shadow: inset 0 1px 0 rgba(255,255,255,.75); }
+      .textarea { min-height: 116px; resize: vertical; }
+      .button { align-items: center; background: var(--brand); border: 0; border-radius: var(--radius); color: white; cursor: pointer; display: inline-flex; font-weight: 700; justify-content: center; min-height: 48px; padding: 12px 18px; }
+      .button.secondary { background: #eef5fc; color: var(--brand); }
+      .button.danger { background: var(--danger); }
+      .section { padding: 28px 20px; }
+      .grid { display: grid; gap: 20px; grid-template-columns: 280px 1fr; }
+      .filters, .card, .admin-panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+      .filters { align-self: start; display: grid; gap: 12px; padding: 16px; }
+      .cards { display: grid; gap: 14px; }
+      .job-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+      .card { padding: 18px; }
+      .job-card { display: grid; gap: 10px; min-height: 210px; position: relative; }
+      .job-card h2 { font-size: 21px; line-height: 1.15; }
+      .job-card p { color: #475569; margin: 0; }
+      .job-card .meta:last-child { align-self: end; border-top: 1px solid rgba(148, 163, 184, .35); padding-top: 12px; }
+      .job-card.job-top { grid-column: span 2; min-height: 190px; }
+      .card h2, .card h3 { margin: 0 0 8px; }
+      .meta { color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 14px; }
+      .tag { background: #eef5fc; border-radius: 999px; color: var(--brand-strong); display: inline-flex; font-size: 13px; font-weight: 700; padding: 6px 10px; }
+      .detail { display: grid; gap: 22px; grid-template-columns: 1fr 340px; }
+      .admin-shell { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+      .admin-nav { background: #0b1727; color: white; padding: 22px; }
+      .admin-nav a { color: white; display: block; margin: 12px 0; }
+      .admin-main { padding: 24px; }
+      .admin-panel { overflow: hidden; }
+      .table { border-collapse: collapse; width: 100%; }
+      .table th, .table td { border-bottom: 1px solid var(--line); padding: 12px; text-align: left; vertical-align: top; }
+      .form-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .full { grid-column: 1 / -1; }
+      .tabs { display: flex; gap: 10px; margin: 0 0 20px; }
+      .promo-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); margin-top: 22px; max-width: 920px; }
+      .hero-ad { background: linear-gradient(135deg, #fff, #fff7ed); border: 2px solid rgba(245, 158, 11, .85); border-radius: 8px; box-shadow: 0 18px 44px rgba(0,0,0,.18); color: var(--ink); display: grid; gap: 18px; grid-template-columns: 1fr 240px; overflow: hidden; padding: 18px; position: relative; }
+      .hero-ad::before { background: #f59e0b; color: #111827; content: "INZERCE"; font-size: 11px; font-weight: 900; left: 0; letter-spacing: .08em; padding: 7px 12px; position: absolute; top: 0; }
+      .hero-ad-copy { padding-top: 20px; }
+      .hero-ad h2 { font-size: 28px; line-height: 1.02; margin: 0 0 8px; }
+      .hero-ad-graphic { background: radial-gradient(circle at 30% 20%, #fde68a, transparent 28%), linear-gradient(135deg, #0f5fa8, #072f55); border-radius: 8px; color: white; display: grid; min-height: 150px; overflow: hidden; padding: 18px; place-items: end start; position: relative; }
+      .hero-ad-graphic::after { border: 10px solid rgba(255,255,255,.18); border-radius: 999px; content: ""; height: 110px; position: absolute; right: -24px; top: -18px; width: 110px; }
+      .hero-ad-graphic strong { font-size: 30px; line-height: .95; position: relative; z-index: 1; }
+      .ad-box { background: #fff; border: 2px solid #f59e0b; border-radius: 8px; box-shadow: 0 12px 28px rgba(0,0,0,.12); color: var(--ink); overflow: hidden; padding: 0; }
+      .ad-box .ad-head { background: #f59e0b; color: #111827; font-size: 12px; font-weight: 900; letter-spacing: .08em; padding: 8px 12px; text-transform: uppercase; }
+      .ad-box .ad-body { background: linear-gradient(135deg, #fff7ed, #ffffff); padding: 16px; }
+      .ad-box .ad-visual { background: linear-gradient(135deg, #0f5fa8, #072f55); border-radius: 6px; color: #fff; font-size: 24px; font-weight: 900; margin-top: 12px; padding: 18px; text-align: center; }
+      .quick-links { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); }
+      .top-strip { background: #fff; border-bottom: 1px solid var(--line); padding: 24px 20px; }
+      .feature-card { background: linear-gradient(135deg, var(--card-a), var(--card-b)); border: 0; border-radius: 8px; box-shadow: 0 14px 32px rgba(15, 47, 85, .16); color: #fff; display: grid; min-height: 145px; overflow: hidden; padding: 18px; position: relative; }
+      .feature-card::after { background: rgba(255,255,255,.18); border-radius: 999px; content: ""; height: 110px; position: absolute; right: -24px; top: -24px; width: 110px; }
+      .feature-card small { color: rgba(255,255,255,.82); font-weight: 700; text-transform: uppercase; }
+      .feature-card strong { align-self: end; font-size: 22px; line-height: 1.05; max-width: 160px; }
+      .media-layout { display: grid; gap: 22px; grid-template-columns: 1fr 320px; }
+      .home-offers-head { align-items: end; display: flex; gap: 16px; justify-content: space-between; margin-bottom: 16px; }
+      .home-offers-head h2 { font-size: 34px; margin: 0; }
+      .home-offers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .home-offers .job-card:nth-child(n+21) { display: none; }
+      .brand-strip { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 24px 20px; }
+      .brand-grid { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .brand-tile { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+      .side-rail { display: grid; gap: 16px; align-self: start; }
+      .ad-rect { background: white; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 24px rgba(15, 47, 85, .08); overflow: hidden; }
+      .ad-rect b { background: #0b1727; color: white; display: block; letter-spacing: .08em; padding: 8px 12px; text-transform: uppercase; }
+      .ad-rect div { min-height: 230px; padding: 18px; background: linear-gradient(135deg, #f9fafb, #eef5fc); }
+      .ad-local div { background: radial-gradient(circle at 80% 12%, rgba(245,158,11,.35), transparent 24%), linear-gradient(135deg, #e0f2fe, #fff); }
+      .issue-cover { background: linear-gradient(135deg, #0b1727, #0f5fa8) !important; color: white; display: grid; gap: 10px; }
+      .issue-cover .paper { background: white; border-radius: 4px; color: #0b1727; font-weight: 900; padding: 12px; transform: rotate(-2deg); width: 78%; }
+      .ad-wide { background: linear-gradient(135deg, #fee2e2, #fff7ed); border: 1px solid #fdba74; border-radius: 8px; display: grid; gap: 8px; margin-top: 18px; min-height: 96px; padding: 18px; place-items: center; text-align: center; }
+      .job-top { border-color: #f59e0b; background: #fff7ed; position: relative; }
+      .job-blue { background: #eef5fc; }
+      .result-count { justify-content: space-between; margin-bottom: 14px; }
+      .pagination { align-items: center; background: white; border: 1px solid var(--line); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-top: 16px; padding: 12px; }
+      .pager-buttons { display: flex; gap: 8px; }
+      .pager-buttons button:disabled { cursor: not-allowed; opacity: .45; }
+      .empty-state { display: none; }
+      .site-footer { background: #0b1727; color: white; padding: 28px 20px; }
+      .site-footer .container { display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
+      .site-footer a { color: white; }
+      .modal-backdrop { align-items: center; background: rgba(11, 23, 39, .64); display: none; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 30; }
+      .modal-backdrop.is-open { display: flex; }
+      .modal { background: #fff; border-radius: 8px; box-shadow: 0 28px 80px rgba(0,0,0,.28); max-height: min(760px, 92vh); max-width: 760px; overflow: auto; padding: 22px; width: 100%; }
+      .modal-head { align-items: start; display: flex; gap: 16px; justify-content: space-between; }
+      .modal h2 { margin: 0 0 8px; }
+      .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+      .close-button { background: #eef2f7; border: 0; border-radius: 999px; cursor: pointer; height: 36px; width: 36px; }
+      .summary-box { background: #eef5fc; border: 1px solid #bfdbfe; border-radius: 8px; margin-top: 14px; padding: 14px; }
+      .login-wrap { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: radial-gradient(circle at 80% 20%, rgba(245,158,11,.22), transparent 28%), linear-gradient(135deg, #0b1727, #0f5fa8); }
+      .login-card { background: white; border-radius: 8px; box-shadow: 0 28px 80px rgba(0,0,0,.28); max-width: 460px; padding: 28px; width: 100%; }
+      .admin-shell { background: #eef2f7; }
+      .admin-nav { box-shadow: 10px 0 30px rgba(15, 23, 42, .12); }
+      .admin-nav h2 { margin-top: 0; }
+      .admin-nav a { border-radius: 8px; padding: 10px 12px; }
+      .admin-nav a:hover { background: rgba(255,255,255,.10); }
+      .admin-toolbar { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 18px; }
+      .admin-title h1 { margin: 0 0 6px; }
+      .kpi-grid { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); margin: 20px 0; }
+      .kpi { background: white; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 24px rgba(15, 47, 85, .07); padding: 16px; }
+      .kpi span { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+      .kpi strong { display: block; font-size: 30px; margin-top: 8px; }
+      .status-pill { border-radius: 999px; display: inline-flex; font-size: 12px; font-weight: 900; padding: 6px 10px; text-transform: uppercase; }
+      .status-active { background: #dcfce7; color: #166534; }
+      .status-top { background: #ffedd5; color: #9a3412; }
+      .admin-panel { box-shadow: 0 12px 34px rgba(15, 47, 85, .08); }
+      .table th { background: #f8fafc; color: #475569; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+      .table tr:hover td { background: #f8fafc; }
+
+      /* Modern visual direction override */
+      :root {
+        --bg: #edf4f7;
+        --panel: rgba(255, 255, 255, .92);
+        --ink: #10202a;
+        --muted: #647782;
+        --brand: #006d77;
+        --brand-strong: #004f57;
+        --accent: #ffb703;
+        --line: rgba(16, 32, 42, .12);
+        --shadow: 0 18px 50px rgba(16, 32, 42, .12);
+      }
+      body {
+        background:
+          radial-gradient(circle at 8% 8%, rgba(0, 109, 119, .12), transparent 26%),
+          radial-gradient(circle at 86% 16%, rgba(255, 183, 3, .16), transparent 22%),
+          var(--bg);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .site-header {
+        backdrop-filter: blur(18px);
+        background: rgba(255,255,255,.82);
+        border-bottom: 1px solid rgba(16, 32, 42, .08);
+      }
+      .logo {
+        align-items: center;
+        display: inline-flex;
+        gap: 10px;
+        letter-spacing: -.03em;
+      }
+      .logo::before {
+        background: linear-gradient(135deg, var(--brand), #24a0a8);
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(0,109,119,.28);
+        content: "";
+        height: 30px;
+        width: 30px;
+      }
+      .hero {
+        background:
+          radial-gradient(circle at 80% 12%, rgba(255, 183, 3, .34), transparent 24%),
+          linear-gradient(135deg, #05333a, #006d77 48%, #118ab2);
+        min-height: 620px;
+        padding: 70px 20px 56px;
+      }
+      .hero::after {
+        background:
+          linear-gradient(160deg, rgba(255,255,255,.96), rgba(255,255,255,.78)),
+          linear-gradient(135deg, transparent 0 55%, rgba(255,183,3,.18) 55% 100%);
+        border: 1px solid rgba(255,255,255,.55);
+        box-shadow: 0 32px 80px rgba(0,0,0,.28);
+        height: 380px;
+        opacity: 1;
+        right: max(20px, calc((100vw - 1180px) / 2));
+        top: 96px;
+        transform: rotate(2deg);
+        width: 360px;
+      }
+      .hero-inner::after {
+        background:
+          radial-gradient(circle at 24% 26%, #ffb703 0 34px, transparent 35px),
+          radial-gradient(circle at 68% 32%, #8ecae6 0 42px, transparent 43px),
+          linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+        border: 1px solid rgba(255,255,255,.26);
+        border-radius: 8px;
+        box-shadow: 0 22px 60px rgba(0,0,0,.18);
+        color: #fff;
+        content: "Lokální práce\\A Vsetínsko";
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+        padding: 150px 24px 24px;
+        position: absolute;
+        right: 54px;
+        top: 76px;
+        white-space: pre-line;
+        width: 300px;
+        z-index: 2;
+      }
+      .hero h1 {
+        font-size: clamp(44px, 6.4vw, 82px);
+        letter-spacing: -.06em;
+        max-width: 740px;
+      }
+      .hero p {
+        color: rgba(255,255,255,.82);
+        font-size: 21px;
+        line-height: 1.5;
+      }
+      .search-box {
+        border: 0;
+        border-radius: 8px;
+        box-shadow: 0 28px 80px rgba(0,0,0,.28);
+        max-width: 850px;
+        padding: 10px;
+      }
+      .field, .select, .textarea {
+        border-color: rgba(16, 32, 42, .12);
+        border-radius: 8px;
+      }
+      .button {
+        background: linear-gradient(135deg, var(--brand), #118ab2);
+        border-radius: 8px;
+        box-shadow: 0 12px 26px rgba(0,109,119,.22);
+        transition: transform .18s ease, box-shadow .18s ease;
+      }
+      .button:hover {
+        box-shadow: 0 18px 34px rgba(0,109,119,.28);
+        transform: translateY(-1px);
+      }
+      .button.secondary {
+        background: #e6f4f5;
+        box-shadow: none;
+        color: var(--brand-strong);
+      }
+      .hero-ad, .feature-card, .brand-tile, .card, .filters, .admin-panel, .ad-rect {
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+      .hero-ad {
+        border: 0;
+        grid-template-columns: 1fr 280px;
+      }
+      .feature-card {
+        min-height: 178px;
+        padding: 22px;
+      }
+      .feature-card strong {
+        font-size: 25px;
+        letter-spacing: -.03em;
+      }
+      .brand-strip, .top-strip {
+        background: rgba(255,255,255,.72);
+        backdrop-filter: blur(16px);
+      }
+      .brand-tile strong {
+        color: var(--brand);
+        font-size: 26px;
+      }
+      .section {
+        padding: 42px 20px;
+      }
+      .home-offers-head h2 {
+        font-size: 42px;
+        letter-spacing: -.04em;
+      }
+      .job-card {
+        border: 0;
+        overflow: hidden;
+        padding: 22px;
+      }
+      .job-card::before {
+        background: linear-gradient(180deg, var(--brand), #8ecae6);
+        content: "";
+        inset: 0 auto 0 0;
+        position: absolute;
+        width: 5px;
+      }
+      .job-card.job-top {
+        background:
+          radial-gradient(circle at 92% 8%, rgba(255,183,3,.26), transparent 22%),
+          #fffaf0;
+      }
+      .job-card h2 {
+        font-size: 24px;
+        letter-spacing: -.03em;
+      }
+      .tag {
+        background: #e6f4f5;
+        color: var(--brand-strong);
+      }
+      .filters {
+        background: rgba(255,255,255,.88);
+        padding: 18px;
+        position: sticky;
+        top: 86px;
+      }
+      .filter-field .select, .filter-field .field {
+        background-color: #fff;
+      }
+      .pagination {
+        border: 0;
+        box-shadow: var(--shadow);
+      }
+      .admin-shell {
+        background:
+          radial-gradient(circle at 90% 10%, rgba(255,183,3,.14), transparent 20%),
+          #eef4f7;
+        grid-template-columns: 280px 1fr;
+      }
+      .admin-nav {
+        background: linear-gradient(180deg, #062d33, #0b1727);
+        padding: 28px 18px;
+      }
+      .admin-nav a {
+        color: rgba(255,255,255,.86);
+        font-weight: 750;
+        margin: 6px 0;
+      }
+      .admin-nav a:hover {
+        background: rgba(255,255,255,.12);
+        color: #fff;
+      }
+      .admin-main {
+        padding: 34px;
+      }
+      .admin-title h1 {
+        font-size: 42px;
+        letter-spacing: -.04em;
+      }
+      .kpi {
+        border: 0;
+        box-shadow: var(--shadow);
+      }
+      .kpi strong {
+        letter-spacing: -.05em;
+      }
+      .table {
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      .table th {
+        background: #f4f8fa;
+      }
+      .table td {
+        background: rgba(255,255,255,.86);
+      }
+      .login-card, .modal {
+        border: 1px solid rgba(255,255,255,.5);
+      }
+      .hero::after,
+      .hero-inner::after {
+        display: none;
+      }
+      .hero {
+        min-height: 720px;
+        padding-bottom: 86px;
+      }
+      .hero h1,
+      .hero p,
+      .search-box,
+      .promo-grid {
+        max-width: 720px;
+      }
+      .hero-showcase {
+        bottom: -44px;
+        display: grid;
+        gap: 16px;
+        position: absolute;
+        right: 0;
+        width: min(46vw, 520px);
+        z-index: 1;
+      }
+      .hero-photo {
+        aspect-ratio: 1 / 1.05;
+        background: #dbeafe url("/public/preview-assets/hero-workers.png") center / cover no-repeat;
+        border: 1px solid rgba(255,255,255,.45);
+        border-radius: 8px;
+        box-shadow: 0 34px 90px rgba(0,0,0,.34);
+        overflow: hidden;
+        position: relative;
+      }
+      .hero-photo::after {
+        background: linear-gradient(180deg, transparent 52%, rgba(5, 51, 58, .78));
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+      .hero-stat-row {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .hero-stat {
+        backdrop-filter: blur(18px);
+        background: rgba(255,255,255,.88);
+        border: 1px solid rgba(255,255,255,.7);
+        border-radius: 8px;
+        box-shadow: 0 18px 44px rgba(0,0,0,.16);
+        color: var(--ink);
+        padding: 14px;
+      }
+      .hero-stat strong {
+        color: var(--brand);
+        display: block;
+        font-size: 26px;
+        letter-spacing: -.05em;
+      }
+      .hero-stat span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      .hero-ad {
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(18px);
+      }
+      .feature-card {
+        isolation: isolate;
+      }
+      .feature-card::before {
+        align-items: center;
+        background: rgba(255,255,255,.2);
+        border: 1px solid rgba(255,255,255,.28);
+        border-radius: 8px;
+        content: attr(data-icon);
+        display: flex;
+        font-size: 28px;
+        height: 54px;
+        justify-content: center;
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        width: 54px;
+        z-index: 1;
+      }
+      .feature-card > * {
+        position: relative;
+        z-index: 2;
+      }
+      .home-offers .job-card:nth-child(1),
+      .home-offers .job-card:nth-child(6),
+      .home-offers .job-card:nth-child(13) {
+        background: linear-gradient(135deg, #fff, #fff7ed);
+      }
+      @media (max-width: 1020px) {
+        .hero-showcase {
+          margin-top: 26px;
+          position: relative;
+          right: auto;
+          width: 100%;
+        }
+        .hero {
+          min-height: auto;
+        }
+      }
+
+      /* Jalovec-inspired editorial/commercial direction */
+      :root {
+        --jalovec-red: #e00909;
+        --jalovec-red-dark: #a40000;
+        --jalovec-red-soft: #fff1f1;
+        --bg: #f5f5f7;
+        --brand: var(--jalovec-red);
+        --brand-strong: var(--jalovec-red-dark);
+        --accent: #111827;
+        --shadow: 0 16px 42px rgba(18, 24, 38, .12);
+      }
+      body {
+        background: #f5f5f7;
+      }
+      .site-header {
+        background: rgba(255,255,255,.94);
+      }
+      .logo {
+        color: #222633;
+      }
+      .logo::before {
+        background: linear-gradient(135deg, var(--jalovec-red), #ff4a4a);
+        box-shadow: 0 9px 22px rgba(224,9,9,.26);
+      }
+      .button {
+        background: linear-gradient(135deg, var(--jalovec-red), #b80000);
+        box-shadow: 0 12px 26px rgba(224,9,9,.22);
+      }
+      .button:hover {
+        box-shadow: 0 18px 36px rgba(224,9,9,.28);
+      }
+      .button.secondary {
+        background: #fff1f1;
+        color: var(--jalovec-red-dark);
+      }
+      .hero {
+        background:
+          linear-gradient(90deg, rgba(255,255,255,.92) 0 44%, rgba(255,255,255,.22) 44% 100%),
+          radial-gradient(circle at 82% 12%, rgba(224,9,9,.30), transparent 24%),
+          linear-gradient(135deg, #1f2937, #3f1111 58%, #e00909);
+        color: #171923;
+      }
+      .hero h1 {
+        color: #171923;
+      }
+      .hero p {
+        color: #4b5563;
+      }
+      .search-box {
+        border: 1px solid rgba(224,9,9,.12);
+      }
+      .hero-stat strong,
+      .brand-tile strong {
+        color: var(--jalovec-red);
+      }
+      .hero-photo {
+        border: 8px solid white;
+        box-shadow: 0 28px 80px rgba(36, 16, 16, .32);
+      }
+      .hero-ad {
+        border-top: 5px solid var(--jalovec-red);
+      }
+      .hero-ad::before {
+        background: var(--jalovec-red);
+        color: white;
+      }
+      .hero-ad-graphic {
+        background: radial-gradient(circle at 30% 20%, #fff, transparent 24%), linear-gradient(135deg, #e00909, #111827);
+      }
+      .top-strip {
+        background: #111827;
+      }
+      .feature-card {
+        box-shadow: 0 18px 42px rgba(0,0,0,.22);
+      }
+      .brand-strip {
+        background: #fff;
+      }
+      .brand-tile {
+        border-left: 5px solid var(--jalovec-red);
+      }
+      .job-card::before {
+        background: linear-gradient(180deg, var(--jalovec-red), #111827);
+      }
+      .job-card.job-top {
+        background: linear-gradient(135deg, #fff, #fff1f1);
+      }
+      .tag {
+        background: #fff1f1;
+        color: var(--jalovec-red-dark);
+      }
+      .ad-rect b {
+        background: var(--jalovec-red);
+      }
+      .issue-cover {
+        background: linear-gradient(135deg, #111827, #e00909) !important;
+      }
+      .ad-wide {
+        background: linear-gradient(135deg, #fff1f1, #fff);
+        border-color: rgba(224,9,9,.26);
+      }
+      .commercial-band {
+        background: #111827;
+        color: white;
+        padding: 22px 20px;
+      }
+      .commercial-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1.4fr 1fr 1fr;
+      }
+      .commercial-slot {
+        background: linear-gradient(135deg, rgba(224,9,9,.95), rgba(17,24,39,.98));
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 8px;
+        min-height: 118px;
+        overflow: hidden;
+        padding: 18px;
+        position: relative;
+      }
+      .commercial-slot::after {
+        background: rgba(255,255,255,.12);
+        border-radius: 999px;
+        content: "";
+        height: 120px;
+        position: absolute;
+        right: -34px;
+        top: -34px;
+        width: 120px;
+      }
+      .commercial-slot small {
+        color: rgba(255,255,255,.72);
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .commercial-slot strong {
+        display: block;
+        font-size: 24px;
+        letter-spacing: -.03em;
+        margin-top: 8px;
+      }
+      .placement-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(4, minmax(0,1fr));
+        margin-top: 18px;
+      }
+      .placement-card {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+      .placement-card span {
+        color: var(--jalovec-red);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .placement-card strong {
+        display: block;
+        font-size: 20px;
+        margin-top: 8px;
+      }
+      .admin-shell {
+        background: #f7f7fa;
+        grid-template-columns: 360px 1fr;
+      }
+      .admin-nav {
+        background: #fff;
+        border-right: 1px solid #e6e8ee;
+        box-shadow: none;
+        color: #6b7280;
+        padding: 28px 28px;
+      }
+      .admin-nav h2 {
+        color: #303445;
+        font-size: 28px;
+      }
+      .admin-nav a {
+        color: #6b7280;
+        font-size: 20px;
+        margin: 8px 0;
+        padding: 16px 18px;
+      }
+      .admin-nav a:hover,
+      .admin-nav a.active {
+        background: var(--jalovec-red);
+        color: #fff;
+      }
+      .admin-main {
+        padding: 44px 52px;
+      }
+      .admin-title h1 {
+        color: #4b5063;
+        font-size: 36px;
+      }
+      .kpi,
+      .admin-panel,
+      .modal,
+      .login-card {
+        border: 1px solid #e7e8ef;
+        border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(40, 45, 64, .09);
+      }
+      .admin-panel {
+        background: white;
+      }
+      .table th {
+        background: #f3f4f8;
+        color: #777b8d;
+        font-size: 14px;
+      }
+      .table td {
+        color: #263047;
+        font-size: 16px;
+        padding: 18px 16px;
+      }
+      .status-active {
+        background: #e9fbe9;
+        color: #13a538;
+      }
+      @media (max-width: 1020px) {
+        .commercial-grid,
+        .placement-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .hero {
+        min-height: 760px;
+      }
+      .hero-showcase {
+        bottom: auto;
+        right: 0;
+        top: 190px;
+        width: min(42vw, 500px);
+      }
+      .hero-photo {
+        aspect-ratio: 1 / .86;
+      }
+      .job-thumb {
+        background: linear-gradient(135deg, #111827, var(--jalovec-red));
+        border-radius: 8px;
+        color: white;
+        display: grid;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        min-height: 118px;
+        padding: 16px;
+        place-items: end start;
+        text-transform: uppercase;
+      }
+      .job-card.has-photo {
+        grid-template-columns: 170px 1fr;
+      }
+      .job-card.has-photo .job-body {
+        display: grid;
+        gap: 10px;
+      }
+      .big-company-strip {
+        background: white;
+        border-block: 1px solid var(--line);
+        padding: 30px 20px;
+      }
+      .company-row {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .company-tile {
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        color: white;
+        min-height: 132px;
+        overflow: hidden;
+        padding: 18px;
+        position: relative;
+      }
+      .company-tile::after {
+        background: rgba(255,255,255,.14);
+        border-radius: 999px;
+        content: "";
+        height: 120px;
+        position: absolute;
+        right: -32px;
+        top: -32px;
+        width: 120px;
+      }
+      .company-tile small {
+        color: rgba(255,255,255,.75);
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .company-tile strong {
+        display: block;
+        font-size: 24px;
+        margin-top: 28px;
+      }
+      .admin-filterbar {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        padding: 18px;
+      }
+      .admin-filterbar > * {
+        min-width: 0;
+      }
+      .admin-card-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 360px 1fr;
+      }
+      .admin-detail-card {
+        background: white;
+        border: 1px solid #e7e8ef;
+        border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(40,45,64,.09);
+        padding: 22px;
+      }
+      .password-wrap {
+        position: relative;
+      }
+      .password-toggle {
+        background: transparent;
+        border: 0;
+        color: var(--jalovec-red);
+        cursor: pointer;
+        font-weight: 900;
+        position: absolute;
+        right: 10px;
+        top: 34px;
+      }
+      .city-list, .package-list {
+        display: grid;
+        gap: 10px;
+      }
+      .list-row {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #e7e8ef;
+        border-radius: 8px;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 12px 14px;
+      }
+      .icon-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .icon-btn {
+        background: #f3f4f8;
+        border: 0;
+        border-radius: 8px;
+        color: #6b7280;
+        cursor: pointer;
+        display: inline-grid;
+        height: 36px;
+        place-items: center;
+        width: 36px;
+      }
+      .icon-btn svg {
+        height: 18px;
+        width: 18px;
+      }
+      .admin-nav {
+        height: 100vh;
+        overflow-y: auto;
+        position: sticky;
+        top: 0;
+      }
+      .admin-collapse {
+        align-items: center;
+        background: #f3f4f8;
+        border: 0;
+        border-radius: 8px;
+        color: #6b7280;
+        cursor: pointer;
+        display: inline-flex;
+        font-weight: 900;
+        height: 38px;
+        justify-content: center;
+        margin-bottom: 14px;
+        width: 38px;
+      }
+      body.nav-collapsed .admin-shell {
+        grid-template-columns: 92px 1fr;
+      }
+      body.nav-collapsed .admin-nav h2,
+      body.nav-collapsed .admin-nav p,
+      body.nav-collapsed .admin-nav a {
+        overflow: hidden;
+        text-indent: -999px;
+        white-space: nowrap;
+      }
+      .chart-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1.2fr .8fr;
+        margin-top: 24px;
+      }
+      .chart-card {
+        background: white;
+        border: 1px solid #e7e8ef;
+        border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(40,45,64,.09);
+        padding: 22px;
+      }
+      .bar-chart {
+        align-items: end;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(7, 1fr);
+        height: 190px;
+        margin-top: 18px;
+      }
+      .bar-chart span {
+        background: linear-gradient(180deg, var(--jalovec-red), #ff8a8a);
+        border-radius: 8px 8px 0 0;
+        min-height: 22px;
+      }
+      .donut {
+        aspect-ratio: 1;
+        background: conic-gradient(var(--jalovec-red) 0 42%, #111827 42% 68%, #f59e0b 68% 100%);
+        border-radius: 999px;
+        display: grid;
+        margin: 18px auto 0;
+        max-width: 190px;
+        place-items: center;
+      }
+      .donut::after {
+        background: white;
+        border-radius: 999px;
+        content: "Balíčky";
+        display: grid;
+        font-weight: 900;
+        height: 54%;
+        place-items: center;
+        width: 54%;
+      }
+      .detail-row {
+        display: none;
+      }
+      .detail-row.is-open {
+        display: table-row;
+      }
+      .detail-panel {
+        background: #fafafa;
+        border: 1px solid #eceef4;
+        border-radius: 8px;
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1fr 1fr;
+        padding: 18px;
+      }
+      .history-list {
+        display: grid;
+        gap: 10px;
+      }
+      .history-list div {
+        background: white;
+        border: 1px solid #eceef4;
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+      @media (max-width: 1020px) {
+        .hero-showcase {
+          top: auto;
+          width: 100%;
+        }
+        .job-card.has-photo,
+        .company-row,
+        .admin-filterbar,
+        .admin-card-grid,
+        .chart-grid,
+        .detail-panel {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Final product-pass overrides: prevent hero overlap, keep cards paired, harden admin responsiveness. */
+      .hero {
+        min-height: auto;
+        padding: 76px 20px 68px;
+      }
+      .hero-inner {
+        align-items: start;
+        column-gap: 58px;
+        display: grid;
+        grid-template-columns: minmax(0, 720px) minmax(320px, 500px);
+      }
+      .hero h1,
+      .hero p,
+      .search-box,
+      .promo-grid {
+        grid-column: 1;
+      }
+      .hero-showcase {
+        bottom: auto !important;
+        grid-column: 2;
+        grid-row: 1 / span 4;
+        justify-self: end;
+        margin-top: 76px;
+        position: relative !important;
+        right: auto !important;
+        top: auto !important;
+        width: min(100%, 430px) !important;
+        z-index: 0;
+      }
+      .hero-photo {
+        aspect-ratio: 1 / 1.05;
+      }
+      .job-grid,
+      .home-offers {
+        align-items: stretch;
+        grid-auto-flow: row dense;
+      }
+      .job-card.job-top {
+        grid-column: auto !important;
+        min-height: 210px;
+      }
+      .home-offers .job-card.job-top {
+        grid-column: span 2 !important;
+        min-height: 190px;
+      }
+      .job-card.has-photo {
+        min-width: 0;
+      }
+      .password-wrap .field {
+        padding-right: 56px;
+      }
+      .password-toggle {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        height: 40px;
+        justify-content: center;
+        right: 8px;
+        top: 32px;
+        width: 40px;
+      }
+      .password-toggle:hover {
+        background: #fff1f1;
+      }
+      .password-toggle svg {
+        height: 20px;
+        width: 20px;
+      }
+      .admin-shell > *,
+      .admin-main,
+      .admin-panel,
+      .admin-filterbar > * {
+        min-width: 0;
+      }
+      .admin-filterbar .button {
+        min-width: 0;
+        width: 100%;
+      }
+      .admin-panel {
+        overflow-x: auto;
+      }
+      .admin-panel .table {
+        min-width: 960px;
+      }
+      .admin-nav a {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+      .admin-nav a::before {
+        flex: 0 0 28px;
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+      }
+      .admin-nav a[href="#dashboard"]::before { content: "▦"; }
+      .admin-nav a[href="#admin"]::before { content: "▤"; }
+      .admin-nav a[href="#addjob"]::before { content: "+"; }
+      .admin-nav a[href="#ads"]::before { content: "▣"; }
+      .admin-nav a[href="#companies"]::before { content: "¤"; }
+      .admin-nav a[href="#packages"]::before { content: "▥"; }
+      .admin-nav a[href="#finance"]::before { content: "Kč"; font-size: 13px; }
+      .admin-nav a[href="#web"]::before { content: "↗"; }
+      body.nav-collapsed .admin-nav h2,
+      body.nav-collapsed .admin-nav p {
+        display: none;
+      }
+      body.nav-collapsed .admin-nav a {
+        font-size: 0;
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+        text-indent: 0;
+      }
+      body.nav-collapsed .admin-nav a::before {
+        font-size: 20px;
+      }
+      body.nav-collapsed .admin-nav a[href="#finance"]::before {
+        font-size: 13px;
+      }
+      body.nav-collapsed .admin-collapse {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .job-admin-row {
+        cursor: pointer;
+      }
+      .job-card[data-open-job-card] {
+        cursor: pointer;
+      }
+      .job-card[data-open-job-card]:hover h2 a {
+        color: var(--jalovec-red-dark);
+      }
+      .job-card .meta + h2 {
+        margin-top: 8px;
+      }
+      .job-card .job-chip-top + .meta {
+        margin-top: 4px;
+      }
+      .detail-hero .job-chip-top + h1 {
+        margin-top: 14px;
+      }
+      .job-admin-row.is-open td {
+        background: #fff7f7;
+      }
+      .icon-actions .icon-btn {
+        flex: 0 0 36px;
+      }
+      .icon-btn:hover {
+        background: #fff1f1;
+        color: var(--jalovec-red-dark);
+      }
+      .linked-manager {
+        margin-top: 24px;
+      }
+      .issue-badge {
+        background: #f3f4f8;
+        border-radius: 999px;
+        color: #4b5563;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 900;
+        padding: 6px 10px;
+        text-transform: uppercase;
+      }
+      @media (max-width: 1180px) {
+        .hero-inner {
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+        }
+      }
+      @media (max-width: 1020px) {
+        .hero {
+          padding-top: 48px;
+        }
+        .hero-inner,
+        .admin-shell {
+          grid-template-columns: 1fr;
+        }
+        .hero h1,
+        .hero p,
+        .search-box,
+        .promo-grid,
+        .hero-showcase {
+          grid-column: 1;
+        }
+        .hero-showcase {
+          grid-row: auto;
+          margin-top: 30px;
+        }
+        .admin-nav {
+          height: auto;
+          max-height: 48vh;
+          position: relative;
+        }
+        .admin-main {
+          padding: 24px 16px;
+        }
+        body.nav-collapsed .admin-shell {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Homepage cleanup: quieter Jalovec palette, readable slider, restrained 3D category tiles. */
+      .site-header .nav a {
+        border-radius: 8px;
+        color: #303445;
+        font-weight: 800;
+        padding: 10px 12px;
+      }
+      .site-header .nav a:hover {
+        background: #fff1f1;
+        color: var(--jalovec-red-dark);
+      }
+      .hero {
+        background:
+          linear-gradient(90deg, #ffffff 0 56%, rgba(255,255,255,.80) 56% 100%),
+          linear-gradient(135deg, #fff7f7, #f3f4f6 62%, #fff);
+      }
+      .hero h1 {
+        color: #151821;
+        text-wrap: balance;
+      }
+      .hero p {
+        color: #4b5563;
+      }
+      .hero-ad {
+        background: #fff;
+        border: 1px solid rgba(224,9,9,.18);
+        border-left: 6px solid var(--jalovec-red);
+        border-top: 0;
+        box-shadow: 0 18px 46px rgba(31, 41, 55, .10);
+        grid-template-columns: 1.08fr 250px;
+      }
+      .hero-ad::before {
+        background: #111827;
+        border-radius: 0 0 8px 0;
+        color: #fff;
+      }
+      .hero-ad h2 {
+        color: #151821;
+        font-size: 30px;
+        letter-spacing: -.04em;
+      }
+      .hero-ad-copy p {
+        color: #4b5563 !important;
+        line-height: 1.5;
+      }
+      .hero-ad-graphic {
+        background:
+          linear-gradient(135deg, rgba(255,255,255,.13), transparent 48%),
+          linear-gradient(135deg, #a40000, #e00909 48%, #111827);
+        min-height: 170px;
+        place-items: center;
+        text-align: center;
+      }
+      .hero-ad-graphic::after {
+        border-color: rgba(255,255,255,.18);
+      }
+      .hero-ad-graphic strong {
+        background: rgba(255,255,255,.95);
+        border-radius: 8px;
+        color: #111827;
+        display: inline-block;
+        font-size: 26px;
+        line-height: 1;
+        padding: 14px 16px;
+        text-shadow: none;
+      }
+      .top-strip {
+        background: #f7f7fa;
+        border-bottom: 1px solid #e7e8ef;
+        border-top: 1px solid #fff;
+        padding: 28px 20px;
+      }
+      .feature-card {
+        background:
+          linear-gradient(145deg, #ffffff, #fff7f7 62%, #fff1f1) !important;
+        border: 1px solid rgba(224,9,9,.16);
+        box-shadow:
+          0 18px 32px rgba(31, 41, 55, .10),
+          inset 0 1px 0 rgba(255,255,255,.95);
+        color: #151821;
+        min-height: 150px;
+        transform: perspective(900px) rotateX(0deg) translateY(0);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      }
+      .feature-card:hover {
+        border-color: rgba(224,9,9,.34);
+        box-shadow:
+          0 26px 44px rgba(31, 41, 55, .15),
+          0 10px 0 rgba(164,0,0,.08);
+        transform: perspective(900px) rotateX(2deg) translateY(-4px);
+      }
+      .feature-card::before {
+        background: var(--jalovec-red) !important;
+        border-color: transparent !important;
+        color: #fff;
+      }
+      .feature-card::after {
+        background: radial-gradient(circle, rgba(224,9,9,.12), transparent 66%);
+      }
+      .feature-card small {
+        color: var(--jalovec-red-dark);
+      }
+      .feature-card strong {
+        color: #151821;
+      }
+      .commercial-band {
+        background: #fff;
+        border-bottom: 1px solid #e7e8ef;
+        border-top: 1px solid #e7e8ef;
+        color: #151821;
+      }
+      .commercial-slot {
+        background: linear-gradient(135deg, #fff, #fff7f7) !important;
+        border: 1px solid rgba(224,9,9,.18);
+        box-shadow: 0 16px 34px rgba(31, 41, 55, .08);
+        color: #151821;
+      }
+      .commercial-slot::after {
+        background: rgba(224,9,9,.08);
+      }
+      .commercial-slot small {
+        color: var(--jalovec-red-dark);
+      }
+      .search-page-box {
+        align-items: center;
+        background: #fff;
+        border: 1px solid rgba(224,9,9,.16);
+        border-left: 6px solid var(--jalovec-red);
+        border-radius: 8px;
+        box-shadow: 0 18px 42px rgba(31, 41, 55, .09);
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1.3fr 1fr 260px auto;
+        margin: 0 0 24px;
+        padding: 18px;
+      }
+      .search-page-box strong {
+        color: #151821;
+        display: block;
+        font-size: 20px;
+        letter-spacing: -.02em;
+      }
+      .job-chip {
+        background: #fff8f8;
+        border: 1px solid rgba(224,9,9,.16);
+        border-radius: 999px;
+        color: #6b2a2a;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 850;
+        padding: 6px 10px;
+      }
+      .job-chip-top {
+        background: #e00909;
+        border-color: #e00909;
+        color: #fff;
+      }
+      .salary-chip {
+        color: #151821;
+        font-weight: 900;
+      }
+      #search .job-grid .job-card.job-top {
+        grid-column: span 2 !important;
+        min-height: 190px;
+      }
+      .job-detail-shell {
+        background:
+          linear-gradient(180deg, #fff7f7 0, #f7f7fa 360px, #f7f7fa 100%);
+        padding: 0 20px 42px;
+      }
+      .detail-hero {
+        background:
+          linear-gradient(135deg, color-mix(in srgb, var(--company-color, #e00909) 11%, #fff), #fff 58%),
+          #fff;
+        border: 1px solid rgba(224,9,9,.14);
+        border-left: 8px solid var(--company-color, #e00909);
+        border-radius: 8px;
+        box-shadow: 0 20px 50px rgba(31,41,55,.10);
+        display: grid;
+        gap: 24px;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+        margin: 28px auto 24px;
+        overflow: hidden;
+        padding: 28px;
+      }
+      .breadcrumb {
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 16px;
+      }
+      .detail-hero h1 {
+        color: #151821;
+        font-size: clamp(36px, 5vw, 62px);
+        letter-spacing: -.055em;
+        line-height: 1;
+        margin: 0 0 14px;
+        text-wrap: balance;
+      }
+      .detail-company-line {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 16px 0 20px;
+      }
+      .company-logo {
+        align-items: center;
+        background: var(--company-color, #e00909);
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 22px;
+        font-weight: 950;
+        height: 54px;
+        justify-content: center;
+        width: 54px;
+      }
+      .detail-highlight {
+        background: #fff;
+        border: 1px solid rgba(224,9,9,.16);
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 22px;
+        padding: 14px;
+      }
+      .detail-highlight div {
+        border-right: 1px solid #eceef4;
+        padding-right: 12px;
+      }
+      .detail-highlight div:last-child {
+        border-right: 0;
+      }
+      .detail-highlight span {
+        color: #6b7280;
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+      .detail-highlight strong {
+        color: #151821;
+        display: block;
+        font-size: 18px;
+        margin-top: 4px;
+      }
+      .detail-media {
+        display: grid;
+        gap: 14px;
+      }
+      .company-photo {
+        background:
+          linear-gradient(180deg, transparent 44%, rgba(17,24,39,.72)),
+          url("/public/preview-assets/hero-workers.png") center / cover no-repeat;
+        border-radius: 8px;
+        box-shadow: 0 18px 42px rgba(31,41,55,.18);
+        color: #fff;
+        display: grid;
+        min-height: 300px;
+        padding: 22px;
+        place-items: end start;
+      }
+      .company-photo strong {
+        font-size: 24px;
+        letter-spacing: -.03em;
+      }
+      .flyer-card {
+        background: #111827;
+        border-radius: 8px;
+        color: #fff;
+        display: grid;
+        gap: 6px;
+        min-height: 120px;
+        padding: 18px;
+        position: relative;
+      }
+      .flyer-card::after {
+        background: rgba(255,255,255,.12);
+        border-radius: 999px;
+        content: "";
+        height: 110px;
+        position: absolute;
+        right: -28px;
+        top: -28px;
+        width: 110px;
+      }
+      .detail-layout {
+        display: grid;
+        gap: 22px;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        margin: 0 auto;
+        max-width: 1180px;
+      }
+      .detail-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .detail-panel-card {
+        background: #fff;
+        border: 1px solid #e7e8ef;
+        border-radius: 8px;
+        box-shadow: 0 14px 34px rgba(31,41,55,.07);
+        padding: 22px;
+      }
+      .detail-panel-card h2,
+      .apply-panel h2 {
+        color: #151821;
+        margin: 0 0 12px;
+      }
+      .detail-panel-card p,
+      .detail-panel-card li {
+        color: #4b5563;
+        line-height: 1.6;
+      }
+      .detail-panel-card ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+      .apply-panel {
+        align-self: start;
+        background: #fff;
+        border: 1px solid rgba(224,9,9,.18);
+        border-top: 6px solid var(--company-color, #e00909);
+        border-radius: 8px;
+        box-shadow: 0 18px 46px rgba(31,41,55,.12);
+        display: grid;
+        gap: 12px;
+        padding: 22px;
+        position: sticky;
+        top: 88px;
+      }
+      .contact-box {
+        background: #fff7f7;
+        border: 1px solid rgba(224,9,9,.16);
+        border-radius: 8px;
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+      }
+      .contact-box strong {
+        color: #151821;
+      }
+      .detail-ad {
+        background: linear-gradient(135deg, #fff, #fff7f7);
+        border: 1px solid rgba(224,9,9,.16);
+        border-radius: 8px;
+        margin-top: 22px;
+        padding: 18px;
+      }
+      .company-tile {
+        background: linear-gradient(135deg, #111827, #e00909) !important;
+      }
+      .company-row .company-tile:nth-child(even) {
+        background: linear-gradient(135deg, #fff, #fff1f1) !important;
+        border: 1px solid rgba(224,9,9,.20);
+        color: #151821;
+      }
+      .company-row .company-tile:nth-child(even) small {
+        color: var(--jalovec-red-dark);
+      }
+      @media (max-width: 820px) {
+        .site-header .nav {
+          flex-wrap: wrap;
+        }
+        .hero-ad {
+          grid-template-columns: 1fr;
+        }
+        .search-page-box {
+          grid-template-columns: 1fr;
+        }
+        .detail-hero,
+        .detail-layout,
+        .detail-grid,
+        .detail-highlight {
+          grid-template-columns: 1fr;
+        }
+        .apply-panel {
+          position: static;
+        }
+      }
+      .tab-target { display: none; }
+      .tab-target:target { display: block; }
+      body:not(:has(:target)) #web { display: block; }
+      @media (max-width: 820px) {
+        .search-box, .grid, .detail, .admin-shell, .form-grid, .promo-grid, .quick-links, .media-layout, .hero-ad, .kpi-grid, .job-grid, .home-offers, .brand-grid { grid-template-columns: 1fr; }
+        .bar { align-items: flex-start; flex-direction: column; }
+        .hero { padding-top: 36px; }
+        .hero::after { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <section id="web" class="tab-target">
+      <header class="site-header">
+        <div class="bar">
+          <a class="logo" href="#web">chcupracu.cz</a>
+          <nav class="nav">
+            <a href="#web">Domů</a>
+            <a href="#search" id="navSearchJobs" data-nav-search>Hledat práci</a>
+            <a href="#login">Zadat inzerát</a>
+          </nav>
+        </div>
+      </header>
+      <section class="hero">
+        <div class="hero-inner">
+          <h1>Práce na Vsetíně a okolí bez zbytečného hledání</h1>
+          <p>Lokální nabídky pro Vsetín, Rožnov, Velké Karlovice, Brumov-Bylnici a další místa, která redakce jednoduše přidá v administraci.</p>
+          <form class="search-box" id="searchForm">
+            <div class="suggest-wrap">
+              <input class="field" id="searchQuery" placeholder="Jakou práci hledáte?" autocomplete="off" />
+              <div class="suggest-menu" id="suggestMenu"></div>
+            </div>
+            <select class="select" id="searchCity">
+              <option>Vsetín a okolí</option>
+              <option>Vsetín</option>
+              <option>Valašské Meziříčí</option>
+              <option>Rožnov pod Radhoštěm</option>
+              <option>Vizovice</option>
+              <option>Zubří</option>
+              <option>Jablůnka</option>
+              <option>Velké Karlovice</option>
+              <option>Brumov-Bylnice</option>
+            </select>
+            <button class="button" type="submit">Hledat</button>
+          </form>
+          <div class="promo-grid">
+            <div class="hero-ad">
+              <div class="hero-ad-copy">
+                <h2>Hledáte lidi na Valašsku?</h2>
+                <p style="color:#475569;margin:0;">Ukázkový reklamní banner pro lokální firmu. Tady může být náborová kampaň, akce partnera nebo plošná inzerce navázaná na Jalovec.</p>
+                <div class="meta" style="margin-top:12px;"><span class="tag">Web + tisk</span><span class="tag">Top pozice</span><span class="tag">Grafika v ceně</span></div>
+              </div>
+              <div class="hero-ad-graphic">
+                <strong>NABÍRÁME<br />Ihned</strong>
+              </div>
+            </div>
+          </div>
+          <div class="hero-showcase" aria-hidden="true">
+            <div class="hero-photo"></div>
+            <div class="hero-stat-row">
+              <div class="hero-stat"><strong>40</strong><span>aktuálních nabídek</span></div>
+              <div class="hero-stat"><strong>7</strong><span>top pozic</span></div>
+              <div class="hero-stat"><strong>25 km</strong><span>Vsetín a okolí</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="top-strip">
+        <div class="container quick-links">
+          <a class="feature-card" style="--card-a:#0f5fa8;--card-b:#38bdf8;" href="#" data-icon="01" data-quick="výroba"><small>Nejžádanější</small><strong>Práce ve výrobě</strong></a>
+          <a class="feature-card" style="--card-a:#f59e0b;--card-b:#ef4444;" href="#" data-icon="02" data-quick="brigáda"><small>Rychlý nástup</small><strong>Brigády na Vsetíně</strong></a>
+          <a class="feature-card" style="--card-a:#16a34a;--card-b:#84cc16;" href="#" data-icon="03" data-quick="absolvent"><small>Bez praxe</small><strong>Pro absolventy</strong></a>
+          <a class="feature-card" style="--card-a:#7c3aed;--card-b:#ec4899;" href="#" data-icon="04" data-quick="administrativa"><small>Kancelář</small><strong>Administrativa</strong></a>
+        </div>
+      </section>
+      <section class="commercial-band">
+        <div class="container commercial-grid">
+          <div class="commercial-slot"><small>Hlavní reklamní pozice</small><strong>Partner týdne: Valašské stavby nabírají</strong></div>
+          <div class="commercial-slot"><small>Top v lokalitě</small><strong>Práce na Vsetíně</strong></div>
+          <div class="commercial-slot"><small>Top v oboru</small><strong>Výroba a řemesla</strong></div>
+        </div>
+      </section>
+      <section class="big-company-strip">
+        <div class="container">
+          <div class="home-offers-head">
+            <div>
+              <h2>Velké firmy v regionu</h2>
+              <p class="meta">Prémiový komerční pruh pro firmy, které chtějí vlastní barvy a odkaz na všechny svoje nabídky.</p>
+            </div>
+          </div>
+          <div class="company-row">
+            <a class="company-tile" style="background:linear-gradient(135deg,#111827,#e00909)" href="#search" data-company="Valašské stavby"><small>Partner náboru</small><strong>Valašské stavby</strong></a>
+            <a class="company-tile" style="background:linear-gradient(135deg,#0f5fa8,#38bdf8)" href="#search" data-company="Automotive Rožnov"><small>Výroba</small><strong>Automotive Rožnov</strong></a>
+            <a class="company-tile" style="background:linear-gradient(135deg,#14532d,#22c55e)" href="#search" data-company="Hotel Horal"><small>Cestovní ruch</small><strong>Hotel Horal</strong></a>
+            <a class="company-tile" style="background:linear-gradient(135deg,#581c87,#ec4899)" href="#search" data-company="Region servis"><small>Obchod</small><strong>Region servis</strong></a>
+          </div>
+        </div>
+      </section>
+      <section class="brand-strip">
+        <div class="container brand-grid">
+          <div class="brand-tile"><strong>40+</strong><br />testovacích pozic v regionu</div>
+          <div class="brand-tile"><strong>Web + tisk</strong><br />propojení s lokální inzercí</div>
+          <div class="brand-tile"><strong>Topování</strong><br />placené zvýraznění nabídek</div>
+          <div class="brand-tile"><strong>Redakce</strong><br />zadá inzerát za firmu</div>
+        </div>
+      </section>
+      <main class="section">
+        <div class="container media-layout">
+          <section>
+            <div class="home-offers-head">
+              <div>
+                <h2>Vybrané pracovní nabídky</h2>
+                <p class="meta">Na hlavní stránce bude maximálně 20 vybraných nebo topovaných inzerátů.</p>
+              </div>
+              <a class="button secondary" href="#search" id="showAllJobs">Zobrazit všechny nabídky</a>
+            </div>
+            <div class="cards home-offers" id="homeJobList"></div>
+            <div class="placement-grid">
+              <div class="placement-card"><span>Reklama A</span><strong>Banner mezi nabídkami</strong><p class="meta">Např. 970 x 250, desktop + mobil.</p></div>
+              <div class="placement-card"><span>Top pozice</span><strong>Doporučeno redakcí</strong><p class="meta">Ruční výběr pro nejdražší balíček.</p></div>
+              <div class="placement-card"><span>Top obor</span><strong>Gastro / výroba / doprava</strong><p class="meta">Komerční bloky podle kategorií.</p></div>
+              <div class="placement-card"><span>Remarketing</span><strong>Firma, která nabírá</strong><p class="meta">Profil firmy + aktivní pozice.</p></div>
+            </div>
+          </section>
+          <aside class="side-rail">
+            <div class="ad-rect ad-local"><b>Inzerce</b><div><strong>VALAŠSKÉ STAVBY přijmou zedníky a řidiče</strong><p>Nástup ihned, práce v regionu, firemní auto a férová mzda.</p><span class="tag">Ukázkový banner</span></div></div>
+            <div class="ad-rect"><b>Aktuální vydání</b><div class="issue-cover"><div class="paper">JALOVEC<br />aktuální vydání</div><strong>Týdeník Jalovec</strong><p>Ukázka prostoru pro přebal / upoutávku na tištěné vydání a pracovní přílohu.</p></div></div>
+            <div class="ad-wide"><strong>Chcete nabrat lidi?</strong><span>Redakce připraví inzerát i grafické zvýraznění.</span></div>
+          </aside>
+        </div>
+      </main>
+      <footer class="site-footer">
+        <div class="container">
+          <div><strong>chcupracu.cz</strong><br />Lokální práce pro Vsetínsko.</div>
+          <div><a href="#login">Redakce / login do administrace</a></div>
+        </div>
+      </footer>
+    </section>
+
+    <section id="search" class="tab-target">
+      <header class="site-header">
+        <div class="bar">
+          <a class="logo" href="#web">chcupracu.cz</a>
+          <nav class="nav">
+            <a href="#web">Domů</a>
+            <a href="#search" data-nav-search>Hledat práci</a>
+            <a href="#login">Zadat inzerát</a>
+          </nav>
+        </div>
+      </header>
+      <main class="section">
+        <div class="container">
+          <form class="search-page-box" id="searchPageForm">
+            <div>
+              <strong>Najděte nabídky podle pozice, oboru nebo firmy</strong>
+              <p class="meta">Stejné hledání jako na hlavní straně, jen s kompletním výpisem a filtry.</p>
+            </div>
+            <input class="field" id="searchPageQuery" placeholder="Jakou práci hledáte?" autocomplete="off" />
+            <select class="select" id="searchPageCity">
+              <option>Vsetín a okolí</option>
+              <option>Vsetín</option>
+              <option>Valašské Meziříčí</option>
+              <option>Rožnov pod Radhoštěm</option>
+              <option>Vizovice</option>
+              <option>Zubří</option>
+              <option>Jablůnka</option>
+              <option>Velké Karlovice</option>
+              <option>Brumov-Bylnice</option>
+            </select>
+            <button class="button" type="submit">Hledat</button>
+          </form>
+        </div>
+        <div class="container grid">
+          <aside class="filters">
+            <label class="filter-field"><span>Obor</span><select class="select" id="filterCategory"><option>Všechny obory</option><option>Administrativa, zákaznický servis</option><option>Bankovnictví, finance a pojišťovnictví</option><option>Doprava, logistika a zásobování</option><option>Elektrotechnika a telekomunikace</option><option>Energetika a ekologie</option><option>Gastronomie a pohostinství</option><option>Informační systémy a technologie</option><option>Marketing, média a PR</option><option>Obchod a prodej</option><option>Řemeslná výroba a manuální práce</option><option>Stavebnictví a reality</option><option>Strojírenství a automotive</option><option>Ubytování a cestovní ruch</option><option>Zdravotnictví a sociální péče</option></select></label>
+            <label class="filter-field"><span>Vzdělání</span><select class="select"><option>Vzdělání nerozhoduje</option><option>Základní</option><option>Středoškolské bez maturity</option><option>Středoškolské s maturitou</option><option>Vysokoškolské</option></select></label>
+            <label class="filter-field"><span>Úvazek</span><select class="select" id="filterType"><option>Všechny úvazky</option><option>Plný úvazek</option><option>Poloviční úvazek</option><option>Brigáda</option></select></label>
+            <label class="filter-field"><span>Vhodné pro</span><select class="select"><option>Vhodné pro kohokoliv</option><option>ZTP</option><option>Maturant</option><option>Rodič na mateřské</option></select></label>
+            <button class="button" type="button" id="refineSearch">Upřesnit hledání</button>
+          </aside>
+          <section>
+            <div class="home-offers-head">
+              <div>
+                <h1>Výsledky hledání</h1>
+                <p class="meta"><span id="jobCount">0</span> aktivních nabídek podle zadaných filtrů.</p>
+              </div>
+              <a class="button secondary" href="#web">Zpět na hlavní stranu</a>
+            </div>
+            <div class="cards job-grid" id="jobList">
+              <div class="card empty-state" id="emptyState">
+                <h2>Nic jsme nenašli.</h2>
+                <p>Zkuste jiné město nebo obecnější název práce.</p>
+              </div>
+            </div>
+            <div class="pagination">
+              <label class="filter-field" style="min-width: 180px;"><span>Inzerátů na stránce</span>
+                <select class="select" id="pageSize">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                </select>
+              </label>
+              <div class="meta" id="pageInfo">Strana 1 z 1</div>
+              <div class="pager-buttons">
+                <button class="button secondary" id="prevPage" type="button">Předchozí</button>
+                <button class="button secondary" id="nextPage" type="button">Další strana</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <section id="detail" class="tab-target">
+      <header class="site-header">
+        <div class="bar">
+          <a class="logo" href="#web">chcupracu.cz</a>
+          <nav class="nav">
+            <a href="#web">Domů</a>
+            <a href="#search" data-nav-search>Hledat práci</a>
+            <a href="#login">Zadat inzerát</a>
+          </nav>
+        </div>
+      </header>
+      <main class="job-detail-shell" id="detailShell" style="--company-color:#e00909;--company-dark:#111827;">
+        <section class="container detail-hero">
+          <div>
+            <div class="breadcrumb"><a href="#web">Domů</a> / <a href="#search">Nabídky práce</a> / <span id="detailBreadcrumbTitle">Asistent/ka redakce</span></div>
+            <span class="job-chip job-chip-top" id="detailTopBadge">Top nabídka</span>
+            <h1 id="detailTitle">Asistent/ka redakce a zákaznické podpory</h1>
+            <p class="meta" id="detailLead" style="font-size:16px;">Stabilní lokální práce s komunikací s firmami, správou inzerce a běžnou administrativou.</p>
+            <div class="detail-company-line">
+              <span class="company-logo" id="detailLogo">RM</span>
+              <div>
+                <strong id="detailCompanyName">Regionální media s.r.o.</strong>
+                <div class="meta" id="detailCompanySub">Lokální vydavatelství a obchodní tým pro Vsetínsko</div>
+              </div>
+            </div>
+            <div class="meta" id="detailChips">
+              <span class="job-chip">Vsetín</span>
+              <span class="job-chip">Plný úvazek</span>
+              <span class="job-chip">Administrativa</span>
+              <span class="job-chip">Středoškolské s maturitou</span>
+              <span class="job-chip">Vhodné pro maturanty</span>
+            </div>
+            <div class="detail-highlight">
+              <div><span>Mzda</span><strong id="detailSalary">od 32 000 Kč</strong></div>
+              <div><span>Nástup</span><strong id="detailStart">Ihned / dohodou</strong></div>
+              <div><span>Odpověď</span><strong>Formulář, telefon, e-mail</strong></div>
+            </div>
+          </div>
+          <div class="detail-media">
+            <div class="company-photo"><strong id="detailPhotoText">Práce v redakci a obchodním týmu</strong></div>
+            <a class="flyer-card" href="#detail">
+              <small>Náborový letáček</small>
+              <strong id="detailFlyerText">Ukázka prostoru pro firemní leták, PDF nebo grafiku kampaně</strong>
+              <span class="meta" style="color:rgba(255,255,255,.76);">V ostré verzi: obrázek / PDF / proklik na kampaň</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="detail-layout">
+          <div>
+            <div class="detail-grid">
+              <article class="detail-panel-card">
+                <h2>Náplň práce</h2>
+                <ul id="detailWorkList">
+                  <li>Komunikace s firmami, které chtějí zadat pracovní nabídku.</li>
+                  <li>Příprava textů inzerátů, kontrola podkladů a práce s redakční administrací.</li>
+                  <li>Obnova aktivních nabídek, topování a základní evidence plateb.</li>
+                </ul>
+              </article>
+              <article class="detail-panel-card">
+                <h2>Co očekáváme</h2>
+                <ul id="detailRequirementsList">
+                  <li>Pečlivost, příjemnou komunikaci a samostatnost.</li>
+                  <li>Základní přehled v práci s počítačem a ochotu učit se nové věci.</li>
+                  <li>Výhodou je zkušenost s administrativou, obchodem nebo redakcí.</li>
+                </ul>
+              </article>
+              <article class="detail-panel-card">
+                <h2>Co nabízíme</h2>
+                <ul id="detailBenefitsList">
+                  <li>Stabilní práci v lokální firmě s vazbou na region.</li>
+                  <li>Zaškolení, férový přístup a možnost částečně tvořit podobu nové platformy.</li>
+                  <li>Pracovní dobu po domluvě a možnost růstu s projektem.</li>
+                </ul>
+              </article>
+              <article class="detail-panel-card">
+                <h2>Informace o firmě</h2>
+                <p id="detailCompanyAbout">Regionální media s.r.o. provozuje lokální inzertní a redakční služby pro Vsetínsko. Firma pracuje s klienty v regionu, připravuje kampaně a pomáhá jim dostat nabídky práce k lidem, kteří hledají blízko domova.</p>
+                <div class="meta" id="detailCompanyFacts"><span class="job-chip">Ověřená firma</span><span class="job-chip">4 aktivní nabídky</span><span class="job-chip">Vsetín</span></div>
+              </article>
+            </div>
+            <section class="detail-panel-card" style="margin-top:22px;">
+              <h2>Firemní brand a média</h2>
+              <p>Detail umí nést jemnou firemní barvu, logo, hlavní fotku, náborový leták a vlastní reklamní sdělení. Barvy firmy slouží jen jako akcent, aby nabídka byla rozpoznatelná, ale pořád zapadala do chcupracu.cz.</p>
+              <div class="meta"><span class="job-chip">Logo firmy</span><span class="job-chip">Hlavní fotka</span><span class="job-chip">Leták / PDF</span><span class="job-chip">Firemní barva</span></div>
+            </section>
+            <section class="detail-ad">
+              <strong id="detailSimilarTitle">Podobné nabídky v administrativě na Vsetíně</strong>
+              <p class="meta">Tady bude blok podobných inzerátů a případně reklamní pozice pro lokální firmu nebo obor.</p>
+            </section>
+          </div>
+
+          <aside class="apply-panel">
+            <h2>Mám zájem o pozici</h2>
+            <p class="meta">Odpověď odejde redakci / firmě podle nastavení konkrétního inzerátu.</p>
+            <div class="contact-box">
+              <strong>Kontaktní osoba</strong>
+              <span id="detailContactName">Jana Nováková, redakce</span>
+              <span id="detailContactPhone">Telefon: +420 777 123 456</span>
+              <span id="detailContactEmail">E-mail: prace@regionalnimedia.cz</span>
+            </div>
+            <input class="field" placeholder="Jméno a příjmení" />
+            <input class="field" placeholder="E-mail" />
+            <input class="field" placeholder="Telefon" />
+            <textarea class="textarea" placeholder="Krátká zpráva pro zaměstnavatele"></textarea>
+            <label class="meta"><input type="checkbox" /> Souhlasím se zpracováním osobních údajů pro předání reakce zaměstnavateli.</label>
+            <button class="button" type="button">Odeslat odpověď</button>
+            <a class="button secondary" href="tel:+420777123456">Zavolat firmě</a>
+            <p class="meta">V administraci půjde nastavit: formulář, telefon, e-mail nebo externí odkaz.</p>
+          </aside>
+        </section>
+      </main>
+    </section>
+
+    <section id="login" class="tab-target">
+      <div class="login-wrap">
+        <form class="login-card">
+          <a class="logo" href="#web">chcupracu.cz</a>
+          <h1>Login redakce</h1>
+          <p class="meta">Administrace inzerátů, plateb, topování a reakcí uchazečů.</p>
+          <label class="filter-field"><span>E-mail</span><input class="field" value="redakce@chcupracu.cz" type="email" /></label>
+          <label class="filter-field password-wrap"><span>Heslo</span><input class="field" id="adminPassword" value="demo12345" type="password" /><button class="password-toggle" id="togglePassword" type="button" aria-label="Zobrazit heslo" title="Zobrazit heslo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg></button></label>
+          <a class="button" href="#dashboard" id="loginSubmit" style="width:100%; margin-top: 14px;">Přihlásit do administrace</a>
+          <p class="meta" style="margin-top: 14px;">V ostré verzi bude přihlášení přes zabezpečenou session cookie a role redakce.</p>
+        </form>
+      </div>
+    </section>
+
+    <section id="dashboard" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav">
+          <h2>chcupracu.cz</h2>
+          <p class="meta">Redakční extranet</p>
+          <button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button>
+          <a class="active" href="#dashboard">Dashboard</a>
+          <a href="#admin">Přehled inzerátů</a>
+          <a href="#addjob">Přidat inzerát</a>
+          <a href="#ads">Reklamní pozice</a>
+          <a href="#companies">Firmy a platby</a>
+          <a href="#packages">Balíčky</a>
+          <a href="#finance">Města, finance</a>
+          <a href="#web">Veřejný web</a>
+        </aside>
+        <main class="admin-main">
+          <div class="admin-toolbar">
+            <div class="admin-title">
+              <h1>Dashboard</h1>
+              <p class="meta">Přehled výkonu, plateb, expirací, reklam a reakcí uchazečů.</p>
+            </div>
+            <a class="button" href="#addjob">Přidat inzerát</a>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi"><span>Aktivní inzeráty</span><strong>40</strong></div>
+            <div class="kpi"><span>Topované</span><strong>7</strong></div>
+            <div class="kpi"><span>Reakce tento týden</span><strong>83</strong></div>
+            <div class="kpi"><span>Neuhrazeno</span><strong>18 430 Kč</strong></div>
+          </div>
+          <div class="placement-grid">
+            <div class="placement-card"><span>Reklama</span><strong>12 aktivních slotů</strong><p class="meta">Homepage, výsledky, detail, sidebar.</p></div>
+            <div class="placement-card"><span>Expirace</span><strong>6 končí tento týden</strong><p class="meta">Rychlé obnovy a topování.</p></div>
+            <div class="placement-card"><span>Firmy</span><strong>28 klientů</strong><p class="meta">Kontakty, poznámky, fakturace.</p></div>
+            <div class="placement-card"><span>Obsah</span><strong>4 redakční boxy</strong><p class="meta">Doporučeno, partner, obor, lokalita.</p></div>
+          </div>
+          <section class="admin-panel" style="margin-top:24px;">
+            <div class="admin-filterbar">
+              <input class="field" placeholder="Filtrovat dashboard podle firmy" />
+              <select class="select"><option>Všechny lokality</option><option>Vsetín</option><option>Rožnov</option></select>
+              <select class="select"><option>Všechny balíčky</option><option>Top</option><option>Standard</option></select>
+              <select class="select"><option>Tento měsíc</option><option>Tento týden</option><option>Letos</option></select>
+              <select class="select"><option>Všechny stavy</option><option>Aktivní</option><option>Expiruje</option></select>
+              <button class="button" type="button">Filtrovat</button>
+            </div>
+          </section>
+          <div class="chart-grid">
+            <section class="chart-card">
+              <h2>Vývoj reakcí a otevření</h2>
+              <p class="meta">Ukázkový týdenní přehled pro redakci a obchod.</p>
+              <div class="bar-chart" aria-hidden="true">
+                <span style="height:44%"></span><span style="height:68%"></span><span style="height:52%"></span><span style="height:88%"></span><span style="height:72%"></span><span style="height:96%"></span><span style="height:61%"></span>
+              </div>
+            </section>
+            <section class="chart-card">
+              <h2>Rozdělení balíčků</h2>
+              <p class="meta">Start / Standard / Top</p>
+              <div class="donut" aria-hidden="true"></div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section id="admin" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav">
+          <h2>chcupracu.cz</h2>
+          <p class="meta">Redakční extranet</p>
+          <button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button>
+          <a href="#dashboard">Dashboard</a>
+          <a class="active" href="#admin">Přehled inzerátů</a>
+          <a href="#addjob">Přidat inzerát</a>
+          <a href="#ads">Reklamní pozice</a>
+          <a href="#companies">Firmy a platby</a>
+          <a href="#packages">Balíčky</a>
+          <a href="#finance">Města, finance</a>
+          <a href="#web">Veřejný web</a>
+        </aside>
+        <main class="admin-main">
+          <div class="admin-toolbar">
+            <div class="admin-title">
+              <h1>Přehled inzerátů</h1>
+              <p class="meta">Tabulka inzerátů s filtrací všech polí, obnovou, topováním, editací a stornem.</p>
+            </div>
+            <a class="button" href="#addjob">Přidat inzerát</a>
+          </div>
+          <section class="admin-panel" style="margin-top: 24px;">
+            <div class="admin-filterbar">
+              <input class="field" placeholder="Pozice, firma, ID" />
+              <select class="select"><option>Všechny firmy</option><option>Regionální media</option><option>Kavárna u náměstí</option></select>
+              <select class="select"><option>Všechny stavy</option><option>Aktivní</option><option>Expiruje</option><option>Storno</option></select>
+              <select class="select"><option>Všechna vydání</option><option>Jalovec 22/2026</option><option>Jalovec 23/2026</option></select>
+              <select class="select"><option>Všechny balíčky</option><option>Top</option><option>Standard</option></select>
+              <button class="button" type="button">Filtrovat</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Pozice</th><th>Firma</th><th>Zadáno</th><th>Vydání</th><th>Stav</th><th>Otevření</th><th>Aktivní do</th><th>Reakce</th><th>Akce</th></tr></thead>
+              <tbody>
+                <tr class="job-admin-row" data-detail="detail-1"><td><strong>Asistent/ka redakce</strong><div class="meta">Vsetín · Topováno · od 32 000 Kč</div></td><td>Regionální media s.r.o.</td><td>27. 5. 2026</td><td>Jalovec 22/2026</td><td><span class="status-pill status-active">Aktivní</span> <span class="status-pill status-top">Top</span></td><td>128</td><td>24. června 2026</td><td>4</td><td><div class="icon-actions"><a class="icon-btn" href="#addjob" title="Editovat inzerát" aria-label="Editovat inzerát"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a><button class="icon-btn" data-renew="Asistent/ka redakce" title="Topovat / obnovit" aria-label="Topovat nebo obnovit inzerát"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 5 7 7"/><path d="m12 5-7 7"/><path d="M12 5v14"/></svg></button><button class="icon-btn" data-storno="Asistent/ka redakce" title="Storno / smazat" aria-label="Stornovat inzerát"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></td></tr>
+                <tr class="detail-row" id="detail-1"><td colspan="9"><div class="detail-panel"><div><h3>Detail inzerátu</h3><p>Balíček Top, foto ve výpisu, web + Jalovec 22/2026. Kontaktní osoba: Redakce.</p><p class="meta">Mzda od 32 000 Kč · Vhodné pro maturanty · Aktivní 30 dní</p></div><div><h3>Historie změn</h3><div class="history-list"><div>27. 5. 2026 · vytvořeno redakcí</div><div>27. 5. 2026 · přiřazen balíček Top</div><div>28. 5. 2026 · topování nastaveno na 14 dní</div></div></div></div></td></tr>
+                <tr class="job-admin-row" data-detail="detail-2"><td><strong>Výpomoc do kavárny</strong><div class="meta">Rožnov · 180 Kč / hod.</div></td><td>Kavárna u náměstí</td><td>25. 5. 2026</td><td>Jalovec 22/2026</td><td><span class="status-pill status-active">Aktivní</span></td><td>74</td><td>9. června 2026</td><td>2</td><td><div class="icon-actions"><a class="icon-btn" href="#addjob" title="Editovat inzerát" aria-label="Editovat inzerát"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a><button class="icon-btn" data-renew="Výpomoc do kavárny" title="Topovat / obnovit" aria-label="Topovat nebo obnovit inzerát"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 5 7 7"/><path d="m12 5-7 7"/><path d="M12 5v14"/></svg></button><button class="icon-btn" data-storno="Výpomoc do kavárny" title="Storno / smazat" aria-label="Stornovat inzerát"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div></td></tr>
+                <tr class="detail-row" id="detail-2"><td colspan="9"><div class="detail-panel"><div><h3>Detail inzerátu</h3><p>Standardní webový inzerát, bez fotky ve výpisu, vydání Jalovec 22/2026.</p></div><div><h3>Historie změn</h3><div class="history-list"><div>25. 5. 2026 · vytvořeno redakcí</div><div>26. 5. 2026 · upravena mzda</div></div></div></div></td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="card" style="margin-top: 24px;">
+            <h2>Obnova inzerátu</h2>
+            <div class="form-grid">
+              <select class="select"><option>Jen obnovit</option><option>Obnovit a topovat</option><option>Jen topovat aktivní inzerát</option></select>
+              <input class="field" value="30" type="number" />
+              <input class="field" value="14" type="number" />
+              <input class="field" value="#fff7ed" />
+            </div>
+            <p><button class="button secondary" data-renew="Vybraný inzerát">Otevřít obnovu v okně</button></p>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <section id="addjob" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav">
+          <h2>chcupracu.cz</h2>
+          <p class="meta">Redakční extranet</p>
+          <button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#admin">Přehled inzerátů</a>
+          <a class="active" href="#addjob">Přidat inzerát</a>
+          <a href="#ads">Reklamní pozice</a>
+          <a href="#companies">Firmy a platby</a>
+          <a href="#packages">Balíčky</a>
+          <a href="#finance">Města, finance</a>
+          <a href="#web">Veřejný web</a>
+        </aside>
+        <main class="admin-main">
+          <h1>Přidat / editovat inzerát</h1>
+          <form class="card form-grid">
+            <h2 class="full">Nový inzerát</h2>
+            <input class="field" placeholder="Název pozice" />
+            <input class="field" placeholder="Firma" />
+            <select class="select"><option>Vsetín</option><option>Valašské Meziříčí</option><option>Rožnov pod Radhoštěm</option><option>Vizovice</option><option>Zubří</option><option>Jablůnka</option><option>Hovězí</option><option>Halenkov</option></select>
+            <select class="select"><option>Administrativa, zákaznický servis</option><option>Doprava, logistika a zásobování</option><option>Gastronomie a pohostinství</option><option>Řemeslná výroba a manuální práce</option><option>Strojírenství a automotive</option></select>
+            <select class="select"><option>Interní balíček: Standard / 30 dní</option><option>Interní balíček: Top / 45 dní / TOP 14 dní</option></select>
+            <select class="select"><option>Zobrazit mzdu ve výpisu i detailu</option><option>Zobrazit mzdu až po rozkliknutí</option><option>Mzdu nezobrazovat</option><option>Mzda dohodou</option></select>
+            <select class="select"><option>Vydání Jalovec 22/2026</option><option>Vydání Jalovec 23/2026</option><option>Pouze web</option></select>
+            <input class="field" placeholder="Mzda / rozpětí, např. od 32 000 Kč" />
+            <input class="field" value="30" type="number" />
+            <input class="field" placeholder="Topovat dní" type="number" />
+            <input class="field" placeholder="Firemní barva / akcent #e00909" />
+            <input class="field" placeholder="Logo firmy / URL nebo upload" />
+            <input class="field" placeholder="Hlavní fotka inzerátu / URL nebo upload" />
+            <input class="field" placeholder="Leták / PDF / obrázek kampaně" />
+            <input class="field" placeholder="Kontaktní osoba" />
+            <input class="field" placeholder="Telefon / e-mail pro odpovědi" />
+            <select class="select"><option>Reakce přes formulář</option><option>Reakce telefonem</option><option>Reakce e-mailem</option><option>Externí odkaz na kariérní web</option></select>
+            <input class="field" placeholder="Externí odkaz / kariérní stránka" />
+            <label class="tag"><input type="checkbox" /> Zobrazit fotku ve výpisu za příplatek</label>
+            <label class="tag"><input type="checkbox" /> Použít firemní brand v detailu</label>
+            <textarea class="textarea full" placeholder="Krátký úvod inzerátu"></textarea>
+            <textarea class="textarea full" placeholder="Náplň práce"></textarea>
+            <textarea class="textarea full" placeholder="Informace o firmě"></textarea>
+            <div class="full meta"><label class="tag"><input type="checkbox" /> ZTP</label><label class="tag"><input type="checkbox" /> Maturant</label><label class="tag"><input type="checkbox" /> Rodič na mateřské</label></div>
+            <button class="button full" type="button">Uložit inzerát</button>
+          </form>
+          <section class="admin-panel linked-manager">
+            <div class="admin-filterbar">
+              <input class="field" placeholder="Hledat vydání Jalovce" />
+              <select class="select"><option>Aktivní vydání</option><option>Archiv</option><option>Připravované</option></select>
+              <button class="button" type="button" data-modal-action="Přidat vydání Jalovce">Přidat vydání</button>
+              <button class="button secondary" type="button" data-modal-action="Obnovit vazbu na vydání">Obnovit vazby</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Vydání</th><th>Uzávěrka</th><th>Publikace</th><th>Napojené inzeráty</th><th>Stav</th><th>Akce</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Jalovec 22/2026</strong></td><td>27. 5. 2026</td><td>28. 5. 2026</td><td>18</td><td><span class="issue-badge">Aktuální</span></td><td><div class="icon-actions"><button class="icon-btn" title="Editovat vydání" aria-label="Editovat vydání" data-modal-action="Editovat Jalovec 22/2026">✎</button><button class="icon-btn" title="Obnovit vazby inzerátů" aria-label="Obnovit vazby inzerátů" data-modal-action="Obnovit Jalovec 22/2026">↻</button><button class="icon-btn" title="Smazat vydání" aria-label="Smazat vydání" data-modal-action="Smazat Jalovec 22/2026">×</button></div></td></tr>
+                <tr><td><strong>Jalovec 23/2026</strong></td><td>3. 6. 2026</td><td>4. 6. 2026</td><td>7</td><td><span class="issue-badge">Připravované</span></td><td><div class="icon-actions"><button class="icon-btn" title="Editovat vydání" aria-label="Editovat vydání" data-modal-action="Editovat Jalovec 23/2026">✎</button><button class="icon-btn" title="Obnovit vazby inzerátů" aria-label="Obnovit vazby inzerátů" data-modal-action="Obnovit Jalovec 23/2026">↻</button><button class="icon-btn" title="Smazat vydání" aria-label="Smazat vydání" data-modal-action="Smazat Jalovec 23/2026">×</button></div></td></tr>
+              </tbody>
+            </table>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <section id="finance" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav"><h2>chcupracu.cz</h2><p class="meta">Redakční extranet</p><button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button><a href="#dashboard">Dashboard</a><a href="#admin">Přehled inzerátů</a><a href="#addjob">Přidat inzerát</a><a href="#ads">Reklamní pozice</a><a href="#companies">Firmy a platby</a><a href="#packages">Balíčky</a><a class="active" href="#finance">Města, finance</a><a href="#web">Veřejný web</a></aside>
+        <main class="admin-main">
+          <h1>Města a finance</h1>
+          <div class="grid">
+            <section class="card">
+              <h2>Města</h2>
+              <div class="form-grid"><input class="field" placeholder="Nové město" /><button class="button" type="button">Přidat město</button></div>
+              <div class="city-list" style="margin-top:16px;">
+                <div class="list-row"><span>Vsetín · výchozí · aktivní</span><div class="icon-actions"><button class="icon-btn" title="Editovat město">✎</button><button class="icon-btn" title="Zneaktivnit město">⏻</button><button class="icon-btn" title="Smazat město">×</button></div></div>
+                <div class="list-row"><span>Valašské Meziříčí · aktivní</span><div class="icon-actions"><button class="icon-btn" title="Editovat město">✎</button><button class="icon-btn" title="Zneaktivnit město">⏻</button><button class="icon-btn" title="Smazat město">×</button></div></div>
+                <div class="list-row"><span>Rožnov pod Radhoštěm · aktivní</span><div class="icon-actions"><button class="icon-btn" title="Editovat město">✎</button><button class="icon-btn" title="Zneaktivnit město">⏻</button><button class="icon-btn" title="Smazat město">×</button></div></div>
+                <div class="list-row"><span>Vizovice · aktivní</span><div class="icon-actions"><button class="icon-btn" title="Editovat město">✎</button><button class="icon-btn" title="Zneaktivnit město">⏻</button><button class="icon-btn" title="Smazat město">×</button></div></div>
+                <div class="list-row"><span>Zubří · aktivní</span><div class="icon-actions"><button class="icon-btn" title="Editovat město">✎</button><button class="icon-btn" title="Zneaktivnit město">⏻</button><button class="icon-btn" title="Smazat město">×</button></div></div>
+                <div class="list-row"><span>Jablůnka · aktivní</span><div class="icon-actions"><button class="icon-btn" title="Editovat město">✎</button><button class="icon-btn" title="Zneaktivnit město">⏻</button><button class="icon-btn" title="Smazat město">×</button></div></div>
+              </div>
+            </section>
+          </div>
+          <section class="admin-panel" style="margin-top: 24px;">
+            <form class="admin-filterbar">
+              <input class="field" placeholder="Filtrovat podle firmy" />
+              <select class="select"><option>Všechny stavy</option><option>Nezaplaceno</option><option>Zaplaceno</option></select>
+              <input class="field" placeholder="Částka od" />
+              <input class="field" placeholder="Částka do" />
+              <button class="button" type="button">Filtrovat finance</button>
+              <button class="button secondary" type="button" data-modal-action="Přidat platbu k firmě">Přidat platbu</button>
+            </form>
+            <table class="table">
+              <thead><tr><th>Firma</th><th>Inzerát</th><th>Částka</th><th>Stav</th></tr></thead>
+              <tbody><tr><td>Regionální media s.r.o.</td><td>Asistent/ka redakce</td><td>1 890 Kč</td><td>UNPAID</td></tr></tbody>
+            </table>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <section id="packages" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav"><h2>chcupracu.cz</h2><p class="meta">Redakční extranet</p><button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button><a href="#dashboard">Dashboard</a><a href="#admin">Přehled inzerátů</a><a href="#addjob">Přidat inzerát</a><a href="#ads">Reklamní pozice</a><a href="#companies">Firmy a platby</a><a class="active" href="#packages">Balíčky</a><a href="#finance">Města, finance</a><a href="#web">Veřejný web</a></aside>
+        <main class="admin-main">
+          <h1>Balíčky</h1>
+          <section class="admin-panel">
+            <div class="admin-filterbar"><input class="field" placeholder="Hledat balíček" /><select class="select"><option>Aktivní</option><option>Skryté</option></select><select class="select"><option>Všechny typy</option><option>Web</option><option>Web + Jalovec</option><option>Topování</option></select><button class="button" type="button" data-modal-action="Přidat balíček">Přidat balíček</button></div>
+            <table class="table"><thead><tr><th>Název</th><th>Cena</th><th>Web</th><th>Topování</th><th>Foto ve výpisu</th><th>Stav</th><th>Akce</th></tr></thead><tbody>
+              <tr><td><strong>Start</strong></td><td>990 Kč</td><td>14 dní</td><td>-</td><td>Ne</td><td><span class="status-pill status-active">Aktivní</span></td><td><div class="icon-actions"><button class="icon-btn" title="Editovat balíček" aria-label="Editovat balíček" data-modal-action="Editovat balíček Start">✎</button><button class="icon-btn" title="Skrýt balíček" aria-label="Skrýt balíček" data-modal-action="Skrýt balíček Start">×</button></div></td></tr>
+              <tr><td><strong>Top</strong></td><td>3 490 Kč</td><td>45 dní</td><td>14 dní</td><td>Ano</td><td><span class="status-pill status-active">Aktivní</span></td><td><div class="icon-actions"><button class="icon-btn" title="Editovat balíček" aria-label="Editovat balíček" data-modal-action="Editovat balíček Top">✎</button><button class="icon-btn" title="Skrýt balíček" aria-label="Skrýt balíček" data-modal-action="Skrýt balíček Top">×</button></div></td></tr>
+            </tbody></table>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <section id="ads" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav"><h2>chcupracu.cz</h2><p class="meta">Redakční extranet</p><button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button><a href="#dashboard">Dashboard</a><a href="#admin">Přehled inzerátů</a><a href="#addjob">Přidat inzerát</a><a class="active" href="#ads">Reklamní pozice</a><a href="#companies">Firmy a platby</a><a href="#packages">Balíčky</a><a href="#finance">Města, finance</a><a href="#web">Veřejný web</a></aside>
+        <main class="admin-main">
+          <h1>Reklamní pozice</h1>
+          <div class="placement-grid">
+            <div class="placement-card"><span>Homepage</span><strong>Hero banner</strong><p class="meta">Top plocha pod hledáním.</p><button class="button secondary" data-ad-edit="Hero banner">Editovat</button></div>
+            <div class="placement-card"><span>Výsledky</span><strong>Sidebar sticky</strong><p class="meta">Reklama ve výsledcích hledání.</p><button class="button secondary" data-ad-edit="Sidebar sticky">Editovat</button></div>
+            <div class="placement-card"><span>Výpis</span><strong>Mezi inzeráty</strong><p class="meta">Banner po 4. nabídce.</p><button class="button secondary" data-ad-edit="Banner mezi inzeráty">Editovat</button></div>
+            <div class="placement-card"><span>Firma</span><strong>Velké firmy v regionu</strong><p class="meta">Barevný firemní pruh.</p><button class="button secondary" data-ad-edit="Velké firmy">Editovat</button></div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section id="companies" class="tab-target">
+      <div class="admin-shell">
+        <aside class="admin-nav"><h2>chcupracu.cz</h2><p class="meta">Redakční extranet</p><button class="admin-collapse" type="button" title="Sbalit / rozbalit menu">≡</button><a href="#dashboard">Dashboard</a><a href="#admin">Přehled inzerátů</a><a href="#addjob">Přidat inzerát</a><a href="#ads">Reklamní pozice</a><a class="active" href="#companies">Firmy a platby</a><a href="#packages">Balíčky</a><a href="#finance">Města, finance</a><a href="#web">Veřejný web</a></aside>
+        <main class="admin-main">
+          <h1>Firmy a platby</h1>
+          <section class="admin-panel">
+            <div class="admin-filterbar"><input class="field" placeholder="Firma, IČO, kontakt" /><select class="select"><option>Všechny platby</option><option>Neuhrazeno</option><option>Uhrazeno</option></select><select class="select"><option>Všechny balíčky</option><option>Top</option></select><button class="button" type="button">Filtrovat</button><button class="button secondary" type="button" data-modal-action="Přidat firmu">Přidat firmu</button><button class="button secondary" type="button" data-modal-action="Přidat platbu">Přidat platbu</button></div>
+            <table class="table"><thead><tr><th>Firma</th><th>Kontakt</th><th>Aktivní inzeráty</th><th>Neuhrazeno</th><th>Poslední aktivita</th><th>Akce</th></tr></thead><tbody>
+              <tr><td>Valašské stavby</td><td>obchod@stavby.cz</td><td>3</td><td>6 980 Kč</td><td>27. 5. 2026</td><td><button class="button secondary" type="button" data-modal-action="Detail firmy Valašské stavby">Detail</button></td></tr>
+              <tr><td>Kavárna u náměstí</td><td>info@kavarna.cz</td><td>1</td><td>0 Kč</td><td>25. 5. 2026</td><td><button class="button secondary" type="button" data-modal-action="Detail firmy Kavárna u náměstí">Detail</button></td></tr>
+            </tbody></table>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <div class="modal-backdrop" id="renewModal" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="renewTitle">
+        <div class="modal-head">
+          <div>
+            <h2 id="renewTitle">Obnovit / topovat inzerát</h2>
+            <p class="meta" id="renewJobName">Vybraný inzerát</p>
+          </div>
+          <button class="close-button" type="button" id="closeRenew">×</button>
+        </div>
+        <form class="form-grid" id="renewForm">
+          <label>Typ akce
+            <select class="select" id="renewType">
+              <option>Jen obnovit</option>
+              <option selected>Obnovit a topovat</option>
+              <option>Jen topovat aktivní inzerát</option>
+            </select>
+          </label>
+          <label>Počet opakování
+            <input class="field" id="renewRepeat" min="1" value="1" type="number" />
+          </label>
+          <label>Délka jedné obnovy ve dnech
+            <input class="field" id="renewDays" min="1" value="30" type="number" />
+          </label>
+          <label>Topovat po každé obnově dní
+            <input class="field" id="renewTopDays" min="0" value="14" type="number" />
+          </label>
+          <label>Barva zvýraznění
+            <input class="field" id="renewColor" value="#fff7ed" />
+          </label>
+          <label>Balíček
+            <select class="select" id="renewPackage">
+              <option>Bez balíčku</option>
+              <option>Standard / 30 dní</option>
+              <option selected>Top / 45 dní / TOP 14 dní</option>
+            </select>
+          </label>
+          <label>Datum zadání
+            <input class="field" value="27.05.2026" />
+          </label>
+          <label>Vydání Jalovce
+            <select class="select"><option>Jalovec 22/2026</option><option>Jalovec 23/2026</option><option>Pouze web</option></select>
+          </label>
+          <label class="full">
+            Poznámka pro finance
+            <textarea class="textarea" id="renewNote">Domluveno telefonicky s firmou. Vystavit ruční fakturaci.</textarea>
+          </label>
+        </form>
+        <div class="summary-box" id="renewSummary">Inzerát se obnoví 1× na 30 dní a bude topovaný 14 dní.</div>
+        <div class="modal-actions">
+          <button class="button secondary" type="button" id="cancelRenew">Zrušit</button>
+          <button class="button" type="button" id="confirmRenew">Uložit obnovu</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const normalize = (value) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const searchForm = document.querySelector("#searchForm");
+      const searchQuery = document.querySelector("#searchQuery");
+      const searchCity = document.querySelector("#searchCity");
+      const suggestMenu = document.querySelector("#suggestMenu");
+      let jobCards = [];
+      const jobCount = document.querySelector("#jobCount");
+      const emptyState = document.querySelector("#emptyState");
+      const pageSize = document.querySelector("#pageSize");
+      const pageInfo = document.querySelector("#pageInfo");
+      const prevPage = document.querySelector("#prevPage");
+      const nextPage = document.querySelector("#nextPage");
+      const filterCategory = document.querySelector("#filterCategory");
+      const filterType = document.querySelector("#filterType");
+      const searchPageForm = document.querySelector("#searchPageForm");
+      const searchPageQuery = document.querySelector("#searchPageQuery");
+      const searchPageCity = document.querySelector("#searchPageCity");
+      let currentPage = 1;
+      let currentVisible = [];
+      let searchMode = false;
+      let activeCompany = "";
+      const jobs = [
+        ["Asistent/ka redakce a zákaznické podpory", "Regionální media s.r.o.", "Vsetín", "Administrativa", "Plný úvazek", "od 32 000 Kč", true],
+        ["Výpomoc do kavárny", "Kavárna u náměstí", "Rožnov pod Radhoštěm", "Gastro", "Brigáda", "180 Kč / hod.", false],
+        ["Recepční v penzionu", "Penzion Beskydy", "Velké Karlovice", "Cestovní ruch", "Částečný úvazek", "mzda dohodou", false],
+        ["Skladník expedice", "Valašská logistika", "Valašské Meziříčí", "Doprava a logistika", "Plný úvazek", "od 35 000 Kč", true],
+        ["Obsluha CNC stroje", "Kovovýroba Vsetín", "Vsetín", "Strojírenství", "Plný úvazek", "38 000 - 48 000 Kč", true],
+        ["Prodavač/ka potravin", "Market u Bečvy", "Jablůnka", "Obchod a služby", "Plný úvazek", "od 29 000 Kč", false],
+        ["Řidič sk. C", "Doprava ValMez", "Valašské Meziříčí", "Doprava a logistika", "Plný úvazek", "od 42 000 Kč", true],
+        ["Účetní junior", "Audit Valašsko", "Vsetín", "Finance", "Plný úvazek", "od 34 000 Kč", false],
+        ["Servírka / číšník", "Restaurace U Růže", "Zubří", "Gastro", "Krátký dlouhý týden", "od 33 000 Kč", false],
+        ["Pracovník úklidu", "Čistý region", "Vizovice", "Služby", "Částečný úvazek", "160 Kč / hod.", false],
+        ["Elektromechanik", "Elektro Beskydy", "Vsetín", "Elektrotechnika", "Plný úvazek", "od 45 000 Kč", true],
+        ["Operátor výroby", "Automotive Rožnov", "Rožnov pod Radhoštěm", "Výroba", "Třísměnný provoz", "od 36 000 Kč", false],
+        ["Mzdová účetní", "Personální kancelář", "Vsetín", "Administrativa", "Plný úvazek", "od 38 000 Kč", false],
+        ["Průvodce turistického centra", "Beskydy info", "Velké Karlovice", "Cestovní ruch", "Sezónní práce", "od 30 000 Kč", false],
+        ["Kuchař/ka", "Hotel Valašsko", "Rožnov pod Radhoštěm", "Gastro", "Plný úvazek", "od 40 000 Kč", true],
+        ["Pomocný dělník ve výrobě", "Dřevovýroba Hovězí", "Hovězí", "Výroba", "Plný úvazek", "od 31 000 Kč", false],
+        ["Obchodní zástupce", "Region servis", "Vsetín", "Obchod", "Plný úvazek", "fix + provize", true],
+        ["Pečovatel/ka", "Sociální služby Vsetín", "Vsetín", "Sociální péče", "Plný úvazek", "od 32 000 Kč", false],
+        ["Zdravotní sestra", "Poliklinika Vsetín", "Vsetín", "Zdravotnictví", "Plný úvazek", "od 43 000 Kč", true],
+        ["Marketingový specialista", "Jalovec media", "Vsetín", "Marketing", "Plný úvazek", "od 39 000 Kč", false],
+        ["Grafik / sazeč", "Tiskárna Valašsko", "Valašské Meziříčí", "Grafika a tisk", "Plný úvazek", "od 34 000 Kč", false],
+        ["Pracovník skladu e-shopu", "E-shop Beskydy", "Zubří", "Logistika", "Brigáda", "170 Kč / hod.", false],
+        ["Učitel/ka mateřské školy", "MŠ Vsetín", "Vsetín", "Školství", "Plný úvazek", "dle tabulek", false],
+        ["Stavební technik", "Valašské stavby", "Vsetín", "Stavebnictví", "Plný úvazek", "od 48 000 Kč", true],
+        ["Zedník", "Valašské stavby", "Liptál", "Stavebnictví", "Plný úvazek", "od 45 000 Kč", false],
+        ["Automechanik", "Autoservis Bečva", "Valašské Meziříčí", "Automotive", "Plný úvazek", "od 42 000 Kč", false],
+        ["Dispečer dopravy", "Doprava ValMez", "Valašské Meziříčí", "Doprava a logistika", "Plný úvazek", "od 39 000 Kč", false],
+        ["Pracovník zákaznické linky", "Call centrum Vsetín", "Vsetín", "Zákaznický servis", "Částečný úvazek", "od 28 000 Kč", false],
+        ["Brigáda ve skladu", "Valašská logistika", "Jablůnka", "Logistika", "Brigáda", "175 Kč / hod.", false],
+        ["Pokojská", "Hotel Horal", "Velké Karlovice", "Cestovní ruch", "Plný úvazek", "od 29 000 Kč", false],
+        ["Recepční wellness", "Wellness Beskydy", "Velké Karlovice", "Cestovní ruch", "Plný úvazek", "od 33 000 Kč", false],
+        ["Technik kvality", "Automotive Rožnov", "Rožnov pod Radhoštěm", "Výroba", "Plný úvazek", "od 44 000 Kč", true],
+        ["Lakýrník", "Kovovýroba Vsetín", "Vsetín", "Řemeslná výroba", "Plný úvazek", "od 40 000 Kč", false],
+        ["HR specialista", "Personální kancelář", "Vsetín", "Personalistika", "Plný úvazek", "od 37 000 Kč", false],
+        ["Fakturant/ka", "Region servis", "Vizovice", "Administrativa", "Poloviční úvazek", "od 24 000 Kč", false],
+        ["Pracovník pneuservisu", "AutoMoto Zubří", "Zubří", "Automotive", "Sezónní práce", "od 36 000 Kč", false],
+        ["Barista", "Kavárna u náměstí", "Rožnov pod Radhoštěm", "Brigáda", "Brigáda", "170 Kč / hod.", false],
+        ["IT správce", "Městské služby", "Vsetín", "IT", "Plný úvazek", "od 46 000 Kč", true],
+        ["Lesní dělník", "Lesy Valašsko", "Halenkov", "Zemědělství a lesnictví", "Plný úvazek", "od 34 000 Kč", false],
+        ["Prodavač sportovního vybavení", "Sport Beskydy", "Rožnov pod Radhoštěm", "Obchod", "Plný úvazek", "od 31 000 Kč", false]
+      ];
+      const suggestions = [
+        { label: "Administrativní pracovník", kind: "Pozice", query: "administrativa" },
+        { label: "Asistent/ka redakce", kind: "Pozice", query: "asistent redakce" },
+        { label: "Výpomoc do kavárny", kind: "Pozice", query: "kavárna" },
+        { label: "Recepční", kind: "Pozice", query: "recepční" },
+        { label: "Řidič / řidička", kind: "Pozice", query: "řidič" },
+        { label: "Skladník / skladnice", kind: "Pozice", query: "skladník" },
+        { label: "Obsluha CNC", kind: "Pozice", query: "cnc" },
+        { label: "Prodavač / prodavačka", kind: "Pozice", query: "prodavač" },
+        { label: "Gastronomie a pohostinství", kind: "Obor", query: "gastro" },
+        { label: "Doprava, logistika a zásobování", kind: "Obor", query: "doprava" },
+        { label: "Regionální media s.r.o.", kind: "Firma", query: "regionální media" },
+        { label: "Kavárna u náměstí", kind: "Firma", query: "kavárna" }
+      ];
+
+      const slugify = (value) => normalize(value)
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      const companyProfiles = {
+        "Regionální media s.r.o.": {
+          initials: "RM",
+          color: "#e00909",
+          sub: "Lokální vydavatelství a obchodní tým pro Vsetínsko",
+          about: "Regionální media s.r.o. provozuje lokální inzertní a redakční služby pro Vsetínsko. Firma pracuje s klienty v regionu, připravuje kampaně a pomáhá jim dostat nabídky práce k lidem, kteří hledají blízko domova.",
+          contact: "Jana Nováková, redakce",
+          phone: "+420 777 123 456",
+          email: "prace@regionalnimedia.cz"
+        },
+        "Elektro Beskydy": {
+          initials: "EB",
+          color: "#b91c1c",
+          sub: "Elektroinstalace, servis a technická údržba v regionu",
+          about: "Elektro Beskydy je regionální technická firma zaměřená na elektroservis, průmyslovou údržbu a montáže. Nabízí zázemí stabilního týmu, práci v regionu a prostor pro odborný růst.",
+          contact: "Petr Kovář, technický vedoucí",
+          phone: "+420 777 240 118",
+          email: "nabor@elektrobeskydy.cz"
+        },
+        "Kavárna u náměstí": {
+          initials: "KU",
+          color: "#a40000",
+          sub: "Rodinný gastro provoz v centru Rožnova",
+          about: "Kavárna u náměstí je menší provoz s osobním přístupem, stálými hosty a možností brigád i dlouhodobé spolupráce.",
+          contact: "Lucie Malá, provozní",
+          phone: "+420 777 555 221",
+          email: "info@kavarna.cz"
+        },
+        "Valašské stavby": {
+          initials: "VS",
+          color: "#111827",
+          sub: "Stavební firma s realizacemi po celém Valašsku",
+          about: "Valašské stavby realizují lokální stavební projekty, rekonstrukce a technické zakázky. Firma nabízí práci v regionu a férové podmínky pro řemeslníky i techniky.",
+          contact: "Marek Stavinoha, nábor",
+          phone: "+420 777 888 119",
+          email: "obchod@stavby.cz"
+        }
+      };
+
+      const defaultCompanyProfile = {
+        initials: "CP",
+        color: "#e00909",
+        sub: "Ověřená regionální firma",
+        about: "Firma působí v regionu a hledá nové kolegy do svého týmu. Detail inzerátu může obsahovat logo, firemní barvy, fotku, leták i vlastní kontaktní nastavení.",
+        contact: "Kontaktní osoba firmy",
+        phone: "+420 777 000 000",
+        email: "prace@chcupracu.cz"
+      };
+
+      const detailTemplates = {
+        "Elektrotechnika": {
+          work: ["Servis a údržba elektro zařízení.", "Diagnostika závad, opravy a preventivní kontroly.", "Spolupráce s výrobou a technickým vedoucím."],
+          requirements: ["Elektro vzdělání nebo praxe v oboru.", "Samostatnost, pečlivost a chuť řešit technické věci.", "Vyhláška / odborná způsobilost je výhodou."],
+          benefits: ["Práce v regionu bez dlouhého dojíždění.", "Stabilní technické zázemí a férové jednání.", "Možnost dalšího odborného růstu."]
+        },
+        "Gastro": {
+          work: ["Obsluha hostů a příprava provozu.", "Komunikace se zákazníky a práce v menším týmu.", "Běžná provozní výpomoc podle domluvených směn."],
+          requirements: ["Příjemné vystupování a spolehlivost.", "Praxe je výhodou, ale důležitější je chuť pracovat.", "Ochota pracovat i v časech provozu."],
+          benefits: ["Přátelský kolektiv a lokální provoz.", "Možnost brigády nebo dlouhodobé spolupráce.", "Směny podle dohody."]
+        },
+        "Administrativa": {
+          work: ["Komunikace s klienty a příprava podkladů.", "Práce v administraci, kontrola údajů a evidence.", "Spolupráce s redakcí nebo obchodním týmem."],
+          requirements: ["Pečlivost, příjemná komunikace a samostatnost.", "Základní přehled v práci s počítačem.", "Výhodou je zkušenost s administrativou nebo obchodem."],
+          benefits: ["Stabilní práce v lokální firmě.", "Zaškolení a férový přístup.", "Možnost růstu s projektem."]
+        }
+      };
+
+      const visitorSignalKey = "chcupracu.intent.v1";
+      const visitorConsentKey = "chcupracu.marketingConsent";
+      const visitorResetAfterMs = 30 * 60 * 1000;
+
+      function visitorStorage() {
+        try {
+          return localStorage.getItem(visitorConsentKey) === "granted" ? localStorage : sessionStorage;
+        } catch {
+          return null;
+        }
+      }
+
+      function readVisitorSignals() {
+        const storage = visitorStorage();
+        if (!storage) return { views: [], searches: [], companies: [], categories: [], lastSeen: 0, mode: "anonymous" };
+        try {
+          const data = JSON.parse(storage.getItem(visitorSignalKey) || "{}");
+          if (!data.lastSeen || Date.now() - data.lastSeen > visitorResetAfterMs) {
+            storage.removeItem(visitorSignalKey);
+            return { views: [], searches: [], companies: [], categories: [], lastSeen: 0, mode: "reset" };
+          }
+          return { views: [], searches: [], companies: [], categories: [], mode: "anonymous", ...data };
+        } catch {
+          return { views: [], searches: [], companies: [], categories: [], lastSeen: 0, mode: "anonymous" };
+        }
+      }
+
+      function writeVisitorSignals(data) {
+        const storage = visitorStorage();
+        if (!storage) return;
+        storage.setItem(visitorSignalKey, JSON.stringify({ ...data, lastSeen: Date.now() }));
+      }
+
+      function trackVisitorSignal(type, payload = {}) {
+        const data = readVisitorSignals();
+        if (type === "view_job") {
+          data.views = [{ ...payload, at: Date.now() }, ...data.views].slice(0, 12);
+          if (payload.company) data.companies = [payload.company, ...data.companies.filter((item) => item !== payload.company)].slice(0, 6);
+          if (payload.category) data.categories = [payload.category, ...data.categories.filter((item) => item !== payload.category)].slice(0, 6);
+        }
+        if (type === "search" && payload.query) {
+          data.searches = [payload.query, ...data.searches.filter((item) => item !== payload.query)].slice(0, 8);
+        }
+        if (type === "browse_company" && payload.company) {
+          data.companies = [payload.company, ...data.companies.filter((item) => item !== payload.company)].slice(0, 6);
+        }
+        const uniqueCategories = new Set(data.categories);
+        data.mode = data.views.length >= 2 && uniqueCategories.size <= 2 ? "intent" : "browsing";
+        writeVisitorSignals(data);
+      }
+
+      function getJobBySlug(slug) {
+        return jobs.find(([title]) => slugify(title) === slug) || jobs[0];
+      }
+
+      function getJobTemplate(category) {
+        return detailTemplates[category] || detailTemplates.Administrativa;
+      }
+
+      function setList(selector, items) {
+        const list = document.querySelector(selector);
+        if (!list) return;
+        list.innerHTML = items.map((item) => `<li>${item}</li>`).join("");
+      }
+
+      function setDetailText(selector, value) {
+        const element = document.querySelector(selector);
+        if (element) element.textContent = value;
+      }
+
+      function openJobDetail(slug, push = true) {
+        const [title, company, city, category, type, salary, top] = getJobBySlug(slug);
+        const profile = companyProfiles[company] || defaultCompanyProfile;
+        const template = getJobTemplate(category);
+        if (normalize(searchQuery.value.trim()) === normalize(company)) {
+          searchQuery.value = "";
+          syncSearchPageFromMain();
+        }
+        activeCompany = "";
+        document.querySelector("#detailShell")?.style.setProperty("--company-color", profile.color);
+        setDetailText("#detailBreadcrumbTitle", title);
+        setDetailText("#detailTitle", title);
+        setDetailText("#detailLead", `${company} hledá posilu do týmu. Detail je připravený jako samostatná stránka nabídky s firemní prezentací, kontakty a odpovědním formulářem.`);
+        setDetailText("#detailCompanyName", company);
+        setDetailText("#detailCompanySub", profile.sub);
+        setDetailText("#detailLogo", profile.initials);
+        setDetailText("#detailSalary", salary);
+        setDetailText("#detailPhotoText", `${title} · ${company}`);
+        setDetailText("#detailFlyerText", `Náborový letáček pro pozici ${title}`);
+        setDetailText("#detailCompanyAbout", profile.about);
+        setDetailText("#detailSimilarTitle", `Podobné nabídky v oboru ${category} na ${city}`);
+        setDetailText("#detailContactName", profile.contact);
+        setDetailText("#detailContactPhone", `Telefon: ${profile.phone}`);
+        setDetailText("#detailContactEmail", `E-mail: ${profile.email}`);
+        const topBadge = document.querySelector("#detailTopBadge");
+        if (topBadge) topBadge.style.display = top ? "inline-flex" : "none";
+        const chips = [city, type, category, "Středoškolské s maturitou", category === "Elektrotechnika" ? "Odborná praxe výhodou" : "Vhodné pro maturanty"];
+        const chipBox = document.querySelector("#detailChips");
+        if (chipBox) chipBox.innerHTML = chips.map((chip) => `<span class="job-chip">${chip}</span>`).join("");
+        const facts = document.querySelector("#detailCompanyFacts");
+        if (facts) facts.innerHTML = [`Ověřená firma`, `${jobs.filter((job) => job[1] === company).length} aktivní nabídky`, city].map((chip) => `<span class="job-chip">${chip}</span>`).join("");
+        setList("#detailWorkList", template.work);
+        setList("#detailRequirementsList", template.requirements);
+        setList("#detailBenefitsList", template.benefits);
+        trackVisitorSignal("view_job", { slug, title, company, category, city });
+        if (push) {
+          const url = new URL(window.location.href);
+          if (normalize(url.searchParams.get("q") || "") === normalize(company)) url.searchParams.set("q", "");
+          url.searchParams.delete("company");
+          url.searchParams.set("job", slug);
+          url.hash = "detail";
+          history.pushState(null, "", url);
+        }
+      }
+
+      function syncRouteFromUrl() {
+        const url = new URL(window.location.href);
+        if (url.hash === "#detail") {
+          const jobParam = url.searchParams.get("job") || slugify(jobs[0][0]);
+          openJobDetail(jobParam, false);
+          return;
+        }
+        if (url.hash === "#search") {
+          readUrlState();
+          searchMode = true;
+          filterJobs(undefined, true);
+        }
+      }
+
+      function renderJobs() {
+        const jobList = document.querySelector("#jobList");
+        const homeJobList = document.querySelector("#homeJobList");
+        const empty = document.querySelector("#emptyState");
+        const cardHtml = ([title, company, city, category, type, salary, top]) => {
+          const slug = slugify(title);
+          return `
+          <article class="card job-card ${top ? "job-top has-photo" : ""}" data-job data-open-job-card="${slug}" data-slug="${slug}" data-title="${title}" data-company="${company}" data-search="${title} ${company} ${category} ${type}" data-city="${city}" data-category="${category}" data-type="${type}">
+            ${top ? `<div class="job-thumb">${company}<br>foto ve výpisu</div><div class="job-body">` : '<div class="job-body">'}
+            ${top ? '<span class="job-chip job-chip-top">Top nabídka</span>' : ""}
+            <div class="meta"><span class="job-chip">${city}</span><span class="job-chip">${type}</span><span class="job-chip">${category}</span></div>
+            <h2><a href="?job=${slug}#detail" data-open-job="${slug}">${title}</a></h2>
+            <p>${company} hledá posilu do týmu. Ukázkový testovací inzerát pro ověření výpisu, filtrování a topování.</p>
+            <div class="meta"><strong>${company}</strong><span class="salary-chip">${salary}</span></div>
+            </div>
+          </article>
+        `;
+        };
+        const html = jobs.map(cardHtml).join("");
+        const homeHtml = jobs.slice(0, 20).map((job) => cardHtml(job).replace("data-job", "data-home-job")).join("");
+        homeJobList.innerHTML = homeHtml;
+        jobList.innerHTML = html;
+        jobList.appendChild(empty);
+        jobCards = Array.from(document.querySelectorAll("[data-job]"));
+        jobCount.textContent = String(jobCards.length);
+      }
+
+      function setUrlState(hash = "search") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("q", searchQuery.value.trim());
+        url.searchParams.set("city", searchCity.value);
+        url.searchParams.set("category", filterCategory?.value || "Všechny obory");
+        url.searchParams.set("type", filterType?.value || "Všechny úvazky");
+        url.searchParams.set("perPage", pageSize.value);
+        url.searchParams.set("page", String(currentPage));
+        if (activeCompany) url.searchParams.set("company", activeCompany);
+        else url.searchParams.delete("company");
+        url.hash = hash;
+        history.replaceState(null, "", url);
+      }
+
+      function syncSearchPageFromMain() {
+        if (searchPageQuery) searchPageQuery.value = searchQuery.value;
+        if (searchPageCity) searchPageCity.value = searchCity.value;
+      }
+
+      function syncMainFromSearchPage() {
+        if (searchPageQuery) searchQuery.value = searchPageQuery.value;
+        if (searchPageCity) searchCity.value = searchPageCity.value;
+      }
+
+      function readUrlState() {
+        const url = new URL(window.location.href);
+        const q = url.searchParams.get("q");
+        const city = url.searchParams.get("city");
+        const category = url.searchParams.get("category");
+        const type = url.searchParams.get("type");
+        const company = url.searchParams.get("company");
+        const perPage = url.searchParams.get("perPage");
+        const page = Number(url.searchParams.get("page") || 1);
+        if (q !== null) searchQuery.value = q;
+        if (city) searchCity.value = city;
+        if (category && filterCategory) filterCategory.value = category;
+        if (type && filterType) filterType.value = type;
+        activeCompany = company || "";
+        if (perPage && ["10", "25"].includes(perPage)) pageSize.value = perPage;
+        currentPage = Math.max(1, page);
+        syncSearchPageFromMain();
+      }
+
+      function filterJobs(queryOverride, keepPage = false) {
+        searchMode = true;
+        const query = normalize(queryOverride ?? searchQuery.value.trim());
+        const city = searchCity.value;
+        const selectedCategory = normalize(filterCategory?.value || "Všechny obory");
+        const selectedType = normalize(filterType?.value || "Všechny úvazky");
+        if (!keepPage) currentPage = 1;
+        currentVisible = [];
+        const categoryOk = (cardCategory) => {
+          const category = normalize(cardCategory || "");
+          if (selectedCategory.includes("vsechny")) return true;
+          if (selectedCategory.includes("gastronomie")) return category.includes("gastro") || category.includes("pohostinstvi");
+          if (selectedCategory.includes("doprava")) return category.includes("doprava") || category.includes("logistika");
+          if (selectedCategory.includes("administrativa")) return category.includes("administrativa") || category.includes("zakaznicky");
+          if (selectedCategory.includes("remeslna")) return category.includes("remesl") || category.includes("vyroba");
+          if (selectedCategory.includes("strojirenstvi")) return category.includes("stroj") || category.includes("automotive");
+          if (selectedCategory.includes("ubytovani")) return category.includes("cestovni") || category.includes("hotel");
+          if (selectedCategory.includes("zdravotnictvi")) return category.includes("zdravotnictvi") || category.includes("socialni");
+          return selectedCategory.includes(category) || category.includes(selectedCategory.split(",")[0]);
+        };
+        const typeOk = (cardType) => {
+          const type = normalize(cardType || "");
+          if (selectedType.includes("vsechny")) return true;
+          if (selectedType.includes("polovicni")) return type.includes("polovicni") || type.includes("castecny");
+          return type.includes(selectedType);
+        };
+        jobCards.forEach((card) => {
+          const title = normalize(card.dataset.title || "");
+          const category = normalize(card.dataset.category || "");
+          const company = normalize(card.dataset.company || "");
+          const text = normalize(`${card.dataset.search} ${card.innerText}`);
+          const cityOk = city === "Vsetín a okolí" || card.dataset.city === city;
+          const queryOk = !query || title.includes(query) || category.includes(query) || company.includes(query) || text.includes(query);
+          const companyOk = !activeCompany || card.dataset.company === activeCompany;
+          const show = cityOk && queryOk && companyOk && categoryOk(card.dataset.category) && typeOk(card.dataset.type);
+          if (show) currentVisible.push(card);
+          card.style.display = "none";
+        });
+        currentVisible.sort((a, b) => {
+          if (!query) return 0;
+          const score = (card) => {
+            const title = normalize(card.dataset.title || "");
+            const category = normalize(card.dataset.category || "");
+            const company = normalize(card.dataset.company || "");
+            if (title.includes(query)) return 0;
+            if (category.includes(query)) return 1;
+            if (company.includes(query)) return 2;
+            return 3;
+          };
+          return score(a) - score(b);
+        });
+        const perPage = Number(pageSize.value || 10);
+        const totalPages = Math.max(1, Math.ceil(currentVisible.length / perPage));
+        currentPage = Math.min(Math.max(1, currentPage), totalPages);
+        const start = (currentPage - 1) * perPage;
+        currentVisible.slice(start, start + perPage).forEach((card) => {
+          card.style.display = "";
+        });
+        jobCount.textContent = String(currentVisible.length);
+        emptyState.style.display = currentVisible.length ? "none" : "block";
+        pageInfo.textContent = `Strana ${currentPage} z ${totalPages}`;
+        prevPage.disabled = currentPage <= 1;
+        nextPage.disabled = currentPage >= totalPages;
+        syncSearchPageFromMain();
+        if (query) trackVisitorSignal("search", { query });
+        setUrlState("search");
+      }
+
+      function goToSearch(queryOverride) {
+        searchMode = true;
+        window.location.hash = "search";
+        filterJobs(queryOverride);
+      }
+
+      searchForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        activeCompany = "";
+        closeSuggestions();
+        goToSearch();
+      });
+      searchPageForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        activeCompany = "";
+        syncMainFromSearchPage();
+        closeSuggestions();
+        goToSearch();
+      });
+      function closeSuggestions() {
+        suggestMenu.classList.remove("is-open");
+        suggestMenu.innerHTML = "";
+      }
+
+      function renderSuggestions() {
+        const query = normalize(searchQuery.value.trim());
+        if (query.length < 2) {
+          closeSuggestions();
+          return;
+        }
+        const intent = readVisitorSignals();
+        const dynamicSuggestions = [
+          ...jobs.map(([title, company]) => ({ label: title, kind: "Pozice", query: title })),
+          ...Object.keys(companyProfiles).map((company) => ({ label: company, kind: "Firma", query: company })),
+          ...intent.companies.map((company) => ({ label: company, kind: "Doporučeno podle prohlížení", query: company })),
+          ...intent.categories.map((category) => ({ label: category, kind: "Doporučený obor", query: category }))
+        ];
+        const seenSuggestions = new Set();
+        const matches = [...suggestions, ...dynamicSuggestions]
+          .filter((item) => {
+            const key = `${item.kind}-${item.label}`;
+            if (seenSuggestions.has(key)) return false;
+            seenSuggestions.add(key);
+            return true;
+          })
+          .filter((item) => normalize(`${item.label} ${item.kind}`).includes(query))
+          .slice(0, 7);
+        if (!matches.length) {
+          closeSuggestions();
+          return;
+        }
+        suggestMenu.innerHTML = matches
+          .map((item) => `<button class="suggest-item" type="button" data-query="${item.query}"><span>${item.label}</span><span class="suggest-kind">${item.kind}</span></button>`)
+          .join("");
+        suggestMenu.classList.add("is-open");
+      }
+
+      renderJobs();
+
+      searchQuery?.addEventListener("input", () => {
+        activeCompany = "";
+        renderSuggestions();
+        if (searchMode) filterJobs();
+      });
+      searchCity?.addEventListener("change", () => filterJobs());
+      searchPageQuery?.addEventListener("input", () => {
+        activeCompany = "";
+        syncMainFromSearchPage();
+        if (searchMode) filterJobs();
+      });
+      searchPageCity?.addEventListener("change", () => {
+        syncMainFromSearchPage();
+        filterJobs();
+      });
+      filterCategory?.addEventListener("change", () => filterJobs());
+      filterType?.addEventListener("change", () => filterJobs());
+      pageSize?.addEventListener("change", () => filterJobs());
+      prevPage?.addEventListener("click", () => {
+        currentPage -= 1;
+        filterJobs(undefined, true);
+      });
+      nextPage?.addEventListener("click", () => {
+        currentPage += 1;
+        filterJobs(undefined, true);
+      });
+      searchQuery?.addEventListener("focus", renderSuggestions);
+      suggestMenu?.addEventListener("click", (event) => {
+        const item = event.target.closest("[data-query]");
+        if (!item) return;
+        activeCompany = "";
+        searchQuery.value = item.dataset.query;
+        closeSuggestions();
+        goToSearch(item.dataset.query);
+      });
+      document.addEventListener("click", (event) => {
+        const jobLink = event.target.closest("[data-open-job], [data-open-job-card]");
+        if (jobLink && !event.target.closest("button, input, select, textarea")) {
+          event.preventDefault();
+          openJobDetail(jobLink.dataset.openJob || jobLink.dataset.openJobCard);
+          requestAnimationFrame(syncRouteFromUrl);
+          return;
+        }
+        if (!event.target.closest(".suggest-wrap")) closeSuggestions();
+      });
+      document.querySelector("#refineSearch")?.addEventListener("click", () => filterJobs());
+      document.querySelector("#showAllJobs")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        activeCompany = "";
+        searchQuery.value = "";
+        searchCity.value = "Vsetín a okolí";
+        goToSearch("");
+      });
+      document.querySelectorAll("[data-nav-search]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          activeCompany = "";
+          searchQuery.value = "";
+          searchCity.value = "Vsetín a okolí";
+          syncSearchPageFromMain();
+          goToSearch("");
+        });
+      });
+      document.querySelectorAll("[data-quick]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          activeCompany = "";
+          searchQuery.value = link.dataset.quick;
+          goToSearch(link.dataset.quick);
+          document.querySelector("#jobList")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+      document.querySelectorAll("[data-company]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          activeCompany = link.dataset.company;
+          searchQuery.value = "";
+          searchCity.value = "Vsetín a okolí";
+          syncSearchPageFromMain();
+          trackVisitorSignal("browse_company", { company: activeCompany });
+          goToSearch("");
+        });
+      });
+
+      readUrlState();
+      syncRouteFromUrl();
+
+      const renewModal = document.querySelector("#renewModal");
+      const renewJobName = document.querySelector("#renewJobName");
+      const renewSummary = document.querySelector("#renewSummary");
+      const renewInputs = ["#renewType", "#renewRepeat", "#renewDays", "#renewTopDays", "#renewColor", "#renewPackage"].map((selector) => document.querySelector(selector));
+
+      function updateRenewSummary() {
+        const type = document.querySelector("#renewType").value;
+        const repeat = Number(document.querySelector("#renewRepeat").value || 1);
+        const days = Number(document.querySelector("#renewDays").value || 0);
+        const topDays = Number(document.querySelector("#renewTopDays").value || 0);
+        renewSummary.textContent = `${type}: ${repeat}× opakování, každé na ${days} dní${topDays ? `, topování ${topDays} dní` : ", bez topování"}.`;
+      }
+
+      function openRenewModal(name) {
+        renewJobName.textContent = name;
+        updateRenewSummary();
+        renewModal.classList.add("is-open");
+        renewModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeRenewModal() {
+        renewModal.classList.remove("is-open");
+        renewModal.setAttribute("aria-hidden", "true");
+      }
+
+      document.querySelectorAll("[data-renew]").forEach((button) => {
+        button.addEventListener("click", () => openRenewModal(button.dataset.renew));
+      });
+      renewInputs.forEach((input) => input?.addEventListener("input", updateRenewSummary));
+      document.querySelector("#closeRenew")?.addEventListener("click", closeRenewModal);
+      document.querySelector("#cancelRenew")?.addEventListener("click", closeRenewModal);
+      document.querySelector("#confirmRenew")?.addEventListener("click", () => {
+        renewSummary.textContent = "Uloženo v náhledu. V ostré verzi se zapíše obnova, topování i finanční položka.";
+        setTimeout(closeRenewModal, 900);
+      });
+      renewModal?.addEventListener("click", (event) => {
+        if (event.target === renewModal) closeRenewModal();
+      });
+
+      const editModal = document.createElement("div");
+      editModal.className = "modal-backdrop";
+      editModal.id = "editModal";
+      editModal.setAttribute("aria-hidden", "true");
+      editModal.innerHTML = `
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+          <div class="modal-head">
+            <div>
+              <h2 id="editModalTitle">Editovat záznam</h2>
+              <p class="meta" id="editModalSubtitle">Redakční úprava propojená s historií změn.</p>
+            </div>
+            <button class="close-button" type="button" data-edit-close>×</button>
+          </div>
+          <form class="form-grid">
+            <label>Název / položka
+              <input class="field" id="editModalName" value="" />
+            </label>
+            <label>Typ
+              <select class="select">
+                <option>Reklamní pozice</option>
+                <option>Firma</option>
+                <option>Platba</option>
+                <option>Balíček</option>
+                <option>Vydání Jalovce</option>
+              </select>
+            </label>
+            <label>Klient / firma
+              <input class="field" placeholder="Název firmy nebo interní správa" />
+            </label>
+            <label>Období
+              <input class="field" placeholder="27. 5. 2026 - 24. 6. 2026" />
+            </label>
+            <label>URL / landing page
+              <input class="field" placeholder="https://..." />
+            </label>
+            <label>Stav
+              <select class="select"><option>Aktivní</option><option>Připravované</option><option>Skryté</option><option>Storno</option></select>
+            </label>
+            <label class="full">Poznámka / historie změny
+              <textarea class="textarea">Změna se v ostré verzi zapíše do auditní historie včetně uživatele a času.</textarea>
+            </label>
+          </form>
+          <div class="modal-actions">
+            <button class="button secondary" type="button" data-edit-close>Zrušit</button>
+            <button class="button" type="button" data-edit-save>Uložit změny</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(editModal);
+      const editModalTitle = editModal.querySelector("#editModalTitle");
+      const editModalSubtitle = editModal.querySelector("#editModalSubtitle");
+      const editModalName = editModal.querySelector("#editModalName");
+
+      function openEditModal(title, subtitle = "Redakční úprava propojená s historií změn.") {
+        editModalTitle.textContent = title;
+        editModalSubtitle.textContent = subtitle;
+        editModalName.value = title.replace(/^(Editovat|Přidat|Smazat|Skrýt|Detail|Obnovit|Storno)\\s*/i, "");
+        editModal.classList.add("is-open");
+        editModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeEditModal() {
+        editModal.classList.remove("is-open");
+        editModal.setAttribute("aria-hidden", "true");
+      }
+
+      document.querySelectorAll("[data-ad-edit]").forEach((button) => {
+        button.addEventListener("click", () => openEditModal(`Editovat reklamní pozici: ${button.dataset.adEdit}`, "Nastavení pozice, klienta, termínu, odkazu, grafiky a ceny."));
+      });
+      document.querySelectorAll("[data-modal-action]").forEach((button) => {
+        button.addEventListener("click", () => openEditModal(button.dataset.modalAction));
+      });
+      document.querySelectorAll("[data-storno]").forEach((button) => {
+        button.addEventListener("click", () => openEditModal(`Storno inzerátu: ${button.dataset.storno}`, "Storno v ostré verzi skryje inzerát z webu, ponechá historii a vazby na platby."));
+      });
+      document.querySelectorAll(".icon-btn[title]:not([data-renew]):not([data-storno]):not([data-modal-action])").forEach((button) => {
+        if (button.tagName.toLowerCase() === "a") return;
+        button.addEventListener("click", () => openEditModal(button.getAttribute("title")));
+      });
+      editModal.addEventListener("click", (event) => {
+        if (event.target === editModal || event.target.closest("[data-edit-close]")) closeEditModal();
+        if (event.target.closest("[data-edit-save]")) {
+          editModalSubtitle.textContent = "Uloženo v náhledu. V ostré verzi se uloží změna a auditní stopa.";
+          setTimeout(closeEditModal, 900);
+        }
+      });
+
+      document.querySelector("#togglePassword")?.addEventListener("click", () => {
+        const input = document.querySelector("#adminPassword");
+        input.type = input.type === "password" ? "text" : "password";
+        document.querySelector("#togglePassword").setAttribute("title", input.type === "password" ? "Zobrazit heslo" : "Skrýt heslo");
+        document.querySelector("#togglePassword").setAttribute("aria-label", input.type === "password" ? "Zobrazit heslo" : "Skrýt heslo");
+      });
+      document.querySelectorAll(".admin-collapse").forEach((button) => {
+        button.addEventListener("click", () => document.body.classList.toggle("nav-collapsed"));
+      });
+      document.querySelectorAll(".job-admin-row").forEach((row) => {
+        row.addEventListener("click", (event) => {
+          if (event.target.closest("a, button")) return;
+          const detail = document.getElementById(row.dataset.detail);
+          const open = detail?.classList.toggle("is-open");
+          row.classList.toggle("is-open", Boolean(open));
+        });
+      });
+      const adminHashes = new Set(["#dashboard", "#admin", "#addjob", "#finance", "#packages", "#ads", "#companies"]);
+      function guardAdmin() {
+        if (adminHashes.has(window.location.hash) && sessionStorage.getItem("demoAdmin") !== "1") {
+          window.location.hash = "login";
+        }
+      }
+      document.querySelector("#loginSubmit")?.addEventListener("click", () => {
+        sessionStorage.setItem("demoAdmin", "1");
+      });
+      window.addEventListener("hashchange", guardAdmin);
+      window.addEventListener("hashchange", syncRouteFromUrl);
+      window.addEventListener("popstate", syncRouteFromUrl);
+      guardAdmin();
+    </script>
+  </body>
+</html>

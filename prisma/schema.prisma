@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  ARCHIVED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  NEW
+  CONTACTED
+  REJECTED
+  HIRED
+}
+
+model City {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  region    String?
+  isDefault Boolean   @default(false)
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(100)
+  jobs      JobPost[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(100)
+  jobs      JobPost[]
+}
+
+model Education {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(100)
+  jobs      JobPost[]
+}
+
+model EmploymentType {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(100)
+  jobs      JobPost[]
+}
+
+model Suitability {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  slug      String           @unique
+  isActive  Boolean          @default(true)
+  sortOrder Int              @default(100)
+  jobs      JobSuitability[]
+}
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  ico         String?
+  contactName String?
+  email       String?
+  phone       String?
+  address     String?
+  note        String?
+  jobs        JobPost[]
+  invoices    Invoice[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model PricingPackage {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  durationDays Int
+  priceCzk    Int
+  highlightColor String?
+  isTopPlacement Boolean   @default(false)
+  topDays      Int?
+  isActive    Boolean   @default(true)
+  jobs        JobPost[]
+  invoices    Invoice[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model JobPost {
+  id             String           @id @default(cuid())
+  title          String
+  slug           String           @unique
+  shortIntro     String
+  description    String
+  requirements   String?
+  benefits       String?
+  contactEmail   String?
+  contactPhone   String?
+  salaryMinCzk   Int?
+  salaryMaxCzk   Int?
+  highlightColor String?
+  isTop          Boolean          @default(false)
+  topUntil       DateTime?
+  status         JobStatus        @default(DRAFT)
+  activeFrom     DateTime?
+  activeUntil    DateTime?
+  renewedAt      DateTime?
+  views          Int              @default(0)
+  companyId      String
+  cityId         String
+  categoryId     String
+  educationId    String?
+  employmentTypeId String
+  packageId      String?
+  company        Company          @relation(fields: [companyId], references: [id])
+  city           City             @relation(fields: [cityId], references: [id])
+  category       Category         @relation(fields: [categoryId], references: [id])
+  education      Education?       @relation(fields: [educationId], references: [id])
+  employmentType EmploymentType   @relation(fields: [employmentTypeId], references: [id])
+  package        PricingPackage?  @relation(fields: [packageId], references: [id])
+  suitabilities  JobSuitability[]
+  applications   Application[]
+  invoices       Invoice[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([status, activeUntil])
+  @@index([cityId, categoryId])
+  @@index([salaryMinCzk, salaryMaxCzk])
+}
+
+model JobSuitability {
+  jobId         String
+  suitabilityId String
+  job          JobPost      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  suitability  Suitability  @relation(fields: [suitabilityId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, suitabilityId])
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  jobId       String
+  name        String
+  email       String
+  phone       String?
+  message     String
+  consentGdpr Boolean
+  ipHash      String?
+  status      ApplicationStatus @default(NEW)
+  job         JobPost           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([jobId, status])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  companyId   String
+  jobId       String?
+  packageId   String?
+  number      String?
+  amountCzk   Int
+  status      PaymentStatus @default(UNPAID)
+  issuedAt    DateTime      @default(now())
+  paidAt      DateTime?
+  note        String?
+  company     Company       @relation(fields: [companyId], references: [id])
+  job         JobPost?      @relation(fields: [jobId], references: [id])
+  package     PricingPackage? @relation(fields: [packageId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, issuedAt])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
