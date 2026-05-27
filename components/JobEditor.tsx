@@ -29,7 +29,10 @@ type EditableJob = {
 export function JobEditor({ filters, packages, job }: { filters: Filters; packages: { id: string; name: string; durationDays: number; isTopPlacement: boolean; topDays: number | null }[]; job?: EditableJob }) {
   const selectedSuitabilities = new Set(job?.suitabilities.map((item) => item.suitabilityId) ?? []);
   return (
-    <form action={upsertJob} className="card form-grid">
+    <form action={async (formData) => {
+  "use server";
+  await upsertJob(formData);
+}} className="card form-grid">
       <h2 className="full">{job ? "Upravit inzerát" : "Nový inzerát"}</h2>
       {job && <input name="id" type="hidden" value={job.id} />}
       <input className="field" name="title" placeholder="Název pozice" required defaultValue={job?.title ?? ""} />
