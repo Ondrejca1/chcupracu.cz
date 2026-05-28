@@ -23,6 +23,7 @@ type EditableJob = {
   flyerUrl: string | null;
   showImageInList: boolean;
   showSalaryInPreview: boolean;
+  showOnHomepage: boolean;
   salaryMinCzk: number | null;
   salaryMaxCzk: number | null;
   highlightColor: string | null;
@@ -95,6 +96,7 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
       <input className="field" name="contactPhone" placeholder="Kontaktní telefon" defaultValue={job?.contactPhone ?? ""} />
       <label className="tag"><input name="showImageInList" type="checkbox" defaultChecked={job?.showImageInList ?? false} /> Zobrazit fotku ve výpisu</label>
       <label className="tag"><input name="showSalaryInPreview" type="checkbox" defaultChecked={job?.showSalaryInPreview ?? true} /> Zobrazit mzdu v náhledu</label>
+      <label className="tag"><input name="showOnHomepage" type="checkbox" defaultChecked={job?.showOnHomepage ?? true} /> Zobrazit na hlavní straně</label>
       <textarea className="textarea full" name="shortIntro" placeholder="Krátký úvod inzerátu" required defaultValue={job?.shortIntro ?? ""} />
       <textarea className="textarea full" name="description" placeholder="Náplň práce" required defaultValue={job?.description ?? ""} />
       <textarea className="textarea full" name="requirements" placeholder="Požadavky" defaultValue={job?.requirements ?? ""} />

@@ -188,7 +188,23 @@ async function main() {
   const topUntil = new Date(now);
   topUntil.setDate(topUntil.getDate() + 14);
 
-  const demoJobs = [
+  type SeedJob = {
+    title: string;
+    companyName: string;
+    cityId: string;
+    categoryId: string;
+    educationId: string;
+    employmentTypeId: string;
+    packageId: string;
+    salaryMinCzk: number;
+    salaryMaxCzk: number;
+    isTop: boolean;
+    highlightColor: string | null;
+    showImageInList: boolean;
+    showOnHomepage?: boolean;
+  };
+
+  const demoJobs: SeedJob[] = [
     {
       title: "Asistent/ka redakce a zákaznické podpory",
       companyName: "Regionální media s.r.o.",
@@ -471,6 +487,7 @@ async function main() {
       flyerUrl: null,
       showImageInList: job.showImageInList,
       showSalaryInPreview: true,
+      showOnHomepage: job.showOnHomepage ?? true,
       salaryMinCzk: job.salaryMinCzk,
       salaryMaxCzk: job.salaryMaxCzk,
       highlightColor: job.highlightColor,

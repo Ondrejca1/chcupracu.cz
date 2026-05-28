@@ -19,12 +19,13 @@ type JobCardProps = {
     showImageInList?: boolean;
     showSalaryInPreview?: boolean;
   };
+  wide?: boolean;
 };
 
-export function JobCard({ job }: JobCardProps) {
+export function JobCard({ job, wide = false }: JobCardProps) {
   const showImage = Boolean(job.showImageInList && job.previewImageUrl);
   return (
-    <article className={`card job-card ${job.isTop ? "job-card-top" : ""} ${showImage ? "job-card-with-image" : ""}`} style={{ background: job.highlightColor ?? undefined }}>
+    <article className={`card job-card ${wide ? "job-card-wide" : ""} ${showImage ? "job-card-with-image" : ""}`} style={{ background: job.highlightColor ?? undefined }}>
       {showImage && (
         <div className="job-card-image" style={{ backgroundImage: `url(${job.previewImageUrl})` }}>
           {job.isTop && <span className="tag top-tag">Topováno</span>}

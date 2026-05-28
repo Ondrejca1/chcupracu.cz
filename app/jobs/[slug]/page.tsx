@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Suspense, type CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
@@ -13,12 +13,8 @@ import { getSimilarJobs } from "@/lib/queries";
 export default async function JobDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const now = new Date();
-  const job = await prisma.jobPost.findFirst({
-    where: {
-      slug,
-      status: JobStatus.ACTIVE,
-      OR: [{ activeUntil: null }, { activeUntil: { gte: now } }]
-    },
+  const job = await prisma.jobPost.findUnique({
+    where: { slug },
     include: {
       company: true,
       city: true,
@@ -29,13 +25,12 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
     }
   });
 
-  if (!job) notFound();
+  if (!job || job.status !== JobStatus.ACTIVE || (job.activeUntil && job.activeUntil < now)) notFound();
 
   after(async () => {
     await prisma.jobPost.update({ where: { id: job.id }, data: { views: { increment: 1 } } }).catch(() => null);
   });
 
-  const similarJobs = await getSimilarJobs(job);
   const companyColor = job.company.brandColor || job.highlightColor || "#e00909";
   const heroImage = job.detailImageUrl || job.previewImageUrl || "/preview-assets/hero-workers.png";
 
@@ -136,12 +131,9 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
                   <h2>Další práce, které dávají smysl</h2>
                 </div>
               </div>
-              <div className="cards job-grid">
-                {similarJobs.map((item) => (
-                  <JobCard job={item} key={item.id} />
-                ))}
-                {similarJobs.length === 0 && <p className="meta">Podobné nabídky se zobrazí po přidání dalších aktivních inzerátů.</p>}
-              </div>
+              <Suspense fallback={<div className="similar-loading">Načítám podobné nabídky...</div>}>
+                <SimilarJobs job={{ id: job.id, cityId: job.cityId, categoryId: job.categoryId }} />
+              </Suspense>
             </section>
           </div>
 
@@ -164,5 +156,18 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
         </section>
       </main>
     </>
+  );
+}
+
+async function SimilarJobs({ job }: { job: { id: string; cityId: string; categoryId: string } }) {
+  const similarJobs = await getSimilarJobs(job);
+
+  return (
+    <div className="cards job-grid">
+      {similarJobs.map((item) => (
+        <JobCard job={item} key={item.id} />
+      ))}
+      {similarJobs.length === 0 && <p className="meta">Podobné nabídky se zobrazí po přidání dalších aktivních inzerátů.</p>}
+    </div>
   );
 }

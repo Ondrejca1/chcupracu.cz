@@ -4,9 +4,33 @@ import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
 import { getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
+type HomepageJob = Awaited<ReturnType<typeof searchJobs>>[number];
+
+function rotateDaily<T>(items: T[]) {
+  if (items.length < 2) return items;
+  const offset = Math.floor(Date.now() / 86_400_000) % items.length;
+  return [...items.slice(offset), ...items.slice(0, offset)];
+}
+
+function arrangeHomepageJobs(jobs: HomepageJob[]) {
+  const topJobs = rotateDaily(jobs.filter((job) => job.isTop));
+  const regularJobs = rotateDaily(jobs.filter((job) => !job.isTop));
+  const arranged: { job: HomepageJob; wide?: boolean }[] = [];
+
+  arranged.push(...topJobs.slice(0, 2).map((job) => ({ job })));
+  arranged.push(...regularJobs.slice(0, 10).map((job, index) => ({ job, wide: index === 4 })));
+  arranged.push(...topJobs.slice(2, 3).map((job) => ({ job, wide: true })));
+  arranged.push(...regularJobs.slice(10, 21).map((job, index) => ({ job, wide: index === 5 })));
+  arranged.push(...topJobs.slice(3, 6).map((job) => ({ job })));
+  arranged.push(...regularJobs.slice(21).map((job) => ({ job })));
+
+  return arranged.slice(0, 30);
+}
+
 export default async function Home({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions] = await Promise.all([getFilters(), searchJobs(params), getSearchSuggestions()]);
+  const [filters, jobs, suggestions] = await Promise.all([getFilters(), searchJobs(params, 80, { homepageOnly: true }), getSearchSuggestions()]);
+  const homepageJobs = arrangeHomepageJobs(jobs);
 
   return (
     <>
@@ -18,6 +42,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
           <nav className="nav">
             <Link href="/">Domů</Link>
             <Link href="#nabidky">Hledat práci</Link>
+            <Link href="/admin/jobs/new">Zadat inzerát</Link>
             <Link href="/admin">Redakce</Link>
           </nav>
         </div>
@@ -135,15 +160,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             <div className="section-head jobs-head">
               <div>
                 <span className="eyebrow">Vybrané pracovní nabídky</span>
-                <h2>{jobs.length > 0 ? `${jobs.length} aktivních nabídek` : "Nabídky už se připravují"}</h2>
+                <h2>{homepageJobs.length > 0 ? `${homepageJobs.length} aktivních nabídek` : "Nabídky už se připravují"}</h2>
               </div>
               <p>Mzdu můžete filtrovat, ale není nutná pro hlavní hledání.</p>
             </div>
             <div className="cards job-grid">
-              {jobs.map((job) => (
-                <JobCard job={job} key={job.id} />
+              {homepageJobs.map(({ job, wide }) => (
+                <JobCard job={job} key={job.id} wide={wide} />
               ))}
-              {jobs.length === 0 && (
+              {homepageJobs.length === 0 && (
                 <div className="empty-marketing">
                   <span>0 aktivních nabídek</span>
                   <h2>Zatím čekáme na první ostré inzeráty.</h2>

@@ -2,20 +2,22 @@ import { JobStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type JobSearchParams = {
-  q?: string;
-  city?: string;
-  category?: string;
-  education?: string;
-  employment?: string;
-  suitable?: string;
-  salaryMin?: string;
-  salaryMax?: string;
+  q?: string | string[];
+  city?: string | string[];
+  category?: string | string[];
+  education?: string | string[];
+  employment?: string | string[];
+  suitable?: string | string[];
+  salaryMin?: string | string[];
+  salaryMax?: string | string[];
 };
 
 const activeJobWhere = () => ({
   status: JobStatus.ACTIVE,
   OR: [{ activeUntil: null }, { activeUntil: { gte: new Date() } }]
 });
+
+const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
 
 export async function getFilters() {
   const [cities, categories, educations, employmentTypes, suitabilities] = await Promise.all([
@@ -53,28 +55,36 @@ export async function getSearchSuggestions() {
   return Array.from(new Set([...jobs.map((job) => job.title), ...companies.map((company) => company.name), ...categories.map((category) => category.name)])).slice(0, 100);
 }
 
-export async function searchJobs(params: JobSearchParams, limit = 40) {
-  const salaryMin = Number(params.salaryMin);
-  const salaryMax = Number(params.salaryMax);
+export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {
+  const q = firstParam(params.q)?.trim();
+  const city = firstParam(params.city);
+  const category = firstParam(params.category);
+  const education = firstParam(params.education);
+  const employment = firstParam(params.employment);
+  const suitable = firstParam(params.suitable);
+  const salaryMin = Number(firstParam(params.salaryMin));
+  const salaryMax = Number(firstParam(params.salaryMax));
   const where: Prisma.JobPostWhereInput = activeJobWhere();
 
-  if (params.q) {
+  if (options.homepageOnly) where.showOnHomepage = true;
+
+  if (q) {
     where.AND = [
       ...(Array.isArray(where.AND) ? where.AND : []),
       {
         OR: [
-          { title: { contains: params.q, mode: "insensitive" } },
-          { shortIntro: { contains: params.q, mode: "insensitive" } },
-          { company: { name: { contains: params.q, mode: "insensitive" } } }
+          { title: { contains: q, mode: "insensitive" } },
+          { shortIntro: { contains: q, mode: "insensitive" } },
+          { company: { name: { contains: q, mode: "insensitive" } } }
         ]
       }
     ];
   }
-  if (params.city) where.city = { slug: params.city };
-  if (params.category) where.category = { slug: params.category };
-  if (params.education) where.education = { slug: params.education };
-  if (params.employment) where.employmentType = { slug: params.employment };
-  if (params.suitable) where.suitabilities = { some: { suitability: { slug: params.suitable } } };
+  if (city) where.city = { is: { slug: city } };
+  if (category) where.category = { is: { slug: category } };
+  if (education) where.education = { is: { slug: education } };
+  if (employment) where.employmentType = { is: { slug: employment } };
+  if (suitable) where.suitabilities = { some: { suitability: { is: { slug: suitable } } } };
   if (!Number.isNaN(salaryMin) && salaryMin > 0) where.salaryMaxCzk = { gte: salaryMin };
   if (!Number.isNaN(salaryMax) && salaryMax > 0) where.salaryMinCzk = { lte: salaryMax };
 

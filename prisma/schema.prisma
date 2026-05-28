@@ -125,6 +125,7 @@ model JobPost {
   flyerUrl        String?
   showImageInList Boolean          @default(false)
   showSalaryInPreview Boolean      @default(true)
+  showOnHomepage Boolean           @default(false)
   salaryMinCzk   Int?
   salaryMaxCzk   Int?
   highlightColor String?
@@ -155,6 +156,7 @@ model JobPost {
 
   @@index([status, activeUntil])
   @@index([status, isTop, renewedAt])
+  @@index([status, showOnHomepage, isTop, renewedAt])
   @@index([status, createdAt])
   @@index([companyId, status])
   @@index([cityId, categoryId])
