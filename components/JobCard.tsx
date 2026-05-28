@@ -20,16 +20,16 @@ type JobCardProps = {
 
 export function JobCard({ job }: JobCardProps) {
   return (
-    <article className="card" style={{ background: job.highlightColor ?? undefined, borderColor: job.isTop ? "#f59e0b" : undefined }}>
-      {job.isTop && <span className="tag">Topováno</span>}
+    <article className={`card job-card ${job.isTop ? "job-card-top" : ""}`} style={{ background: job.highlightColor ?? undefined }}>
+      {job.isTop && <span className="tag top-tag">Topováno</span>}
       <div className="meta">
-        <span>
+        <span className="job-chip">
           <MapPin size={14} /> {job.city.name}
         </span>
-        <span>
+        <span className="job-chip">
           <Briefcase size={14} /> {job.employmentType.name}
         </span>
-        <span>{job.category.name}</span>
+        <span className="job-chip">{job.category.name}</span>
       </div>
       <h2>
         <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
