@@ -121,24 +121,37 @@ async function main() {
     });
   }
 
-  const [vsetin, roznov, karlovice] = await Promise.all([
+  const [vsetin, roznov, karlovice, valmez, zubri, vizovice, brumov, halenkov] = await Promise.all([
     prisma.city.findUniqueOrThrow({ where: { slug: "vsetin" } }),
     prisma.city.findUniqueOrThrow({ where: { slug: "roznov-pod-radhostem" } }),
-    prisma.city.findUniqueOrThrow({ where: { slug: "velke-karlovice" } })
+    prisma.city.findUniqueOrThrow({ where: { slug: "velke-karlovice" } }),
+    prisma.city.findUniqueOrThrow({ where: { slug: "valasske-mezirici" } }),
+    prisma.city.findUniqueOrThrow({ where: { slug: "zubri" } }),
+    prisma.city.findUniqueOrThrow({ where: { slug: "vizovice" } }),
+    prisma.city.findUniqueOrThrow({ where: { slug: "brumov-bylnice" } }),
+    prisma.city.findUniqueOrThrow({ where: { slug: "halenkov" } })
   ]);
-  const [administrativa, gastro, elektro, remesla] = await Promise.all([
+  const [administrativa, gastro, elektro, remesla, doprava, obchod, strojirenstvi, zdravotnictvi, cestovniRuch, stavebnictvi] = await Promise.all([
     prisma.category.findUniqueOrThrow({ where: { slug: "administrativa-zakaznicky-servis" } }),
     prisma.category.findUniqueOrThrow({ where: { slug: "gastronomie-a-pohostinstvi" } }),
     prisma.category.findUniqueOrThrow({ where: { slug: "elektrotechnika-a-telekomunikace" } }),
-    prisma.category.findUniqueOrThrow({ where: { slug: "remeslna-vyroba-a-manualni-prace" } })
+    prisma.category.findUniqueOrThrow({ where: { slug: "remeslna-vyroba-a-manualni-prace" } }),
+    prisma.category.findUniqueOrThrow({ where: { slug: "doprava-logistika-a-zasobovani" } }),
+    prisma.category.findUniqueOrThrow({ where: { slug: "obchod-nakup-a-prodej-zbozi" } }),
+    prisma.category.findUniqueOrThrow({ where: { slug: "strojirenstvi-a-automobilovy-prumysl" } }),
+    prisma.category.findUniqueOrThrow({ where: { slug: "zdravotnictvi-a-socialni-pece" } }),
+    prisma.category.findUniqueOrThrow({ where: { slug: "ubytovani-a-cestovni-ruch" } }),
+    prisma.category.findUniqueOrThrow({ where: { slug: "stavebnictvi-a-realitni-sluzby" } })
   ]);
   const [maturita, bezMaturity] = await Promise.all([
     prisma.education.findUniqueOrThrow({ where: { slug: "stredoskolske-s-maturitou" } }),
     prisma.education.findUniqueOrThrow({ where: { slug: "stredoskolske-bez-maturity" } })
   ]);
-  const [fullTime, brigade] = await Promise.all([
+  const [fullTime, brigade, partTime, halfTime] = await Promise.all([
     prisma.employmentType.findUniqueOrThrow({ where: { slug: "plny-uvazek" } }),
-    prisma.employmentType.findUniqueOrThrow({ where: { slug: "brigada" } })
+    prisma.employmentType.findUniqueOrThrow({ where: { slug: "brigada" } }),
+    prisma.employmentType.findUniqueOrThrow({ where: { slug: "castecny-uvazek" } }),
+    prisma.employmentType.findUniqueOrThrow({ where: { slug: "polovicni-uvazek" } })
   ]);
   const [topPackage, standardPackage] = await Promise.all([
     prisma.pricingPackage.findUniqueOrThrow({ where: { id: "top" } }),
@@ -149,7 +162,16 @@ async function main() {
     { name: "Regionální media s.r.o.", email: "redakce@chcupracu.cz", phone: "+420 777 123 456", brandColor: "#e00909" },
     { name: "Hotel Horal", email: "personalni@horal.cz", phone: "+420 777 555 221", brandColor: "#14532d" },
     { name: "Elektro Beskydy", email: "nabor@elektrobeskydy.cz", phone: "+420 777 240 118", brandColor: "#0f5fa8" },
-    { name: "Valašské stavby", email: "obchod@stavby.cz", phone: "+420 777 888 119", brandColor: "#111827" }
+    { name: "Valašské stavby", email: "obchod@stavby.cz", phone: "+420 777 888 119", brandColor: "#111827" },
+    { name: "Kovovýroba Zubří", email: "personalni@kovozubri.cz", phone: "+420 777 420 310", brandColor: "#374151" },
+    { name: "Logistika Valmez", email: "hr@logistikavalmez.cz", phone: "+420 777 612 220", brandColor: "#0f766e" },
+    { name: "Kavárna u náměstí", email: "info@kavarna-roznov.cz", phone: "+420 777 555 221", brandColor: "#7c2d12" },
+    { name: "Domov Vsetín", email: "personalni@domovvsetin.cz", phone: "+420 777 240 551", brandColor: "#166534" },
+    { name: "Vizovické služby", email: "prace@vizovickesluzby.cz", phone: "+420 777 882 410", brandColor: "#7f1d1d" },
+    { name: "Beskyd servis", email: "nabor@beskydservis.cz", phone: "+420 777 300 112", brandColor: "#1e3a8a" },
+    { name: "Potraviny Halenkov", email: "vedouci@potravinyhalenkov.cz", phone: "+420 777 910 123", brandColor: "#854d0e" },
+    { name: "Brumovská strojírna", email: "hr@brumovstroj.cz", phone: "+420 777 733 440", brandColor: "#334155" },
+    { name: "Recepce Beskydy", email: "recepce@beskydy.cz", phone: "+420 777 505 909", brandColor: "#0369a1" }
   ];
   for (const company of demoCompanies) {
     await prisma.company.upsert({
@@ -219,6 +241,216 @@ async function main() {
       packageId: standardPackage.id,
       salaryMinCzk: 38000,
       salaryMaxCzk: 52000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Operátor CNC obrábění",
+      companyName: "Kovovýroba Zubří",
+      cityId: zubri.id,
+      categoryId: strojirenstvi.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 36000,
+      salaryMaxCzk: 48000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Skladník / expedient",
+      companyName: "Logistika Valmez",
+      cityId: valmez.id,
+      categoryId: doprava.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 33000,
+      salaryMaxCzk: 41000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Výpomoc do kavárny",
+      companyName: "Kavárna u náměstí",
+      cityId: roznov.id,
+      categoryId: gastro.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: brigade.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 170,
+      salaryMaxCzk: 210,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Pečovatel/ka v sociálních službách",
+      companyName: "Domov Vsetín",
+      cityId: vsetin.id,
+      categoryId: zdravotnictvi.id,
+      educationId: maturita.id,
+      employmentTypeId: fullTime.id,
+      packageId: topPackage.id,
+      salaryMinCzk: 34000,
+      salaryMaxCzk: 44000,
+      isTop: true,
+      highlightColor: "#fff7f7",
+      showImageInList: true
+    },
+    {
+      title: "Pracovník údržby města",
+      companyName: "Vizovické služby",
+      cityId: vizovice.id,
+      categoryId: remesla.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 31000,
+      salaryMaxCzk: 39000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Servisní technik pro region",
+      companyName: "Beskyd servis",
+      cityId: valmez.id,
+      categoryId: elektro.id,
+      educationId: maturita.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 40000,
+      salaryMaxCzk: 55000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Prodavač/ka potravin",
+      companyName: "Potraviny Halenkov",
+      cityId: halenkov.id,
+      categoryId: obchod.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: halfTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 23000,
+      salaryMaxCzk: 29000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Seřizovač výrobní linky",
+      companyName: "Brumovská strojírna",
+      cityId: brumov.id,
+      categoryId: strojirenstvi.id,
+      educationId: maturita.id,
+      employmentTypeId: fullTime.id,
+      packageId: topPackage.id,
+      salaryMinCzk: 45000,
+      salaryMaxCzk: 62000,
+      isTop: true,
+      highlightColor: "#fff7f7",
+      showImageInList: true
+    },
+    {
+      title: "Recepční v penzionu",
+      companyName: "Recepce Beskydy",
+      cityId: karlovice.id,
+      categoryId: cestovniRuch.id,
+      educationId: maturita.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 30000,
+      salaryMaxCzk: 38000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Řidič dodávky pro rozvoz",
+      companyName: "Logistika Valmez",
+      cityId: valmez.id,
+      categoryId: doprava.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 35000,
+      salaryMaxCzk: 47000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Administrativní podpora prodeje",
+      companyName: "Regionální media s.r.o.",
+      cityId: vsetin.id,
+      categoryId: administrativa.id,
+      educationId: maturita.id,
+      employmentTypeId: partTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 26000,
+      salaryMaxCzk: 34000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Číšník / servírka",
+      companyName: "Hotel Horal",
+      cityId: karlovice.id,
+      categoryId: gastro.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: fullTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 32000,
+      salaryMaxCzk: 43000,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Pomocný stavební dělník",
+      companyName: "Valašské stavby",
+      cityId: vsetin.id,
+      categoryId: stavebnictvi.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: brigade.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 190,
+      salaryMaxCzk: 240,
+      isTop: false,
+      highlightColor: null,
+      showImageInList: false
+    },
+    {
+      title: "Obchodní zástupce pro lokální klienty",
+      companyName: "Regionální media s.r.o.",
+      cityId: vsetin.id,
+      categoryId: obchod.id,
+      educationId: maturita.id,
+      employmentTypeId: fullTime.id,
+      packageId: topPackage.id,
+      salaryMinCzk: 38000,
+      salaryMaxCzk: 68000,
+      isTop: true,
+      highlightColor: "#fff7f7",
+      showImageInList: true
+    },
+    {
+      title: "Pomocná síla do kuchyně",
+      companyName: "Kavárna u náměstí",
+      cityId: roznov.id,
+      categoryId: gastro.id,
+      educationId: bezMaturity.id,
+      employmentTypeId: partTime.id,
+      packageId: standardPackage.id,
+      salaryMinCzk: 160,
+      salaryMaxCzk: 190,
       isTop: false,
       highlightColor: null,
       showImageInList: false
