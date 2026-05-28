@@ -1,18 +1,38 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import type { getFilters } from "@/lib/queries";
+import type { getFilters, JobSearchParams } from "@/lib/queries";
 
 type Filters = Awaited<ReturnType<typeof getFilters>>;
 
-export function SearchForm({ filters, compact = false }: { filters: Filters; compact?: boolean }) {
+export function SearchForm({ filters, compact = false, suggestions = [], values = {} }: { filters: Filters; compact?: boolean; suggestions?: string[]; values?: JobSearchParams }) {
+  const [query, setQuery] = useState(values.q ?? "");
+  const matches = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (normalized.length < 2) return [];
+    return suggestions.filter((item) => item.toLowerCase().includes(normalized)).slice(0, 8);
+  }, [query, suggestions]);
+
   return (
     <form action="/" className={compact ? "filters" : "search-box"}>
-      <label className={compact ? "filter-field" : "search-field"}>
+      <label className={compact ? "filter-field suggest-wrap" : "search-field suggest-wrap"}>
         {compact && <span>Pozice nebo firma</span>}
-        <input className="field" name="q" placeholder="Jakou práci hledáte?" />
+        <input className="field" name="q" placeholder="Jakou práci hledáte?" value={query} onChange={(event) => setQuery(event.target.value)} autoComplete="off" />
+        {matches.length > 0 && (
+          <div className="suggest-menu">
+            {matches.map((item) => (
+              <button className="suggest-item" key={item} type="button" onClick={() => setQuery(item)}>
+                <strong>{item}</strong>
+                <span>vyhledat</span>
+              </button>
+            ))}
+          </div>
+        )}
       </label>
       <label className={compact ? "filter-field" : "search-field"}>
         {compact && <span>Lokalita</span>}
-        <select className="select" name="city" defaultValue="">
+        <select className="select" name="city" defaultValue={values.city ?? ""}>
           <option value="">Vsetín a okolí</option>
           {filters.cities.map((city) => (
             <option key={city.id} value={city.slug}>
@@ -30,7 +50,7 @@ export function SearchForm({ filters, compact = false }: { filters: Filters; com
         <>
           <label className="filter-field">
             <span>Obor</span>
-            <select className="select" name="category" defaultValue="">
+            <select className="select" name="category" defaultValue={values.category ?? ""}>
               <option value="">Všechny obory</option>
               {filters.categories.map((category) => (
                 <option key={category.id} value={category.slug}>
@@ -41,7 +61,7 @@ export function SearchForm({ filters, compact = false }: { filters: Filters; com
           </label>
           <label className="filter-field">
             <span>Vzdělání</span>
-            <select className="select" name="education" defaultValue="">
+            <select className="select" name="education" defaultValue={values.education ?? ""}>
               <option value="">Vzdělání nerozhoduje</option>
               {filters.educations.map((education) => (
                 <option key={education.id} value={education.slug}>
@@ -52,7 +72,7 @@ export function SearchForm({ filters, compact = false }: { filters: Filters; com
           </label>
           <label className="filter-field">
             <span>Úvazek</span>
-            <select className="select" name="employment" defaultValue="">
+            <select className="select" name="employment" defaultValue={values.employment ?? ""}>
               <option value="">Všechny úvazky</option>
               {filters.employmentTypes.map((type) => (
                 <option key={type.id} value={type.slug}>
@@ -63,7 +83,7 @@ export function SearchForm({ filters, compact = false }: { filters: Filters; com
           </label>
           <label className="filter-field">
             <span>Vhodné pro</span>
-            <select className="select" name="suitable" defaultValue="">
+            <select className="select" name="suitable" defaultValue={values.suitable ?? ""}>
               <option value="">Vhodné pro kohokoliv</option>
               {filters.suitabilities.map((item) => (
                 <option key={item.id} value={item.slug}>
@@ -74,11 +94,11 @@ export function SearchForm({ filters, compact = false }: { filters: Filters; com
           </label>
           <label className="filter-field">
             <span>Mzda od</span>
-            <input className="field" min="0" name="salaryMin" placeholder="např. 30000" type="number" />
+            <input className="field" min="0" name="salaryMin" placeholder="např. 30000" type="number" defaultValue={values.salaryMin ?? ""} />
           </label>
           <label className="filter-field">
             <span>Mzda do</span>
-            <input className="field" min="0" name="salaryMax" placeholder="např. 50000" type="number" />
+            <input className="field" min="0" name="salaryMax" placeholder="např. 50000" type="number" defaultValue={values.salaryMax ?? ""} />
           </label>
           <button className="button" type="submit">
             Upřesnit hledání

@@ -81,6 +81,8 @@ model Company {
   name        String
   slug        String    @unique
   ico         String?
+  logoUrl     String?
+  brandColor  String?
   contactName String?
   email       String?
   phone       String?
@@ -118,6 +120,11 @@ model JobPost {
   benefits       String?
   contactEmail   String?
   contactPhone   String?
+  previewImageUrl String?
+  detailImageUrl  String?
+  flyerUrl        String?
+  showImageInList Boolean          @default(false)
+  showSalaryInPreview Boolean      @default(true)
   salaryMinCzk   Int?
   salaryMaxCzk   Int?
   highlightColor String?
@@ -147,6 +154,9 @@ model JobPost {
   updatedAt      DateTime         @updatedAt
 
   @@index([status, activeUntil])
+  @@index([status, isTop, renewedAt])
+  @@index([status, createdAt])
+  @@index([companyId, status])
   @@index([cityId, categoryId])
   @@index([salaryMinCzk, salaryMaxCzk])
 }

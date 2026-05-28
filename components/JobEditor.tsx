@@ -18,6 +18,11 @@ type EditableJob = {
   benefits: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
+  previewImageUrl: string | null;
+  detailImageUrl: string | null;
+  flyerUrl: string | null;
+  showImageInList: boolean;
+  showSalaryInPreview: boolean;
   salaryMinCzk: number | null;
   salaryMaxCzk: number | null;
   highlightColor: string | null;
@@ -81,10 +86,15 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
       <input className="field" min="1" name="durationDays" placeholder="Aktivní dní" required type="number" defaultValue={30} />
       <input className="field" min="0" name="topDays" placeholder="Topovat dní" type="number" defaultValue={job?.isTop ? 14 : 0} />
       <input className="field" name="highlightColor" placeholder="Barva nabídky, např. #fff7ed" defaultValue={job?.highlightColor ?? ""} />
+      <input className="field" name="previewImageUrl" placeholder="URL fotky do výpisu" defaultValue={job?.previewImageUrl ?? ""} />
+      <input className="field" name="detailImageUrl" placeholder="URL hlavní fotky detailu" defaultValue={job?.detailImageUrl ?? ""} />
+      <input className="field" name="flyerUrl" placeholder="URL letáku / PDF kampaně" defaultValue={job?.flyerUrl ?? ""} />
       <input className="field" min="0" name="salaryMinCzk" placeholder="Mzda od" type="number" defaultValue={job?.salaryMinCzk ?? ""} />
       <input className="field" min="0" name="salaryMaxCzk" placeholder="Mzda do" type="number" defaultValue={job?.salaryMaxCzk ?? ""} />
       <input className="field" name="contactEmail" placeholder="Kontaktní e-mail" type="email" defaultValue={job?.contactEmail ?? ""} />
       <input className="field" name="contactPhone" placeholder="Kontaktní telefon" defaultValue={job?.contactPhone ?? ""} />
+      <label className="tag"><input name="showImageInList" type="checkbox" defaultChecked={job?.showImageInList ?? false} /> Zobrazit fotku ve výpisu</label>
+      <label className="tag"><input name="showSalaryInPreview" type="checkbox" defaultChecked={job?.showSalaryInPreview ?? true} /> Zobrazit mzdu v náhledu</label>
       <textarea className="textarea full" name="shortIntro" placeholder="Krátký úvod inzerátu" required defaultValue={job?.shortIntro ?? ""} />
       <textarea className="textarea full" name="description" placeholder="Náplň práce" required defaultValue={job?.description ?? ""} />
       <textarea className="textarea full" name="requirements" placeholder="Požadavky" defaultValue={job?.requirements ?? ""} />

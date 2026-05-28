@@ -12,25 +12,51 @@ export type JobSearchParams = {
   salaryMax?: string;
 };
 
+const activeJobWhere = () => ({
+  status: JobStatus.ACTIVE,
+  OR: [{ activeUntil: null }, { activeUntil: { gte: new Date() } }]
+});
+
 export async function getFilters() {
   const [cities, categories, educations, employmentTypes, suitabilities] = await Promise.all([
-    prisma.city.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
-    prisma.category.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
-    prisma.education.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
-    prisma.employmentType.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
-    prisma.suitability.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
+    prisma.city.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true } }),
+    prisma.category.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true } }),
+    prisma.education.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true } }),
+    prisma.employmentType.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true } }),
+    prisma.suitability.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true } })
   ]);
   return { cities, categories, educations, employmentTypes, suitabilities };
 }
 
-export async function searchJobs(params: JobSearchParams) {
-  const now = new Date();
+export async function getSearchSuggestions() {
+  const [jobs, companies, categories] = await Promise.all([
+    prisma.jobPost.findMany({
+      where: activeJobWhere(),
+      orderBy: [{ isTop: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }],
+      select: { title: true },
+      take: 60
+    }),
+    prisma.company.findMany({
+      where: { jobs: { some: activeJobWhere() } },
+      orderBy: { name: "asc" },
+      select: { name: true },
+      take: 40
+    }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { name: true },
+      take: 40
+    })
+  ]);
+
+  return Array.from(new Set([...jobs.map((job) => job.title), ...companies.map((company) => company.name), ...categories.map((category) => category.name)])).slice(0, 100);
+}
+
+export async function searchJobs(params: JobSearchParams, limit = 40) {
   const salaryMin = Number(params.salaryMin);
   const salaryMax = Number(params.salaryMax);
-  const where: Prisma.JobPostWhereInput = {
-    status: JobStatus.ACTIVE,
-    OR: [{ activeUntil: null }, { activeUntil: { gte: now } }]
-  };
+  const where: Prisma.JobPostWhereInput = activeJobWhere();
 
   if (params.q) {
     where.AND = [
@@ -62,6 +88,29 @@ export async function searchJobs(params: JobSearchParams) {
       employmentType: true,
       suitabilities: { include: { suitability: true } }
     },
-    orderBy: [{ isTop: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }]
+    orderBy: [{ isTop: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }],
+    take: Math.min(Math.max(limit, 1), 80)
+  });
+}
+
+export async function getSimilarJobs(job: { id: string; cityId: string; categoryId: string }) {
+  return prisma.jobPost.findMany({
+    where: {
+      id: { not: job.id },
+      AND: [
+        activeJobWhere(),
+        { OR: [{ categoryId: job.categoryId }, { cityId: job.cityId }] }
+      ]
+    },
+    include: {
+      company: true,
+      city: true,
+      category: true,
+      education: true,
+      employmentType: true,
+      suitabilities: { include: { suitability: true } }
+    },
+    orderBy: [{ isTop: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }],
+    take: 3
   });
 }

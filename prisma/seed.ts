@@ -146,10 +146,10 @@ async function main() {
   ]);
 
   const demoCompanies = [
-    { name: "Regionální media s.r.o.", email: "redakce@chcupracu.cz", phone: "+420 777 123 456" },
-    { name: "Hotel Horal", email: "personalni@horal.cz", phone: "+420 777 555 221" },
-    { name: "Elektro Beskydy", email: "nabor@elektrobeskydy.cz", phone: "+420 777 240 118" },
-    { name: "Valašské stavby", email: "obchod@stavby.cz", phone: "+420 777 888 119" }
+    { name: "Regionální media s.r.o.", email: "redakce@chcupracu.cz", phone: "+420 777 123 456", brandColor: "#e00909" },
+    { name: "Hotel Horal", email: "personalni@horal.cz", phone: "+420 777 555 221", brandColor: "#14532d" },
+    { name: "Elektro Beskydy", email: "nabor@elektrobeskydy.cz", phone: "+420 777 240 118", brandColor: "#0f5fa8" },
+    { name: "Valašské stavby", email: "obchod@stavby.cz", phone: "+420 777 888 119", brandColor: "#111827" }
   ];
   for (const company of demoCompanies) {
     await prisma.company.upsert({
@@ -178,7 +178,8 @@ async function main() {
       salaryMinCzk: 32000,
       salaryMaxCzk: 42000,
       isTop: true,
-      highlightColor: "#fff7f7"
+      highlightColor: "#fff7f7",
+      showImageInList: true
     },
     {
       title: "Pokojská / provozní výpomoc",
@@ -191,7 +192,8 @@ async function main() {
       salaryMinCzk: 180,
       salaryMaxCzk: 220,
       isTop: false,
-      highlightColor: null
+      highlightColor: null,
+      showImageInList: false
     },
     {
       title: "Elektromechanik výroby",
@@ -204,7 +206,8 @@ async function main() {
       salaryMinCzk: 42000,
       salaryMaxCzk: 56000,
       isTop: true,
-      highlightColor: "#fff7f7"
+      highlightColor: "#fff7f7",
+      showImageInList: true
     },
     {
       title: "Zedník pro regionální stavby",
@@ -217,7 +220,8 @@ async function main() {
       salaryMinCzk: 38000,
       salaryMaxCzk: 52000,
       isTop: false,
-      highlightColor: null
+      highlightColor: null,
+      showImageInList: false
     }
   ];
 
@@ -230,6 +234,11 @@ async function main() {
       benefits: "Práce blízko domova, férové jednání, nástup dle dohody a možnost dlouhodobé spolupráce.",
       contactEmail: company.email,
       contactPhone: company.phone,
+      previewImageUrl: "/preview-assets/hero-workers.png",
+      detailImageUrl: "/preview-assets/hero-workers.png",
+      flyerUrl: null,
+      showImageInList: job.showImageInList,
+      showSalaryInPreview: true,
       salaryMinCzk: job.salaryMinCzk,
       salaryMaxCzk: job.salaryMaxCzk,
       highlightColor: job.highlightColor,

@@ -240,6 +240,49 @@ textarea {
   text-transform: uppercase;
 }
 
+.suggest-wrap {
+  position: relative;
+}
+
+.suggest-menu {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 48px rgba(31, 41, 55, 0.15);
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 30;
+}
+
+.suggest-item {
+  align-items: center;
+  background: white;
+  border: 0;
+  border-bottom: 1px solid #edf2f7;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.suggest-item:hover {
+  background: #fff7f7;
+}
+
+.suggest-item span {
+  color: var(--brand-strong);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .cards {
   display: grid;
   gap: 14px;
@@ -262,6 +305,12 @@ textarea {
   overflow: hidden;
   padding: 22px;
   position: relative;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.job-card:hover {
+  box-shadow: 0 24px 54px rgba(31, 41, 55, 0.15);
+  transform: translateY(-3px);
 }
 
 .job-card::before {
@@ -274,6 +323,34 @@ textarea {
 
 .job-card-top {
   background: linear-gradient(135deg, #fff, #fff1f1) !important;
+}
+
+.job-card-with-image {
+  grid-template-columns: 170px minmax(0, 1fr);
+  padding: 0;
+}
+
+.job-card-with-image::before {
+  display: none;
+}
+
+.job-card-image {
+  background-position: center;
+  background-size: cover;
+  min-height: 100%;
+  padding: 14px;
+}
+
+.job-card-body {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+
+.job-card-foot {
+  align-self: end;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  padding-top: 12px;
 }
 
 .card h2,
@@ -433,12 +510,17 @@ textarea {
   transform: translateY(-4px);
 }
 
+.quick-card:hover svg {
+  transform: rotate(-5deg) scale(1.06);
+}
+
 .quick-card svg {
   background: var(--brand);
   border-radius: var(--radius);
   color: white;
   height: 48px;
   padding: 12px;
+  transition: transform 0.18s ease;
   width: 48px;
 }
 
@@ -577,6 +659,220 @@ textarea {
   max-width: 720px;
 }
 
+.detail-page-shell {
+  background: linear-gradient(180deg, #fff7f7 0, #f7f7fa 360px, #f7f7fa 100%);
+  padding: 28px 20px 48px;
+}
+
+.detail-hero {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--company-color, #e00909) 11%, #fff), #fff 58%);
+  border: 1px solid rgba(224, 9, 9, 0.14);
+  border-left: 8px solid var(--company-color, #e00909);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 50px rgba(31, 41, 55, 0.1);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  margin: 0 auto 24px;
+  overflow: hidden;
+  padding: 28px;
+}
+
+.breadcrumb {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 850;
+  margin-bottom: 16px;
+}
+
+.detail-hero h1 {
+  color: #151821;
+  font-size: clamp(36px, 5vw, 62px);
+  letter-spacing: -0.055em;
+  line-height: 1;
+  margin: 14px 0;
+}
+
+.detail-lead {
+  color: #4b5563;
+  font-size: 17px;
+  line-height: 1.55;
+  max-width: 720px;
+}
+
+.detail-company-line {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0 20px;
+}
+
+.company-logo {
+  align-items: center;
+  background: var(--company-color, #e00909);
+  border-radius: var(--radius);
+  color: white;
+  display: inline-flex;
+  font-size: 22px;
+  font-weight: 950;
+  height: 54px;
+  justify-content: center;
+  width: 54px;
+}
+
+.detail-highlight {
+  background: #fff;
+  border: 1px solid rgba(224, 9, 9, 0.16);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 22px;
+  padding: 14px;
+}
+
+.detail-highlight div {
+  border-right: 1px solid #eceef4;
+  padding-right: 12px;
+}
+
+.detail-highlight div:last-child {
+  border-right: 0;
+}
+
+.detail-highlight span {
+  color: #6b7280;
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.detail-highlight strong {
+  color: #151821;
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
+}
+
+.detail-media,
+.apply-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.company-photo {
+  background-position: center !important;
+  background-size: cover !important;
+  border-radius: var(--radius);
+  box-shadow: 0 18px 42px rgba(31, 41, 55, 0.18);
+  color: white;
+  display: grid;
+  min-height: 300px;
+  padding: 22px;
+  place-items: end start;
+}
+
+.company-photo strong {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.flyer-card {
+  background: #111827;
+  border-radius: var(--radius);
+  color: white;
+  display: grid;
+  gap: 6px;
+  min-height: 120px;
+  padding: 18px;
+}
+
+.flyer-card small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flyer-card span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.detail-layout {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.detail-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-panel-card,
+.apply-panel {
+  background: #fff;
+  border: 1px solid #e7e8ef;
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px rgba(31, 41, 55, 0.07);
+  padding: 22px;
+}
+
+.detail-panel-card h2,
+.apply-panel h2 {
+  color: #151821;
+  margin: 0 0 12px;
+}
+
+.detail-panel-card p {
+  color: #4b5563;
+  line-height: 1.65;
+}
+
+.detail-brand-card,
+.similar-section {
+  margin-top: 22px;
+}
+
+.apply-panel {
+  align-self: start;
+  border-top: 6px solid var(--company-color, #e00909);
+  position: sticky;
+  top: 92px;
+}
+
+.apply-panel form.card {
+  border: 0;
+  box-shadow: none;
+  display: grid;
+  gap: 12px;
+  padding: 0;
+}
+
+.contact-box,
+.apply-note {
+  background: #fff7f7;
+  border: 1px solid rgba(224, 9, 9, 0.16);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+}
+
+.contact-box span,
+.apply-note {
+  align-items: center;
+  color: #4b5563;
+  display: flex;
+  gap: 8px;
+}
+
 .detail {
   display: grid;
   gap: 22px;
@@ -658,6 +954,10 @@ textarea {
   .search-box,
   .grid,
   .detail,
+  .detail-hero,
+  .detail-layout,
+  .detail-grid,
+  .detail-highlight,
   .admin-shell,
   .form-grid,
   .hero-inner,
@@ -706,6 +1006,18 @@ textarea {
   }
 
   .filters {
+    position: static;
+  }
+
+  .job-card-with-image {
+    grid-template-columns: 1fr;
+  }
+
+  .job-card-image {
+    min-height: 190px;
+  }
+
+  .apply-panel {
     position: static;
   }
 

@@ -15,29 +15,40 @@ type JobCardProps = {
     employmentType: { name: string };
     isTop?: boolean;
     highlightColor?: string | null;
+    previewImageUrl?: string | null;
+    showImageInList?: boolean;
+    showSalaryInPreview?: boolean;
   };
 };
 
 export function JobCard({ job }: JobCardProps) {
+  const showImage = Boolean(job.showImageInList && job.previewImageUrl);
   return (
-    <article className={`card job-card ${job.isTop ? "job-card-top" : ""}`} style={{ background: job.highlightColor ?? undefined }}>
-      {job.isTop && <span className="tag top-tag">Topováno</span>}
-      <div className="meta">
-        <span className="job-chip">
-          <MapPin size={14} /> {job.city.name}
-        </span>
-        <span className="job-chip">
-          <Briefcase size={14} /> {job.employmentType.name}
-        </span>
-        <span className="job-chip">{job.category.name}</span>
-      </div>
-      <h2>
-        <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
-      </h2>
-      <p>{job.shortIntro}</p>
-      <div className="meta">
-        <strong>{job.company.name}</strong>
-        <span>{salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}</span>
+    <article className={`card job-card ${job.isTop ? "job-card-top" : ""} ${showImage ? "job-card-with-image" : ""}`} style={{ background: job.highlightColor ?? undefined }}>
+      {showImage && (
+        <div className="job-card-image" style={{ backgroundImage: `url(${job.previewImageUrl})` }}>
+          {job.isTop && <span className="tag top-tag">Topováno</span>}
+        </div>
+      )}
+      <div className="job-card-body">
+        {!showImage && job.isTop && <span className="tag top-tag">Topováno</span>}
+        <div className="meta">
+          <span className="job-chip">
+            <MapPin size={14} /> {job.city.name}
+          </span>
+          <span className="job-chip">
+            <Briefcase size={14} /> {job.employmentType.name}
+          </span>
+          <span className="job-chip">{job.category.name}</span>
+        </div>
+        <h2>
+          <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
+        </h2>
+        <p>{job.shortIntro}</p>
+        <div className="meta job-card-foot">
+          <strong>{job.company.name}</strong>
+          {job.showSalaryInPreview !== false && <span>{salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}</span>}
+        </div>
       </div>
     </article>
   );

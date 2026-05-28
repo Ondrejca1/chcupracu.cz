@@ -2,11 +2,11 @@ import Link from "next/link";
 import { ArrowRight, Building2, Newspaper, Sparkles } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
-import { getFilters, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 export default async function Home({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs] = await Promise.all([getFilters(), searchJobs(params)]);
+  const [filters, jobs, suggestions] = await Promise.all([getFilters(), searchJobs(params), getSearchSuggestions()]);
 
   return (
     <>
@@ -28,7 +28,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             <span className="eyebrow">Lokální práce pro Vsetínsko</span>
             <h1>Práce na Vsetíně a okolí bez zbytečného hledání</h1>
             <p>Moderní regionální pracovní portál propojený s redakcí. Vsetín, Rožnov, Velké Karlovice, Brumov-Bylnice a další okolní města na jednom místě.</p>
-            <SearchForm filters={filters} />
+            <SearchForm filters={filters} suggestions={suggestions} values={params} />
           </div>
           <aside className="hero-promo" aria-label="Ukázková reklamní pozice">
             <span>Inzerce</span>
@@ -124,7 +124,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
       <main className="section">
         <div className="container grid" id="nabidky">
           <aside className="filter-column">
-            <SearchForm compact filters={filters} />
+            <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
             <div className="side-ad">
               <Newspaper size={24} />
               <strong>Aktuální vydání Jalovce</strong>
