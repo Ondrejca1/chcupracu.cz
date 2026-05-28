@@ -2734,12 +2734,13 @@
         const jobLink = event.target.closest("[data-open-job], [data-open-job-card]");
         if (jobLink && !event.target.closest("button, input, select, textarea")) {
           event.preventDefault();
+          event.stopPropagation();
           openJobDetail(jobLink.dataset.openJob || jobLink.dataset.openJobCard);
           requestAnimationFrame(syncRouteFromUrl);
           return;
         }
         if (!event.target.closest(".suggest-wrap")) closeSuggestions();
-      });
+      }, true);
       document.querySelector("#refineSearch")?.addEventListener("click", () => filterJobs());
       document.querySelector("#showAllJobs")?.addEventListener("click", (event) => {
         event.preventDefault();
