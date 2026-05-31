@@ -36,7 +36,17 @@ ADMIN_PASSWORD="silne-docasne-heslo"
 NEXT_PUBLIC_SITE_URL="https://chcupracu.cz"
 ```
 
-Build script spouští `prisma generate`, `prisma migrate deploy`, seed referenčních dat a potom `next build`, takže po pushi stačí na Vercelu připojit Neon databázi a nastavit env.
+Build script na Vercelu spouští jen `prisma generate` a `next build`. Databázové migrace a seed se spouští samostatně, aby deploy nepadal na PostgreSQL advisory locku při souběžných buildech:
+
+```bash
+npm run db:setup
+```
+
+Pokud databáze už obsahuje produkční data, používejte jen migrace bez seedu:
+
+```bash
+npm run db:deploy
+```
 
 ## Produkční poznámky
 
