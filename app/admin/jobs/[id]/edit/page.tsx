@@ -17,7 +17,13 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
 
   return (
     <AdminShell>
-      <h1>Editovat inzerát</h1>
+      <div className="admin-page-head">
+        <div>
+          <span className="admin-kicker">Úprava nabídky</span>
+          <h1>Editovat inzerát</h1>
+          <p>Kontrola obsahu, topování, médií a obchodních parametrů před dalším zveřejněním.</p>
+        </div>
+      </div>
       <JobEditor filters={filters} packages={packages} job={job} />
     </AdminShell>
   );

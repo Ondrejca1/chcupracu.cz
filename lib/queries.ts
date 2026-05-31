@@ -1,4 +1,4 @@
-import { JobStatus, Prisma } from "@prisma/client";
+import { AdPlacementStatus, JobStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type JobSearchParams = {
@@ -53,6 +53,31 @@ export async function getSearchSuggestions() {
   ]);
 
   return Array.from(new Set([...jobs.map((job) => job.title), ...companies.map((company) => company.name), ...categories.map((category) => category.name)])).slice(0, 100);
+}
+
+export async function getCurrentIssue() {
+  try {
+    return await prisma.publicationIssue.findFirst({
+      where: { isCurrent: true },
+      orderBy: { publishedAt: "desc" }
+    });
+  } catch (error) {
+    console.error("Unable to load current publication issue.", error);
+    return null;
+  }
+}
+
+export async function getFeaturedAds(limit = 4) {
+  try {
+    return await prisma.adPlacement.findMany({
+      where: { status: AdPlacementStatus.ACTIVE },
+      orderBy: [{ isFeatured: "desc" }, { startsAt: "desc" }, { createdAt: "desc" }],
+      take: Math.min(Math.max(limit, 1), 8)
+    });
+  } catch (error) {
+    console.error("Unable to load featured ads.", error);
+    return [];
+  }
 }
 
 export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {

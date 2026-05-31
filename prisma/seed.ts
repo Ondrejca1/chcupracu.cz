@@ -1,4 +1,4 @@
-import { JobStatus, PrismaClient } from "@prisma/client";
+import { AdPlacementStatus, JobStatus, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -118,6 +118,72 @@ async function main() {
       where: { id: item.name.toLowerCase() },
       update: item,
       create: { id: item.name.toLowerCase(), ...item, description: "Ruční evidence objednávky přes redakci." }
+    });
+  }
+
+  await prisma.publicationIssue.upsert({
+    where: { id: "jalovec-current" },
+    update: {
+      title: "Aktuální vydání Jalovce",
+      coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
+      targetUrl: "https://www.jalovec.cz",
+      isCurrent: true
+    },
+    create: {
+      id: "jalovec-current",
+      title: "Aktuální vydání Jalovce",
+      issueNumber: "aktuální",
+      coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
+      targetUrl: "https://www.jalovec.cz",
+      isCurrent: true,
+      note: "Výchozí redakční pozice pro aktuální číslo týdeníku."
+    }
+  });
+
+  const placements = [
+    {
+      id: "homepage-hero-partner",
+      name: "Partner týdne",
+      location: "Homepage / horní reklamní pás",
+      format: "Velký horizontální banner",
+      priceCzk: 4900,
+      durationDays: 7,
+      availableSlots: 1,
+      status: AdPlacementStatus.AVAILABLE,
+      isFeatured: true,
+      note: "Nejviditelnější pozice pro lokální náborovou kampaň."
+    },
+    {
+      id: "jobs-results-strip",
+      name: "Reklamní pruh ve výsledcích",
+      location: "Hledání práce / nad výsledky",
+      format: "Horizontální banner s obrázkem",
+      priceCzk: 2900,
+      durationDays: 14,
+      availableSlots: 2,
+      status: AdPlacementStatus.AVAILABLE,
+      isFeatured: false,
+      note: "Vhodné pro firmy, které chtějí oslovit aktivně hledající uchazeče."
+    },
+    {
+      id: "sidebar-jalovec",
+      name: "Boční box Jalovec / partner",
+      location: "Homepage a výsledky / boční sloupec",
+      format: "Obrázek 4:3 + text",
+      priceCzk: 1900,
+      durationDays: 14,
+      availableSlots: 1,
+      status: AdPlacementStatus.ACTIVE,
+      isFeatured: true,
+      note: "Stálá pozice pro aktuální vydání nebo placeného partnera."
+    }
+  ];
+
+  for (const placement of placements) {
+    await prisma.adPlacement.upsert({
+      where: { id: placement.id },
+      update: placement,
+      create: placement
     });
   }
 

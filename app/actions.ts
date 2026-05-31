@@ -4,13 +4,19 @@ import { addDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { JobStatus } from "@prisma/client";
+import { AdPlacementStatus, JobStatus } from "@prisma/client";
 import { login, logout, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 
 const required = z.string().trim().min(1, "Povinné pole");
 const email = z.string().trim().email("Neplatný e-mail");
+const optionalAssetUrl = z
+  .string()
+  .trim()
+  .refine((value) => !value || value.startsWith("/") || URL.canParse(value), "Neplatná URL")
+  .optional()
+  .or(z.literal(""));
 
 export async function adminLogin(_: unknown, formData: FormData) {
   const parsed = z.object({ email, password: required }).safeParse(Object.fromEntries(formData));
@@ -27,12 +33,121 @@ export async function adminLogin(_: unknown, formData: FormData) {
       message: result.reason === "invalid" ? "Přihlášení se nepovedlo." : configMessage
     };
   }
-  redirect("/admin/jobs");
+  redirect("/admin/dashboard");
 }
 
 export async function adminLogout() {
   await logout();
   redirect("/admin");
+}
+
+export async function createPublicationIssue(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      title: required.max(140),
+      issueNumber: z.string().trim().max(40).optional(),
+      coverImageUrl: optionalAssetUrl,
+      targetUrl: optionalAssetUrl,
+      priceCzk: z.coerce.number().int().min(0).optional(),
+      publishedAt: z.string().optional(),
+      isCurrent: z.string().optional(),
+      note: z.string().trim().max(500).optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const isCurrent = parsed.data.isCurrent === "on";
+  if (isCurrent) await prisma.publicationIssue.updateMany({ data: { isCurrent: false } });
+
+  await prisma.publicationIssue.create({
+    data: {
+      title: parsed.data.title,
+      issueNumber: parsed.data.issueNumber || null,
+      coverImageUrl: parsed.data.coverImageUrl || "/ads/jalovec-aktualni-vydani.jpg",
+      targetUrl: parsed.data.targetUrl || "https://www.jalovec.cz",
+      priceCzk: parsed.data.priceCzk || null,
+      publishedAt: parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date(),
+      isCurrent,
+      note: parsed.data.note || null
+    }
+  });
+
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/ads");
+  revalidatePath("/admin/dashboard");
+}
+
+export async function setCurrentPublicationIssue(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await prisma.$transaction([
+    prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
+    prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
+  ]);
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/ads");
+  revalidatePath("/admin/dashboard");
+}
+
+export async function createAdPlacement(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      name: required.max(120),
+      location: required.max(120),
+      format: required.max(80),
+      clientName: z.string().trim().max(120).optional(),
+      creativeUrl: optionalAssetUrl,
+      targetUrl: optionalAssetUrl,
+      priceCzk: z.coerce.number().int().min(0),
+      durationDays: z.coerce.number().int().min(1).max(365),
+      availableSlots: z.coerce.number().int().min(0).max(20).optional(),
+      status: z.nativeEnum(AdPlacementStatus),
+      startsAt: z.string().optional(),
+      endsAt: z.string().optional(),
+      isFeatured: z.string().optional(),
+      note: z.string().trim().max(700).optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  await prisma.adPlacement.create({
+    data: {
+      name: parsed.data.name,
+      location: parsed.data.location,
+      format: parsed.data.format,
+      clientName: parsed.data.clientName || null,
+      creativeUrl: parsed.data.creativeUrl || null,
+      targetUrl: parsed.data.targetUrl || null,
+      priceCzk: parsed.data.priceCzk,
+      durationDays: parsed.data.durationDays,
+      availableSlots: parsed.data.availableSlots ?? 1,
+      status: parsed.data.status,
+      startsAt: parsed.data.startsAt ? new Date(parsed.data.startsAt) : null,
+      endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
+      isFeatured: parsed.data.isFeatured === "on",
+      note: parsed.data.note || null
+    }
+  });
+
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/ads");
+  revalidatePath("/admin/dashboard");
+}
+
+export async function updateAdPlacementStatus(formData: FormData) {
+  await requireAdmin();
+  const parsed = z.object({ id: required, status: z.nativeEnum(AdPlacementStatus) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } });
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/ads");
+  revalidatePath("/admin/dashboard");
 }
 
 export async function createApplication(_: unknown, formData: FormData) {

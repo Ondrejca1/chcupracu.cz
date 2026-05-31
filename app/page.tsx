@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Building2, Newspaper, Sparkles } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
-import { getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { money } from "@/lib/format";
+import { getCurrentIssue, getFeaturedAds, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 type HomepageJob = Awaited<ReturnType<typeof searchJobs>>[number];
 
@@ -29,8 +30,20 @@ function arrangeHomepageJobs(jobs: HomepageJob[]) {
 
 export default async function Home({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions] = await Promise.all([getFilters(), searchJobs(params, 80, { homepageOnly: true }), getSearchSuggestions()]);
+  const [filters, jobs, suggestions, currentIssue, featuredAds] = await Promise.all([
+    getFilters(),
+    searchJobs(params, 80, { homepageOnly: true }),
+    getSearchSuggestions(),
+    getCurrentIssue(),
+    getFeaturedAds(3)
+  ]);
   const homepageJobs = arrangeHomepageJobs(jobs);
+  const issue = currentIssue ?? {
+    title: "Týdeník Jalovec plus Sport Jalovec",
+    coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
+    targetUrl: "https://www.jalovec.cz",
+    note: "Ukázka velkého reklamního prostoru pro redakci nebo partnera týdne."
+  };
 
   return (
     <>
@@ -95,26 +108,25 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
 
       <section className="commercial-band">
         <div className="container commercial-grid">
-          <a className="commercial-slot issue-slot" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
-            <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
+          <a className="commercial-slot issue-slot" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+            <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
             <div>
               <small>Aktuální vydání Jalovce</small>
-              <strong>Týdeník Jalovec plus Sport Jalovec</strong>
-              <span>Ukázka velkého reklamního prostoru pro redakci nebo partnera týdne.</span>
+              <strong>{issue.title}</strong>
+              <span>{issue.note ?? "Redakční prostor pro aktuální vydání nebo partnera týdne."}</span>
             </div>
           </a>
-          <div className="commercial-slot">
-            <small>Hlavní reklamní pozice</small>
-            <strong>Partner týdne: Valašské stavby nabírají</strong>
-          </div>
-          <div className="commercial-slot">
-            <small>Top lokalita</small>
-            <strong>Práce na Vsetíně</strong>
-          </div>
-          <div className="commercial-slot">
-            <small>Top obor</small>
-            <strong>Výroba a řemesla</strong>
-          </div>
+          {(featuredAds.length > 0 ? featuredAds : [
+            { id: "fallback-1", name: "Partner týdne", location: "Hlavní reklamní pozice", priceCzk: 4900, durationDays: 7 },
+            { id: "fallback-2", name: "Práce na Vsetíně", location: "Top lokalita", priceCzk: 2900, durationDays: 14 },
+            { id: "fallback-3", name: "Výroba a řemesla", location: "Top obor", priceCzk: 1900, durationDays: 14 }
+          ]).slice(0, 3).map((ad) => (
+            <div className="commercial-slot" key={ad.id}>
+              <small>{ad.location}</small>
+              <strong>{ad.name}</strong>
+              <span>{money(ad.priceCzk)} / {ad.durationDays} dní</span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -158,11 +170,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
         <div className="container grid" id="nabidky">
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
-            <a className="side-ad jalovec-issue" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
-              <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
+            <a className="side-ad jalovec-issue" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+              <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
               <Newspaper size={24} />
-              <strong>Aktuální vydání Jalovce</strong>
-              <p>Konkrétní reklamní blok pro týdeník, který může redakce pravidelně měnit.</p>
+              <strong>{issue.title}</strong>
+              <p>{issue.note ?? "Konkrétní reklamní blok pro týdeník, který může redakce pravidelně měnit."}</p>
             </a>
           </aside>
           <section>

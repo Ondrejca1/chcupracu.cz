@@ -13,7 +13,13 @@ export default async function NewJobPage() {
 
   return (
     <AdminShell>
-      <h1>Přidat inzerát</h1>
+      <div className="admin-page-head">
+        <div>
+          <span className="admin-kicker">Nová nabídka</span>
+          <h1>Přidat inzerát</h1>
+          <p>Vložení nabídky od firmy, nastavení balíčku, topování, médií a zobrazení na veřejném webu.</p>
+        </div>
+      </div>
       <JobEditor filters={filters} packages={packages} />
     </AdminShell>
   );

@@ -38,9 +38,14 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
     <form action={async (formData) => {
   "use server";
   await upsertJob(formData);
-}} className="card form-grid">
-      <h2 className="full">{job ? "Upravit inzerát" : "Nový inzerát"}</h2>
+}} className="admin-card form-grid job-editor-form">
+      <div className="admin-form-intro full">
+        <span>Pracovní nabídka</span>
+        <h2>{job ? "Upravit inzerát" : "Nový inzerát"}</h2>
+        <p>Základní obsah, publikace, topování, média a kontakt jsou oddělené, aby šlo inzerát rychle zkontrolovat před zveřejněním.</p>
+      </div>
       {job && <input name="id" type="hidden" value={job.id} />}
+      <div className="admin-form-section full">Základ nabídky</div>
       <input className="field" name="title" placeholder="Název pozice" required defaultValue={job?.title ?? ""} />
       <input className="field" name="companyName" placeholder="Firma" required defaultValue={job?.company.name ?? ""} />
       <select className="select" name="cityId" required defaultValue={job?.cityId}>
@@ -72,6 +77,7 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
           </option>
         ))}
       </select>
+      <div className="admin-form-section full">Publikace a obchod</div>
       <select className="select" name="packageId" defaultValue={job?.packageId ?? ""}>
         <option value="">Bez balíčku</option>
         {packages.map((item) => (
@@ -87,6 +93,7 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
       <input className="field" min="1" name="durationDays" placeholder="Aktivní dní" required type="number" defaultValue={30} />
       <input className="field" min="0" name="topDays" placeholder="Topovat dní" type="number" defaultValue={job?.isTop ? 14 : 0} />
       <input className="field" name="highlightColor" placeholder="Barva nabídky, např. #fff7ed" defaultValue={job?.highlightColor ?? ""} />
+      <div className="admin-form-section full">Média a kontakt</div>
       <input className="field" name="previewImageUrl" placeholder="URL fotky do výpisu" defaultValue={job?.previewImageUrl ?? ""} />
       <input className="field" name="detailImageUrl" placeholder="URL hlavní fotky detailu" defaultValue={job?.detailImageUrl ?? ""} />
       <input className="field" name="flyerUrl" placeholder="URL letáku / PDF kampaně" defaultValue={job?.flyerUrl ?? ""} />
@@ -94,9 +101,11 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
       <input className="field" min="0" name="salaryMaxCzk" placeholder="Mzda do" type="number" defaultValue={job?.salaryMaxCzk ?? ""} />
       <input className="field" name="contactEmail" placeholder="Kontaktní e-mail" type="email" defaultValue={job?.contactEmail ?? ""} />
       <input className="field" name="contactPhone" placeholder="Kontaktní telefon" defaultValue={job?.contactPhone ?? ""} />
+      <div className="admin-form-section full">Zobrazení</div>
       <label className="tag"><input name="showImageInList" type="checkbox" defaultChecked={job?.showImageInList ?? false} /> Zobrazit fotku ve výpisu</label>
       <label className="tag"><input name="showSalaryInPreview" type="checkbox" defaultChecked={job?.showSalaryInPreview ?? true} /> Zobrazit mzdu v náhledu</label>
       <label className="tag"><input name="showOnHomepage" type="checkbox" defaultChecked={job?.showOnHomepage ?? true} /> Zobrazit na hlavní straně</label>
+      <div className="admin-form-section full">Obsah inzerátu</div>
       <textarea className="textarea full" name="shortIntro" placeholder="Krátký úvod inzerátu" required defaultValue={job?.shortIntro ?? ""} />
       <textarea className="textarea full" name="description" placeholder="Náplň práce" required defaultValue={job?.description ?? ""} />
       <textarea className="textarea full" name="requirements" placeholder="Požadavky" defaultValue={job?.requirements ?? ""} />

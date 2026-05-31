@@ -2,11 +2,17 @@ import Link from "next/link";
 import { Newspaper, Search } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
-import { getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions] = await Promise.all([getFilters(), searchJobs(params, 80), getSearchSuggestions()]);
+  const [filters, jobs, suggestions, currentIssue] = await Promise.all([getFilters(), searchJobs(params, 80), getSearchSuggestions(), getCurrentIssue()]);
+  const issue = currentIssue ?? {
+    title: "Aktuální vydání Jalovce",
+    coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
+    targetUrl: "https://www.jalovec.cz",
+    note: "Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň."
+  };
 
   return (
     <>
@@ -37,12 +43,12 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
 
       <section className="commercial-band search-ad-band">
         <div className="container">
-          <a className="commercial-slot issue-slot issue-slot-wide" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
-            <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
+          <a className="commercial-slot issue-slot issue-slot-wide" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+            <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
             <div>
               <small>Aktuální vydání Jalovce</small>
-              <strong>Viditelný reklamní pruh nad výsledky hledání</strong>
-              <span>Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň.</span>
+              <strong>{issue.title}</strong>
+              <span>{issue.note ?? "Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň."}</span>
             </div>
           </a>
         </div>
@@ -52,11 +58,11 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         <div className="container grid">
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
-            <a className="side-ad jalovec-issue" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
-              <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
+            <a className="side-ad jalovec-issue" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+              <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
               <Newspaper size={24} />
-              <strong>Aktuální vydání Jalovce</strong>
-              <p>Boční pozice pro týdeník, lokální firmu nebo sezónní náborovou kampaň.</p>
+              <strong>{issue.title}</strong>
+              <p>{issue.note ?? "Boční pozice pro týdeník, lokální firmu nebo sezónní náborovou kampaň."}</p>
             </a>
           </aside>
           <section>
