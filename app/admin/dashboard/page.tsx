@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { addDays } from "date-fns";
 import { AdPlacementStatus, ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
-import { ArrowUpRight, BadgeCzechKoruna, BarChart3, BriefcaseBusiness, CalendarClock, FilePlus2, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
+import { ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
@@ -31,7 +31,7 @@ const dashboardTiles = [
     title: "Číselníky a finance",
     text: "Správa měst, balíčků, faktur a základních ekonomických filtrů.",
     href: "/admin/settings",
-    icon: BadgeCzechKoruna
+    icon: CircleDollarSign
   }
 ];
 

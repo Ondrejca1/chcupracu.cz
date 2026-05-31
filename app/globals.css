@@ -136,7 +136,7 @@ textarea {
 }
 
 .search-hero-inner {
-  align-items: end;
+  align-items: flex-end;
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
@@ -655,7 +655,7 @@ textarea {
 }
 
 .section-head {
-  align-items: end;
+  align-items: flex-end;
   display: flex;
   gap: 16px;
   justify-content: space-between;
@@ -1090,7 +1090,7 @@ textarea {
 }
 
 .admin-page-head {
-  align-items: end;
+  align-items: flex-end;
   display: flex;
   gap: 18px;
   justify-content: space-between;
@@ -1139,7 +1139,7 @@ textarea {
 }
 
 .admin-card-head {
-  align-items: start;
+  align-items: flex-start;
   display: flex;
   gap: 16px;
   justify-content: space-between;
