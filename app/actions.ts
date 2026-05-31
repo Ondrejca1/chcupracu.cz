@@ -17,12 +17,14 @@ export async function adminLogin(_: unknown, formData: FormData) {
   if (!parsed.success) return { ok: false, message: "Vyplňte prosím e-mail a heslo." };
   const result = await login(parsed.data.email, parsed.data.password);
   if (!result.ok) {
+    const configMessage =
+      result.reason === "config_missing"
+        ? "Administrace není dokončená. Na Vercelu chybí proměnná SESSION_SECRET pro aktuální prostředí."
+        : "Administrace není dokončená. SESSION_SECRET na Vercelu musí mít alespoň 32 znaků.";
+
     return {
       ok: false,
-      message:
-        result.reason === "config"
-          ? "Administrace není dokončená. Zkontrolujte prosím SESSION_SECRET na Vercelu."
-          : "Přihlášení se nepovedlo."
+      message: result.reason === "invalid" ? "Přihlášení se nepovedlo." : configMessage
     };
   }
   redirect("/admin/jobs");
