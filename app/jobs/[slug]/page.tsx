@@ -43,7 +43,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
           </Link>
           <nav className="nav">
             <Link href="/">Domů</Link>
-            <Link href="/#nabidky">Hledat práci</Link>
+            <Link href="/jobs">Hledat práci</Link>
             <Link href="/admin">Redakce</Link>
           </nav>
         </div>
@@ -52,7 +52,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
         <section className="container detail-hero">
           <div>
             <div className="breadcrumb">
-              <Link href="/">Domů</Link> / <Link href="/#nabidky">Nabídky práce</Link> / <span>{job.title}</span>
+              <Link href="/">Domů</Link> / <Link href="/jobs">Nabídky práce</Link> / <span>{job.title}</span>
             </div>
             {job.isTop && <span className="tag top-tag">Top nabídka</span>}
             <h1>{job.title}</h1>

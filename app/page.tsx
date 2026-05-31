@@ -41,7 +41,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
           </Link>
           <nav className="nav">
             <Link href="/">Domů</Link>
-            <Link href="#nabidky">Hledat práci</Link>
+            <Link href="/jobs">Hledat práci</Link>
             <Link href="/admin/jobs/new">Zadat inzerát</Link>
             <Link href="/admin">Redakce</Link>
           </nav>
@@ -70,22 +70,22 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
 
       <section className="quick-section">
         <div className="container quick-grid">
-          <Link href="/?category=remeslna-vyroba-a-manualni-prace#nabidky" className="quick-card">
+          <Link href="/jobs?category=remeslna-vyroba-a-manualni-prace" className="quick-card">
             <Sparkles size={24} />
             <span>Nejžádanější</span>
             <strong>Práce ve výrobě</strong>
           </Link>
-          <Link href="/?employment=brigada#nabidky" className="quick-card">
+          <Link href="/jobs?employment=brigada" className="quick-card">
             <Sparkles size={24} />
             <span>Rychlý nástup</span>
             <strong>Brigády na Vsetíně</strong>
           </Link>
-          <Link href="/?suitable=absolvent#nabidky" className="quick-card">
+          <Link href="/jobs?suitable=absolvent" className="quick-card">
             <Sparkles size={24} />
             <span>Bez praxe</span>
             <strong>Pro absolventy</strong>
           </Link>
-          <Link href="/?category=administrativa-zakaznicky-servis#nabidky" className="quick-card">
+          <Link href="/jobs?category=administrativa-zakaznicky-servis" className="quick-card">
             <Sparkles size={24} />
             <span>Kancelář</span>
             <strong>Administrativa</strong>
@@ -117,27 +117,27 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
               <span className="eyebrow">Firmy v regionu</span>
               <h2>Prostor pro větší náborové kampaně</h2>
             </div>
-            <Link href="#nabidky" className="text-link">
+            <Link href="/jobs" className="text-link">
               Zobrazit nabídky <ArrowRight size={17} />
             </Link>
           </div>
           <div className="company-grid">
-            <Link href="/?q=Valašské%20stavby#nabidky" className="company-tile dark">
+            <Link href="/jobs?q=Valašské%20stavby" className="company-tile dark">
               <Building2 size={24} />
               <span>Partner náboru</span>
               <strong>Valašské stavby</strong>
             </Link>
-            <Link href="/?q=Automotive%20Rožnov#nabidky" className="company-tile light">
+            <Link href="/jobs?q=Automotive%20Rožnov" className="company-tile light">
               <Building2 size={24} />
               <span>Výroba</span>
               <strong>Automotive Rožnov</strong>
             </Link>
-            <Link href="/?q=Hotel%20Horal#nabidky" className="company-tile dark">
+            <Link href="/jobs?q=Hotel%20Horal" className="company-tile dark">
               <Building2 size={24} />
               <span>Cestovní ruch</span>
               <strong>Hotel Horal</strong>
             </Link>
-            <Link href="/?q=Region%20servis#nabidky" className="company-tile light">
+            <Link href="/jobs?q=Region%20servis" className="company-tile light">
               <Building2 size={24} />
               <span>Obchod</span>
               <strong>Region servis</strong>
@@ -150,11 +150,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
         <div className="container grid" id="nabidky">
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
-            <div className="side-ad">
+            <a className="side-ad jalovec-issue" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
+              <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
               <Newspaper size={24} />
               <strong>Aktuální vydání Jalovce</strong>
-              <p>Ukázková boční reklamní pozice pro redakční obsah nebo lokální firmu.</p>
-            </div>
+              <p>Konkrétní reklamní blok pro týdeník, který může redakce pravidelně měnit.</p>
+            </a>
           </aside>
           <section>
             <div className="section-head jobs-head">

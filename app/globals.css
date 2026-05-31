@@ -129,6 +129,33 @@ textarea {
   max-width: 680px;
 }
 
+.search-hero {
+  background: linear-gradient(135deg, #fff, #fff4f4 58%, #f8fafc);
+  border-bottom: 1px solid rgba(224, 9, 9, 0.12);
+  padding: 42px 20px;
+}
+
+.search-hero-inner {
+  align-items: end;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+}
+
+.search-hero h1 {
+  font-size: clamp(36px, 5vw, 62px);
+  letter-spacing: -0.055em;
+  line-height: 1;
+  margin: 0 0 12px;
+}
+
+.search-hero p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 680px;
+}
+
 .search-box {
   background: white;
   border: 1px solid rgba(224, 9, 9, 0.14);
@@ -642,12 +669,39 @@ textarea {
 .side-ad {
   background: linear-gradient(135deg, #111827, var(--brand));
   color: white;
+  display: grid;
+  gap: 12px;
   padding: 20px;
+  text-decoration: none;
 }
 
 .side-ad p {
   color: rgba(255, 255, 255, 0.75);
   margin-bottom: 0;
+}
+
+.jalovec-issue {
+  background: #fff;
+  border: 1px solid rgba(224, 9, 9, 0.18);
+  color: var(--ink);
+  overflow: hidden;
+  padding: 12px;
+}
+
+.jalovec-issue img {
+  aspect-ratio: 4 / 3;
+  border-radius: calc(var(--radius) - 4px);
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.jalovec-issue svg {
+  color: var(--brand);
+}
+
+.jalovec-issue p {
+  color: var(--muted);
 }
 
 .empty-marketing {
@@ -1027,6 +1081,7 @@ textarea {
 @media (max-width: 820px) {
   .search-box,
   .grid,
+  .search-hero-inner,
   .detail,
   .detail-hero,
   .detail-layout,

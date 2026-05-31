@@ -7,7 +7,19 @@ import type { getFilters, JobSearchParams } from "@/lib/queries";
 type Filters = Awaited<ReturnType<typeof getFilters>>;
 const fieldValue = (value?: string | string[]) => (Array.isArray(value) ? value[0] ?? "" : value ?? "");
 
-export function SearchForm({ filters, compact = false, suggestions = [], values = {} }: { filters: Filters; compact?: boolean; suggestions?: string[]; values?: JobSearchParams }) {
+export function SearchForm({
+  action = "/jobs",
+  filters,
+  compact = false,
+  suggestions = [],
+  values = {}
+}: {
+  action?: string;
+  filters: Filters;
+  compact?: boolean;
+  suggestions?: string[];
+  values?: JobSearchParams;
+}) {
   const [query, setQuery] = useState("");
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
   const matches = useMemo(() => {
@@ -17,7 +29,7 @@ export function SearchForm({ filters, compact = false, suggestions = [], values 
   }, [isSuggestOpen, query, suggestions]);
 
   return (
-    <form action="/" className={compact ? "filters" : "search-box"} onSubmit={() => {
+    <form action={action} className={compact ? "filters" : "search-box"} onSubmit={() => {
       setIsSuggestOpen(false);
       setTimeout(() => setQuery(""), 0);
     }}>
