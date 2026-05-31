@@ -542,7 +542,7 @@ async function main() {
     }
   ];
 
-  for (const job of demoJobs) {
+  for (const [index, job] of demoJobs.entries()) {
     const company = await companyBySlug(job.companyName);
     const jobPayload = {
       shortIntro: `${job.companyName} hledá posilu do týmu. Ukázkový inzerát pro ostrý náhled portálu chcupracu.cz.`,
@@ -573,7 +573,7 @@ async function main() {
       employmentTypeId: job.employmentTypeId,
       packageId: job.packageId
     };
-    await prisma.jobPost.upsert({
+    const savedJob = await prisma.jobPost.upsert({
       where: { slug: slug(job.title) },
       update: jobPayload,
       create: {
@@ -582,6 +582,24 @@ async function main() {
         ...jobPayload
       }
     });
+
+    const selectedPackage = job.packageId === topPackage.id ? topPackage : standardPackage;
+    const existingInvoice = await prisma.invoice.findFirst({ where: { jobId: savedJob.id } });
+    if (!existingInvoice) {
+      const isPaid = index % 3 !== 1;
+      await prisma.invoice.create({
+        data: {
+          companyId: company.id,
+          jobId: savedJob.id,
+          packageId: selectedPackage.id,
+          amountCzk: selectedPackage.priceCzk,
+          status: isPaid ? "PAID" : "UNPAID",
+          issuedAt: savedJob.createdAt,
+          paidAt: isPaid ? new Date(savedJob.createdAt.getTime() + 1000 * 60 * 60 * 24 * 2) : null,
+          note: "Ukázková faktura vytvořená ze seed dat podle balíčku inzerátu."
+        }
+      });
+    }
   }
 
   const adminEmail = process.env.ADMIN_EMAIL ?? "redakce@chcupracu.cz";

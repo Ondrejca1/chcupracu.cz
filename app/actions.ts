@@ -115,25 +115,33 @@ export async function createAdPlacement(formData: FormData) {
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
-  await prisma.adPlacement.create({
-    data: {
-      name: parsed.data.name,
-      placementKey: parsed.data.placementKey,
-      location: parsed.data.location,
-      format: parsed.data.format,
-      clientName: parsed.data.clientName || null,
-      creativeUrl: parsed.data.creativeUrl || null,
-      targetUrl: parsed.data.targetUrl || null,
-      priceCzk: parsed.data.priceCzk,
-      durationDays: parsed.data.durationDays,
-      availableSlots: parsed.data.availableSlots ?? 1,
-      status: parsed.data.status,
-      startsAt: parsed.data.startsAt ? new Date(parsed.data.startsAt) : null,
-      endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      isFeatured: parsed.data.isFeatured === "on",
-      note: parsed.data.note || null
-    }
-  });
+  const startsAt = parsed.data.startsAt ? new Date(parsed.data.startsAt) : new Date();
+  const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : addDays(startsAt, parsed.data.durationDays);
+
+  try {
+    await prisma.adPlacement.create({
+      data: {
+        name: parsed.data.name,
+        placementKey: parsed.data.placementKey,
+        location: parsed.data.location,
+        format: parsed.data.format,
+        clientName: parsed.data.clientName || null,
+        creativeUrl: parsed.data.creativeUrl || null,
+        targetUrl: parsed.data.targetUrl || null,
+        priceCzk: parsed.data.priceCzk,
+        durationDays: parsed.data.durationDays,
+        availableSlots: parsed.data.availableSlots ?? 1,
+        status: parsed.data.status,
+        startsAt,
+        endsAt,
+        isFeatured: parsed.data.isFeatured === "on",
+        note: parsed.data.note || null
+      }
+    });
+  } catch (error) {
+    console.error("Unable to create ad placement.", error);
+    return;
+  }
 
   revalidatePath("/");
   revalidatePath("/jobs");
@@ -145,7 +153,9 @@ export async function updateAdPlacementStatus(formData: FormData) {
   await requireAdmin();
   const parsed = z.object({ id: required, status: z.nativeEnum(AdPlacementStatus) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
-  await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } });
+  await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } }).catch((error) => {
+    console.error("Unable to update ad placement status.", error);
+  });
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/ads");
@@ -395,6 +405,40 @@ export async function toggleDictionaryItem(formData: FormData) {
   revalidatePath("/admin/dictionaries");
 }
 
+export async function updateDictionaryItem(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      type: dictionaryType,
+      id: required,
+      name: required.max(100),
+      region: z.string().trim().max(80).optional(),
+      sortOrder: z.coerce.number().int().min(0).max(9999),
+      isActive: z.string().optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const baseData = {
+    name: parsed.data.name,
+    slug: slugify(parsed.data.name),
+    sortOrder: parsed.data.sortOrder,
+    isActive: parsed.data.isActive === "on"
+  };
+
+  if (parsed.data.type === "city") {
+    await prisma.city.update({ where: { id: parsed.data.id }, data: { ...baseData, region: parsed.data.region || null } });
+  }
+  if (parsed.data.type === "category") await prisma.category.update({ where: { id: parsed.data.id }, data: baseData });
+  if (parsed.data.type === "education") await prisma.education.update({ where: { id: parsed.data.id }, data: baseData });
+  if (parsed.data.type === "employmentType") await prisma.employmentType.update({ where: { id: parsed.data.id }, data: baseData });
+  if (parsed.data.type === "suitability") await prisma.suitability.update({ where: { id: parsed.data.id }, data: baseData });
+
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/dictionaries");
+}
+
 export async function toggleCity(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
@@ -478,6 +522,33 @@ export async function updateInvoiceStatus(formData: FormData) {
     where: { id: parsed.data.id },
     data: { status: parsed.data.status, paidAt: parsed.data.status === PaymentStatus.PAID ? new Date() : null }
   });
+  revalidatePath("/admin/finance");
+  revalidatePath("/admin/dashboard");
+}
+
+export async function createMissingInvoicesFromJobs() {
+  await requireAdmin();
+  const jobs = await prisma.jobPost.findMany({
+    where: { packageId: { not: null }, invoices: { none: {} } },
+    include: { package: true, company: true },
+    take: 500
+  });
+
+  await prisma.invoice.createMany({
+    data: jobs
+      .filter((job) => job.package)
+      .map((job) => ({
+        companyId: job.companyId,
+        jobId: job.id,
+        packageId: job.package!.id,
+        amountCzk: job.package!.priceCzk,
+        status: PaymentStatus.UNPAID,
+        issuedAt: job.createdAt,
+        note: "Doplněno automaticky podle balíčku inzerátu."
+      })),
+    skipDuplicates: true
+  });
+
   revalidatePath("/admin/finance");
   revalidatePath("/admin/dashboard");
 }

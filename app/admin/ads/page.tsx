@@ -52,6 +52,9 @@ const placementSlots = [
 export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ status?: string; slot?: string; q?: string }> }) {
   await requireAdmin();
   const params = await searchParams;
+  const today = new Date();
+  const defaultStart = today.toISOString().slice(0, 10);
+  const defaultEnd = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 14).toISOString().slice(0, 10);
   const where: Prisma.AdPlacementWhereInput = {
     ...(params.status && Object.values(AdPlacementStatus).includes(params.status as AdPlacementStatus) ? { status: params.status as AdPlacementStatus } : {}),
     ...(params.slot ? { placementKey: params.slot } : {}),
@@ -212,11 +215,12 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
             </label>
             <label className="field-group">
               <span>Začátek</span>
-              <input className="field" name="startsAt" type="date" />
+              <input className="field" name="startsAt" type="date" defaultValue={defaultStart} />
             </label>
             <label className="field-group">
               <span>Konec</span>
-              <input className="field" name="endsAt" type="date" />
+              <input className="field" name="endsAt" type="date" defaultValue={defaultEnd} />
+              <small>Při změně délky bez ručního konce se datum dopočítá při uložení.</small>
             </label>
             <label className="admin-check full">
               <input name="isFeatured" type="checkbox" /> Zvýraznit na dashboardu

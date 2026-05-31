@@ -1,4 +1,4 @@
-import { createDictionaryItem, toggleDictionaryItem } from "@/app/actions";
+import { createDictionaryItem, updateDictionaryItem } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -62,15 +62,28 @@ export default async function AdminDictionariesPage() {
             </div>
             <div className="admin-list compact">
               {group.items.map((item) => (
-                <form action={toggleDictionaryItem} className="admin-list-row" key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <span>{item.slug} · pořadí {item.sortOrder}{group.type === "city" && "region" in item && item.region ? ` · ${item.region}` : ""}</span>
-                  </div>
+                <form action={updateDictionaryItem} className="dictionary-edit-row" key={item.id}>
                   <input name="type" type="hidden" value={group.type} />
                   <input name="id" type="hidden" value={item.id} />
-                  <input name="isActive" type="hidden" value={String(item.isActive)} />
-                  <button className="admin-mini-button" type="submit">{item.isActive ? "Skrýt" : "Aktivovat"}</button>
+                  <label className="field-group">
+                    <span>Název</span>
+                    <input className="field" name="name" defaultValue={item.name} required />
+                  </label>
+                  {group.type === "city" && (
+                    <label className="field-group">
+                      <span>Region</span>
+                      <input className="field" name="region" defaultValue={"region" in item ? item.region ?? "" : ""} />
+                    </label>
+                  )}
+                  <label className="field-group compact-field">
+                    <span>Pořadí</span>
+                    <input className="field" name="sortOrder" type="number" min="0" max="9999" defaultValue={item.sortOrder} />
+                  </label>
+                  <label className="admin-check dictionary-active">
+                    <input name="isActive" type="checkbox" defaultChecked={item.isActive} /> Aktivní
+                  </label>
+                  <button className="admin-mini-button" type="submit">Uložit</button>
+                  <small className="dictionary-slug">{item.slug}</small>
                 </form>
               ))}
             </div>

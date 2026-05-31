@@ -6,6 +6,7 @@ import { Briefcase, CalendarDays, FileText, Mail, MapPin, Phone, Sparkles } from
 import { JobStatus } from "@prisma/client";
 import { ApplicationForm } from "@/components/ApplicationForm";
 import { JobCard } from "@/components/JobCard";
+import { SiteHeader } from "@/components/SiteHeader";
 import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAdForSlot, getSimilarJobs } from "@/lib/queries";
@@ -37,18 +38,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
 
   return (
     <>
-      <header className="site-header">
-        <div className="bar">
-          <Link className="logo" href="/">
-            chcupracu.cz
-          </Link>
-          <nav className="nav">
-            <Link href="/">Domů</Link>
-            <Link href="/jobs">Hledat práci</Link>
-            <Link href="/admin">Redakce</Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
       <main className="detail-page-shell" style={{ "--company-color": companyColor } as CSSProperties}>
         <section className="container detail-hero">
           <div>

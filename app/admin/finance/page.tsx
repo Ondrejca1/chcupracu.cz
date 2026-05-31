@@ -1,6 +1,6 @@
 import { PaymentStatus, type Prisma } from "@prisma/client";
 import { BarChart3, CircleDollarSign, ReceiptText } from "lucide-react";
-import { updateInvoiceStatus } from "@/app/actions";
+import { createMissingInvoicesFromJobs, updateInvoiceStatus } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
@@ -29,13 +29,14 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [invoices, paidTotal, unpaidTotal, monthPaid, paidInvoices, allInvoices] = await Promise.all([
+  const [invoices, paidTotal, unpaidTotal, monthPaid, paidInvoices, allInvoices, jobsWithoutInvoice] = await Promise.all([
     prisma.invoice.findMany({ where, include: { company: true, package: true, job: true }, orderBy: { issuedAt: "desc" }, take: 100 }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID }, _sum: { amountCzk: true }, _count: true }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.UNPAID }, _sum: { amountCzk: true }, _count: true }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID, paidAt: { gte: monthStart } }, _sum: { amountCzk: true }, _count: true }),
     prisma.invoice.findMany({ where: { status: PaymentStatus.PAID }, include: { company: true }, take: 1000 }),
-    prisma.invoice.findMany({ select: { status: true, amountCzk: true }, take: 2000 })
+    prisma.invoice.findMany({ select: { status: true, amountCzk: true }, take: 2000 }),
+    prisma.jobPost.count({ where: { packageId: { not: null }, invoices: { none: {} } } })
   ]);
   const byCompany = Array.from(
     paidInvoices.reduce((map, invoice) => {
@@ -67,6 +68,18 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
         <article className="admin-stat"><BarChart3 size={22} /><span>Tento měsíc</span><strong>{money(monthPaid._sum.amountCzk)}</strong><small>{monthPaid._count} zaplacených</small></article>
         <article className="admin-stat"><span>Výsledek filtru</span><strong>{invoices.length}</strong><small>zobrazeno max. 100 faktur</small></article>
       </section>
+
+      {jobsWithoutInvoice > 0 && (
+        <section className="admin-card finance-repair">
+          <div>
+            <h2>Chybí faktury k inzerátům</h2>
+            <p>{jobsWithoutInvoice} inzerátů má nastavený balíček, ale nemá fakturu. Doplněním vzniknou nezaplacené faktury podle ceny balíčku.</p>
+          </div>
+          <form action={createMissingInvoicesFromJobs}>
+            <button className="button" type="submit">Doplnit chybějící faktury</button>
+          </form>
+        </section>
+      )}
 
       <section className="admin-card">
         <div className="admin-card-head">

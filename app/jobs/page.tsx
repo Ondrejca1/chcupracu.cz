@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Newspaper, Search } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
+import { SiteHeader } from "@/components/SiteHeader";
 import { getAdForSlot, getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
@@ -23,19 +24,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <header className="site-header">
-        <div className="bar">
-          <Link className="logo" href="/">
-            chcupracu.cz
-          </Link>
-          <nav className="nav">
-            <Link href="/">Domů</Link>
-            <Link href="/jobs">Hledat práci</Link>
-            <Link href="/admin/jobs/new">Zadat inzerát</Link>
-            <Link href="/admin">Redakce</Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="search-hero">
         <div className="container search-hero-inner">

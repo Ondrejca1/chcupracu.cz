@@ -92,6 +92,11 @@ textarea {
   color: var(--brand-strong);
 }
 
+.site-menu-toggle,
+.site-menu-button {
+  display: none;
+}
+
 .hero {
   background: linear-gradient(90deg, #ffffff 0 56%, rgba(255, 255, 255, 0.84) 56% 100%), linear-gradient(135deg, #fff7f7, #f3f4f6 62%, #fff);
   color: var(--ink);
@@ -1795,6 +1800,46 @@ textarea {
   min-height: 42px;
 }
 
+.finance-repair {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.finance-repair h2 {
+  margin: 0 0 6px;
+}
+
+.finance-repair p {
+  color: #667085;
+  margin: 0;
+}
+
+.dictionary-edit-row {
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, 0.7fr) 94px auto auto;
+  padding: 12px;
+}
+
+.dictionary-edit-row .field {
+  min-height: 42px;
+}
+
+.dictionary-active {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.dictionary-slug {
+  color: #667085;
+  grid-column: 1 / -1;
+}
+
 .notice {
   background: #ecfdf5;
   border: 1px solid #bbf7d0;
@@ -1831,6 +1876,7 @@ textarea {
   .package-edit-list,
   .package-edit-card,
   .dictionary-grid,
+  .dictionary-edit-row,
   .form-grid,
   .hero-inner,
   .quick-grid,
@@ -1841,11 +1887,32 @@ textarea {
   }
 
   .bar {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .site-menu-button {
+    align-items: center;
+    background: #fff1f1;
+    border: 1px solid rgba(224, 9, 9, 0.16);
+    border-radius: var(--radius);
+    color: var(--brand-strong);
+    cursor: pointer;
+    display: inline-flex;
+    font-weight: 900;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 12px;
   }
 
   .nav {
+    display: none;
+    order: 3;
+    width: 100%;
+  }
+
+  .site-menu-toggle:checked ~ .nav {
     display: grid;
     grid-template-columns: 1fr;
     width: 100%;
@@ -1977,5 +2044,10 @@ textarea {
 
   .inline-form {
     grid-template-columns: 1fr;
+  }
+
+  .finance-repair {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
