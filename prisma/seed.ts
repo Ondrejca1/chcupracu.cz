@@ -143,6 +143,7 @@ async function main() {
   const placements = [
     {
       id: "homepage-hero-partner",
+      placementKey: "homepage_strip",
       name: "Partner týdne",
       location: "Homepage / horní reklamní pás",
       format: "Velký horizontální banner",
@@ -155,6 +156,7 @@ async function main() {
     },
     {
       id: "jobs-results-strip",
+      placementKey: "jobs_top_strip",
       name: "Reklamní pruh ve výsledcích",
       location: "Hledání práce / nad výsledky",
       format: "Horizontální banner s obrázkem",
@@ -167,6 +169,7 @@ async function main() {
     },
     {
       id: "sidebar-jalovec",
+      placementKey: "sidebar_box",
       name: "Boční box Jalovec / partner",
       location: "Homepage a výsledky / boční sloupec",
       format: "Obrázek 4:3 + text",

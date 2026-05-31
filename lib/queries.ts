@@ -80,6 +80,18 @@ export async function getFeaturedAds(limit = 4) {
   }
 }
 
+export async function getAdForSlot(placementKey: string) {
+  try {
+    return await prisma.adPlacement.findFirst({
+      where: { placementKey, status: AdPlacementStatus.ACTIVE },
+      orderBy: [{ isFeatured: "desc" }, { startsAt: "desc" }, { createdAt: "desc" }]
+    });
+  } catch (error) {
+    console.error(`Unable to load ad slot ${placementKey}.`, error);
+    return null;
+  }
+}
+
 export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {
   const q = firstParam(params.q)?.trim();
   const city = firstParam(params.city);

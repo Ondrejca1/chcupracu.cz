@@ -993,6 +993,27 @@ textarea {
   gap: 8px;
 }
 
+.detail-ad-card {
+  background: #111827;
+  border-radius: var(--radius);
+  color: white;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.detail-ad-card img {
+  aspect-ratio: 4 / 3;
+  border-radius: calc(var(--radius) - 3px);
+  object-fit: cover;
+  width: 100%;
+}
+
+.detail-ad-card small,
+.detail-ad-card span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .detail {
   display: grid;
   gap: 22px;
@@ -1004,6 +1025,11 @@ textarea {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   min-height: 100vh;
+}
+
+.admin-menu-toggle,
+.admin-mobile-bar {
+  display: none;
 }
 
 .admin-nav {
@@ -1313,6 +1339,40 @@ textarea {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.admin-form.single {
+  grid-template-columns: 1fr;
+}
+
+.field-group {
+  display: grid;
+  gap: 7px;
+}
+
+.field-group > span {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.field-group small {
+  color: #667085;
+  line-height: 1.4;
+}
+
+.textarea-short {
+  min-height: 90px;
+}
+
+.textarea-large {
+  min-height: 260px;
+}
+
+.content-two-col {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .admin-form-intro,
 .admin-form-section {
   border-bottom: 1px solid #e7edf4;
@@ -1453,13 +1513,15 @@ textarea {
 }
 
 .status-active,
-.status-available {
+.status-available,
+.status-paid {
   background: #ecfdf5;
   color: #166534;
 }
 
 .status-draft,
-.status-reserved {
+.status-reserved,
+.status-unpaid {
   background: #fffbeb;
   color: #92400e;
 }
@@ -1470,7 +1532,8 @@ textarea {
   color: #475569;
 }
 
-.status-archived {
+.status-archived,
+.status-cancelled {
   background: #fef2f2;
   color: #991b1b;
 }
@@ -1546,6 +1609,192 @@ textarea {
   margin: 0;
 }
 
+.admin-filter-bar {
+  align-items: flex-end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.admin-filter-bar .button {
+  width: 100%;
+}
+
+.placement-slot-grid,
+.package-preview-grid,
+.dictionary-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.placement-slot-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.placement-slot-card,
+.package-preview,
+.finance-status,
+.package-edit-card {
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+}
+
+.placement-slot-card {
+  color: #111827;
+  display: grid;
+  gap: 10px;
+  min-height: 150px;
+  padding: 16px;
+}
+
+.placement-slot-card svg {
+  color: var(--brand);
+}
+
+.placement-slot-card strong,
+.placement-slot-card span,
+.placement-slot-card small {
+  display: block;
+}
+
+.placement-slot-card span,
+.placement-slot-card small {
+  color: #667085;
+  line-height: 1.4;
+}
+
+.jalovec-preview {
+  align-items: flex-start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 210px minmax(0, 1fr);
+}
+
+.jalovec-preview img {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  object-fit: cover;
+  width: 100%;
+}
+
+.jalovec-preview h3 {
+  font-size: 26px;
+  letter-spacing: -0.035em;
+  margin: 14px 0 8px;
+}
+
+.finance-bars {
+  display: grid;
+  gap: 13px;
+}
+
+.finance-bar {
+  display: grid;
+  gap: 8px;
+}
+
+.finance-bar div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.finance-bar span {
+  color: #667085;
+  font-weight: 850;
+}
+
+.finance-bar meter {
+  height: 12px;
+  width: 100%;
+}
+
+.finance-status-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.finance-status {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.finance-status span,
+.finance-status small {
+  color: #667085;
+}
+
+.finance-status strong {
+  font-size: 24px;
+  letter-spacing: -0.035em;
+}
+
+.inline-form {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(150px, 1fr) auto;
+}
+
+.package-preview-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.package-preview {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.package-preview span,
+.package-preview small {
+  color: #667085;
+  font-weight: 850;
+}
+
+.package-preview strong {
+  font-size: 22px;
+  letter-spacing: -0.035em;
+}
+
+.package-preview em {
+  color: var(--brand-strong);
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.package-edit-list {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.package-edit-card {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 16px;
+}
+
+.package-edit-head {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+.dictionary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-table .select {
+  min-height: 42px;
+}
+
 .notice {
   background: #ecfdf5;
   border: 1px solid #bbf7d0;
@@ -1573,6 +1822,15 @@ textarea {
   .job-admin-item,
   .renew-form,
   .ad-placement-grid,
+  .admin-filter-bar,
+  .placement-slot-grid,
+  .content-two-col,
+  .jalovec-preview,
+  .finance-status-grid,
+  .package-preview-grid,
+  .package-edit-list,
+  .package-edit-card,
+  .dictionary-grid,
   .form-grid,
   .hero-inner,
   .quick-grid,
@@ -1653,8 +1911,49 @@ textarea {
     position: static;
   }
 
+  .admin-shell {
+    display: block;
+    padding-top: 62px;
+  }
+
+  .admin-mobile-bar {
+    align-items: center;
+    background: #111827;
+    color: white;
+    display: flex;
+    height: 62px;
+    justify-content: space-between;
+    left: 0;
+    padding: 0 16px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 60;
+  }
+
+  .admin-mobile-bar label {
+    align-items: center;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    font-weight: 900;
+  }
+
   .admin-nav {
-    position: static;
+    bottom: 0;
+    left: 0;
+    max-width: 320px;
+    overflow-y: auto;
+    position: fixed;
+    top: 62px;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    width: 86vw;
+    z-index: 70;
+  }
+
+  .admin-menu-toggle:checked ~ .admin-nav {
+    transform: translateX(0);
   }
 
   .admin-main {
@@ -1674,5 +1973,9 @@ textarea {
 
   .admin-nav form {
     margin-top: 0;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
   }
 }

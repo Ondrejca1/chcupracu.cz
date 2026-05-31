@@ -8,7 +8,7 @@ import { ApplicationForm } from "@/components/ApplicationForm";
 import { JobCard } from "@/components/JobCard";
 import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { getSimilarJobs } from "@/lib/queries";
+import { getAdForSlot, getSimilarJobs } from "@/lib/queries";
 
 export default async function JobDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -33,6 +33,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
 
   const companyColor = job.company.brandColor || job.highlightColor || "#e00909";
   const heroImage = job.detailImageUrl || job.previewImageUrl || "/preview-assets/hero-workers.png";
+  const detailAd = await getAdForSlot("job_detail_sidebar");
 
   return (
     <>
@@ -152,6 +153,14 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
               <Sparkles size={18} />
               <span>V ostré verzi půjde nastavit formulář, telefon, e-mail nebo externí odkaz na kariérní stránku firmy.</span>
             </div>
+            {detailAd && (
+              <a className="detail-ad-card" href={detailAd.targetUrl ?? "#"} target={detailAd.targetUrl ? "_blank" : undefined} rel={detailAd.targetUrl ? "noreferrer" : undefined}>
+                {detailAd.creativeUrl && <img alt={detailAd.name} src={detailAd.creativeUrl} />}
+                <small>Reklamní partner</small>
+                <strong>{detailAd.name}</strong>
+                <span>{detailAd.note ?? detailAd.location}</span>
+              </a>
+            )}
           </aside>
         </section>
       </main>

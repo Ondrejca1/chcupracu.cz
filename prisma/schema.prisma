@@ -244,6 +244,7 @@ model PublicationIssue {
 
 model AdPlacement {
   id             String            @id @default(cuid())
+  placementKey   String            @default("homepage_strip")
   name           String
   location       String
   format         String
@@ -263,4 +264,5 @@ model AdPlacement {
 
   @@index([status, startsAt, endsAt])
   @@index([isFeatured, status])
+  @@index([placementKey, status])
 }

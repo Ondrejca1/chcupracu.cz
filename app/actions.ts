@@ -4,7 +4,7 @@ import { addDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { AdPlacementStatus, JobStatus } from "@prisma/client";
+import { AdPlacementStatus, JobStatus, PaymentStatus } from "@prisma/client";
 import { login, logout, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
@@ -75,7 +75,7 @@ export async function createPublicationIssue(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/jobs");
-  revalidatePath("/admin/ads");
+  revalidatePath("/admin/jalovec");
   revalidatePath("/admin/dashboard");
 }
 
@@ -88,7 +88,7 @@ export async function setCurrentPublicationIssue(formData: FormData) {
   ]);
   revalidatePath("/");
   revalidatePath("/jobs");
-  revalidatePath("/admin/ads");
+  revalidatePath("/admin/jalovec");
   revalidatePath("/admin/dashboard");
 }
 
@@ -97,6 +97,7 @@ export async function createAdPlacement(formData: FormData) {
   const parsed = z
     .object({
       name: required.max(120),
+      placementKey: required.max(80),
       location: required.max(120),
       format: required.max(80),
       clientName: z.string().trim().max(120).optional(),
@@ -117,6 +118,7 @@ export async function createAdPlacement(formData: FormData) {
   await prisma.adPlacement.create({
     data: {
       name: parsed.data.name,
+      placementKey: parsed.data.placementKey,
       location: parsed.data.location,
       format: parsed.data.format,
       clientName: parsed.data.clientName || null,
@@ -342,7 +344,55 @@ export async function createCity(formData: FormData) {
     create: { name: parsed.data.name, slug: slugify(parsed.data.name), region: parsed.data.region || null }
   });
   revalidatePath("/");
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/dictionaries");
+}
+
+const dictionaryType = z.enum(["city", "category", "education", "employmentType", "suitability"]);
+
+export async function createDictionaryItem(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      type: dictionaryType,
+      name: required.max(100),
+      region: z.string().trim().max(80).optional(),
+      sortOrder: z.coerce.number().int().min(0).max(9999).optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const data = { name: parsed.data.name, slug: slugify(parsed.data.name), sortOrder: parsed.data.sortOrder ?? 100, isActive: true };
+  if (parsed.data.type === "city") {
+    await prisma.city.upsert({
+      where: { slug: data.slug },
+      update: { name: data.name, region: parsed.data.region || null, sortOrder: data.sortOrder, isActive: true },
+      create: { ...data, region: parsed.data.region || null }
+    });
+  }
+  if (parsed.data.type === "category") await prisma.category.upsert({ where: { slug: data.slug }, update: data, create: data });
+  if (parsed.data.type === "education") await prisma.education.upsert({ where: { slug: data.slug }, update: data, create: data });
+  if (parsed.data.type === "employmentType") await prisma.employmentType.upsert({ where: { slug: data.slug }, update: data, create: data });
+  if (parsed.data.type === "suitability") await prisma.suitability.upsert({ where: { slug: data.slug }, update: data, create: data });
+
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/dictionaries");
+}
+
+export async function toggleDictionaryItem(formData: FormData) {
+  await requireAdmin();
+  const parsed = z.object({ type: dictionaryType, id: required, isActive: z.string() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const data = { isActive: parsed.data.isActive !== "true" };
+  if (parsed.data.type === "city") await prisma.city.update({ where: { id: parsed.data.id }, data });
+  if (parsed.data.type === "category") await prisma.category.update({ where: { id: parsed.data.id }, data });
+  if (parsed.data.type === "education") await prisma.education.update({ where: { id: parsed.data.id }, data });
+  if (parsed.data.type === "employmentType") await prisma.employmentType.update({ where: { id: parsed.data.id }, data });
+  if (parsed.data.type === "suitability") await prisma.suitability.update({ where: { id: parsed.data.id }, data });
+
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/dictionaries");
 }
 
 export async function toggleCity(formData: FormData) {
@@ -351,7 +401,7 @@ export async function toggleCity(formData: FormData) {
   const isActive = String(formData.get("isActive")) === "true";
   await prisma.city.update({ where: { id }, data: { isActive: !isActive } });
   revalidatePath("/");
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/dictionaries");
 }
 
 export async function createPackage(formData: FormData) {
@@ -361,6 +411,7 @@ export async function createPackage(formData: FormData) {
       name: required.max(80),
       durationDays: z.coerce.number().int().min(1).max(365),
       priceCzk: z.coerce.number().int().min(0),
+      description: z.string().trim().max(500).optional(),
       highlightColor: z.string().optional(),
       isTopPlacement: z.string().optional(),
       topDays: z.coerce.number().int().optional()
@@ -375,10 +426,10 @@ export async function createPackage(formData: FormData) {
       highlightColor: parsed.data.highlightColor || null,
       isTopPlacement: parsed.data.isTopPlacement === "on",
       topDays: parsed.data.topDays || null,
-      description: "Ruční evidence objednávky přes redakci."
+      description: parsed.data.description || "Ruční evidence objednávky přes redakci."
     }
   });
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/packages");
 }
 
 export async function togglePackage(formData: FormData) {
@@ -386,5 +437,47 @@ export async function togglePackage(formData: FormData) {
   const id = String(formData.get("id"));
   const isActive = String(formData.get("isActive")) === "true";
   await prisma.pricingPackage.update({ where: { id }, data: { isActive: !isActive } });
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/packages");
+}
+
+export async function updatePackage(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      id: required,
+      name: required.max(80),
+      durationDays: z.coerce.number().int().min(1).max(365),
+      priceCzk: z.coerce.number().int().min(0),
+      description: z.string().trim().max(500).optional(),
+      highlightColor: z.string().optional(),
+      isTopPlacement: z.string().optional(),
+      topDays: z.coerce.number().int().optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  await prisma.pricingPackage.update({
+    where: { id: parsed.data.id },
+    data: {
+      name: parsed.data.name,
+      durationDays: parsed.data.durationDays,
+      priceCzk: parsed.data.priceCzk,
+      description: parsed.data.description || null,
+      highlightColor: parsed.data.highlightColor || null,
+      isTopPlacement: parsed.data.isTopPlacement === "on",
+      topDays: parsed.data.topDays || null
+    }
+  });
+  revalidatePath("/admin/packages");
+}
+
+export async function updateInvoiceStatus(formData: FormData) {
+  await requireAdmin();
+  const parsed = z.object({ id: required, status: z.nativeEnum(PaymentStatus) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  await prisma.invoice.update({
+    where: { id: parsed.data.id },
+    data: { status: parsed.data.status, paidAt: parsed.data.status === PaymentStatus.PAID ? new Date() : null }
+  });
+  revalidatePath("/admin/finance");
+  revalidatePath("/admin/dashboard");
 }

@@ -18,19 +18,19 @@ const dashboardTiles = [
   {
     title: "Aktuální číslo Jalovce",
     text: "Vyměnit obálku, odkaz a poznámky k právě propagovanému vydání.",
-    href: "/admin/ads#jalovec",
+    href: "/admin/jalovec",
     icon: Newspaper
   },
   {
     title: "Reklamní plocha",
     text: "Zadat partnera, cenu, délku kampaně, dostupné sloty a stav kampaně.",
-    href: "/admin/ads#reklamy",
+    href: "/admin/ads",
     icon: Megaphone
   },
   {
     title: "Číselníky a finance",
     text: "Správa měst, balíčků, faktur a základních ekonomických filtrů.",
-    href: "/admin/settings",
+    href: "/admin/finance",
     icon: CircleDollarSign
   }
 ];
@@ -50,7 +50,10 @@ export default async function AdminDashboardPage() {
     latestApplications,
     latestJobs,
     featuredAds,
-    activeAds
+    activeAds,
+    paidRevenue,
+    monthRevenue,
+    totalViews
   ] = await Promise.all([
     prisma.jobPost.count({ where: { status: JobStatus.ACTIVE } }),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
@@ -69,7 +72,10 @@ export default async function AdminDashboardPage() {
       take: 6
     }),
     getFeaturedAds(4),
-    prisma.adPlacement.count({ where: { status: AdPlacementStatus.ACTIVE } }).catch(() => 0)
+    prisma.adPlacement.count({ where: { status: AdPlacementStatus.ACTIVE } }).catch(() => 0),
+    prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID }, _sum: { amountCzk: true } }),
+    prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID, paidAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } }, _sum: { amountCzk: true } }),
+    prisma.jobPost.aggregate({ _sum: { views: true } })
   ]);
 
   const stats = [
@@ -77,7 +83,9 @@ export default async function AdminDashboardPage() {
     { label: "Končí do 7 dní", value: expiringJobs, hint: "vhodné obnovit nebo topovat", icon: CalendarClock },
     { label: "Nové reakce", value: newApplications, hint: "čekají na zpracování", icon: UsersRound },
     { label: "Nezaplacené faktury", value: money(unpaidInvoices._sum.amountCzk), hint: `${unpaidInvoices._count} položek`, icon: BarChart3 },
-    { label: "Aktivní reklamy", value: activeAds, hint: "běžící reklamní pozice", icon: Megaphone }
+    { label: "Aktivní reklamy", value: activeAds, hint: "běžící reklamní pozice", icon: Megaphone },
+    { label: "Zaplacené celkem", value: money(paidRevenue._sum.amountCzk), hint: `${money(monthRevenue._sum.amountCzk)} tento měsíc`, icon: CircleDollarSign },
+    { label: "Zobrazení inzerátů", value: totalViews._sum.views ?? 0, hint: "součet detailů nabídek", icon: BarChart3 }
   ];
 
   return (
@@ -148,8 +156,8 @@ export default async function AdminDashboardPage() {
         <section className="admin-card">
           <div className="admin-card-head">
             <div>
-              <h2>Jalovec a reklamy</h2>
-              <p>Aktuální vydání a top reklamní pozice.</p>
+              <h2>Jalovec a reklamní pozice</h2>
+              <p>Aktuální vydání a aktivní obchodní sloty.</p>
             </div>
             <Link className="admin-link" href="/admin/ads">Spravovat</Link>
           </div>

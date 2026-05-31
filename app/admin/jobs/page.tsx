@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { JobStatus } from "@prisma/client";
+import { JobStatus, type Prisma } from "@prisma/client";
 import { addDays } from "date-fns";
 import { ArrowUpRight, Eye, Flame, Pencil, Plus, RotateCw } from "lucide-react";
 import { expireJob, renewJob } from "@/app/actions";
@@ -8,13 +8,32 @@ import { dateCs, salaryRange } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export default async function AdminJobsPage() {
+export default async function AdminJobsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; city?: string; top?: string; homepage?: string }> }) {
   await requireAdmin();
+  const params = await searchParams;
   const soon = addDays(new Date(), 7);
-  const [jobs, applications, activeJobs, draftJobs, expiringJobs, topJobs] = await Promise.all([
+  const where: Prisma.JobPostWhereInput = {};
+  const q = params.q?.trim();
+  if (q) {
+    where.OR = [
+      { title: { contains: q, mode: "insensitive" } },
+      { shortIntro: { contains: q, mode: "insensitive" } },
+      { company: { name: { contains: q, mode: "insensitive" } } }
+    ];
+  }
+  if (params.status && Object.values(JobStatus).includes(params.status as JobStatus)) where.status = params.status as JobStatus;
+  if (params.city) where.cityId = params.city;
+  if (params.top === "yes") where.isTop = true;
+  if (params.top === "no") where.isTop = false;
+  if (params.homepage === "yes") where.showOnHomepage = true;
+  if (params.homepage === "no") where.showOnHomepage = false;
+
+  const [jobs, applications, activeJobs, draftJobs, expiringJobs, topJobs, cities, totalMatches] = await Promise.all([
     prisma.jobPost.findMany({
+      where,
       include: { company: true, city: true, applications: true, package: true },
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }]
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 100
     }),
     prisma.application.findMany({
       include: { job: { include: { company: true } } },
@@ -24,7 +43,9 @@ export default async function AdminJobsPage() {
     prisma.jobPost.count({ where: { status: JobStatus.ACTIVE } }),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
     prisma.jobPost.count({ where: { status: JobStatus.ACTIVE, activeUntil: { lte: soon } } }),
-    prisma.jobPost.count({ where: { isTop: true, status: JobStatus.ACTIVE } })
+    prisma.jobPost.count({ where: { isTop: true, status: JobStatus.ACTIVE } }),
+    prisma.city.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
+    prisma.jobPost.count({ where })
   ]);
 
   return (
@@ -45,6 +66,38 @@ export default async function AdminJobsPage() {
         <article className="admin-stat"><span>Koncepty</span><strong>{draftJobs}</strong><small>čekají na doplnění</small></article>
         <article className="admin-stat"><span>Končí brzy</span><strong>{expiringJobs}</strong><small>do 7 dní</small></article>
         <article className="admin-stat"><span>Topované</span><strong>{topJobs}</strong><small>zvýrazněné nabídky</small></article>
+      </section>
+
+      <section className="admin-card">
+        <div className="admin-card-head">
+          <div>
+            <h2>Filtry</h2>
+            <p>Zobrazeno {jobs.length} z {totalMatches} nalezených inzerátů. Přehled je omezený na prvních 100 položek.</p>
+          </div>
+        </div>
+        <form className="admin-filter-bar">
+          <input className="field" name="q" placeholder="Název, firma nebo text" defaultValue={params.q ?? ""} />
+          <select className="select" name="status" defaultValue={params.status ?? ""}>
+            <option value="">Všechny stavy</option>
+            {Object.values(JobStatus).map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+          <select className="select" name="city" defaultValue={params.city ?? ""}>
+            <option value="">Všechna města</option>
+            {cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}
+          </select>
+          <select className="select" name="top" defaultValue={params.top ?? ""}>
+            <option value="">Topování nerozhoduje</option>
+            <option value="yes">Jen topované</option>
+            <option value="no">Bez topování</option>
+          </select>
+          <select className="select" name="homepage" defaultValue={params.homepage ?? ""}>
+            <option value="">Homepage nerozhoduje</option>
+            <option value="yes">Zobrazené na homepage</option>
+            <option value="no">Skryté z homepage</option>
+          </select>
+          <button className="button" type="submit">Filtrovat</button>
+          <Link className="button secondary" href="/admin/jobs">Vyčistit</Link>
+        </form>
       </section>
 
       <section className="admin-card">

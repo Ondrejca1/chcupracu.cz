@@ -3,7 +3,7 @@ import { ArrowRight, Building2, Newspaper, Sparkles } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
 import { money } from "@/lib/format";
-import { getCurrentIssue, getFeaturedAds, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { getAdForSlot, getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 type HomepageJob = Awaited<ReturnType<typeof searchJobs>>[number];
 
@@ -30,12 +30,13 @@ function arrangeHomepageJobs(jobs: HomepageJob[]) {
 
 export default async function Home({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions, currentIssue, featuredAds] = await Promise.all([
+  const [filters, jobs, suggestions, currentIssue, homepageAd, sidebarAd] = await Promise.all([
     getFilters(),
     searchJobs(params, 80, { homepageOnly: true }),
     getSearchSuggestions(),
     getCurrentIssue(),
-    getFeaturedAds(3)
+    getAdForSlot("homepage_strip"),
+    getAdForSlot("sidebar_box")
   ]);
   const homepageJobs = arrangeHomepageJobs(jobs);
   const issue = currentIssue ?? {
@@ -116,17 +117,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
               <span>{issue.note ?? "Redakční prostor pro aktuální vydání nebo partnera týdne."}</span>
             </div>
           </a>
-          {(featuredAds.length > 0 ? featuredAds : [
-            { id: "fallback-1", name: "Partner týdne", location: "Hlavní reklamní pozice", priceCzk: 4900, durationDays: 7 },
-            { id: "fallback-2", name: "Práce na Vsetíně", location: "Top lokalita", priceCzk: 2900, durationDays: 14 },
-            { id: "fallback-3", name: "Výroba a řemesla", location: "Top obor", priceCzk: 1900, durationDays: 14 }
-          ]).slice(0, 3).map((ad) => (
-            <div className="commercial-slot" key={ad.id}>
-              <small>{ad.location}</small>
-              <strong>{ad.name}</strong>
-              <span>{money(ad.priceCzk)} / {ad.durationDays} dní</span>
-            </div>
-          ))}
+          <a className="commercial-slot" href={homepageAd?.targetUrl ?? "/jobs"} target={homepageAd?.targetUrl ? "_blank" : undefined} rel={homepageAd?.targetUrl ? "noreferrer" : undefined}>
+            <small>{homepageAd?.location ?? "Hlavní reklamní pozice"}</small>
+            <strong>{homepageAd?.name ?? "Partner týdne: volná pozice"}</strong>
+            <span>{homepageAd ? `${money(homepageAd.priceCzk)} / ${homepageAd.durationDays} dní` : "Volná pozice pro lokální náborovou kampaň"}</span>
+          </a>
+          <div className="commercial-slot">
+            <small>Top lokalita</small>
+            <strong>Práce na Vsetíně</strong>
+            <span>Prodejní pozice pro místní zaměstnavatele</span>
+          </div>
+          <div className="commercial-slot">
+            <small>Top obor</small>
+            <strong>Výroba a řemesla</strong>
+            <span>Tematický blok pro sezónní kampaně</span>
+          </div>
         </div>
       </section>
 
@@ -170,11 +175,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
         <div className="container grid" id="nabidky">
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
-            <a className="side-ad jalovec-issue" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-              <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
+            <a className="side-ad jalovec-issue" href={sidebarAd?.targetUrl ?? issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+              <img alt={sidebarAd?.name ?? "Aktuální vydání týdeníku Jalovec"} src={sidebarAd?.creativeUrl ?? issue.coverImageUrl} />
               <Newspaper size={24} />
-              <strong>{issue.title}</strong>
-              <p>{issue.note ?? "Konkrétní reklamní blok pro týdeník, který může redakce pravidelně měnit."}</p>
+              <strong>{sidebarAd?.name ?? issue.title}</strong>
+              <p>{sidebarAd?.note ?? issue.note ?? "Konkrétní reklamní blok pro týdeník, který může redakce pravidelně měnit."}</p>
             </a>
           </aside>
           <section>

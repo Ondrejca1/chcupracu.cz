@@ -46,70 +46,129 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
       </div>
       {job && <input name="id" type="hidden" value={job.id} />}
       <div className="admin-form-section full">Základ nabídky</div>
-      <input className="field" name="title" placeholder="Název pozice" required defaultValue={job?.title ?? ""} />
-      <input className="field" name="companyName" placeholder="Firma" required defaultValue={job?.company.name ?? ""} />
-      <select className="select" name="cityId" required defaultValue={job?.cityId}>
-        {filters.cities.map((city) => (
-          <option key={city.id} value={city.id}>
-            {city.name}
-          </option>
-        ))}
-      </select>
-      <select className="select" name="categoryId" required defaultValue={job?.categoryId}>
-        {filters.categories.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.name}
-          </option>
-        ))}
-      </select>
-      <select className="select" name="educationId" defaultValue={job?.educationId ?? ""}>
-        <option value="">Bez požadavku</option>
-        {filters.educations.map((education) => (
-          <option key={education.id} value={education.id}>
-            {education.name}
-          </option>
-        ))}
-      </select>
-      <select className="select" name="employmentTypeId" required defaultValue={job?.employmentTypeId}>
-        {filters.employmentTypes.map((type) => (
-          <option key={type.id} value={type.id}>
-            {type.name}
-          </option>
-        ))}
-      </select>
+      <label className="field-group">
+        <span>Název pozice</span>
+        <input className="field" name="title" placeholder="např. Obchodní zástupce pro Vsetínsko" required defaultValue={job?.title ?? ""} />
+        <small>Pište konkrétní název, podle kterého budou lidé nabídku hledat.</small>
+      </label>
+      <label className="field-group">
+        <span>Firma</span>
+        <input className="field" name="companyName" placeholder="Název zaměstnavatele" required defaultValue={job?.company.name ?? ""} />
+        <small>Firma se použije i pro filtrování a veřejné zobrazení.</small>
+      </label>
+      <label className="field-group">
+        <span>Město</span>
+        <select className="select" name="cityId" required defaultValue={job?.cityId}>
+          {filters.cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}
+        </select>
+      </label>
+      <label className="field-group">
+        <span>Obor</span>
+        <select className="select" name="categoryId" required defaultValue={job?.categoryId}>
+          {filters.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+        </select>
+      </label>
+      <label className="field-group">
+        <span>Vzdělání</span>
+        <select className="select" name="educationId" defaultValue={job?.educationId ?? ""}>
+          <option value="">Bez požadavku</option>
+          {filters.educations.map((education) => <option key={education.id} value={education.id}>{education.name}</option>)}
+        </select>
+        <small>Pokud není nutné, nechte bez požadavku.</small>
+      </label>
+      <label className="field-group">
+        <span>Úvazek</span>
+        <select className="select" name="employmentTypeId" required defaultValue={job?.employmentTypeId}>
+          {filters.employmentTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+        </select>
+      </label>
       <div className="admin-form-section full">Publikace a obchod</div>
-      <select className="select" name="packageId" defaultValue={job?.packageId ?? ""}>
-        <option value="">Bez balíčku</option>
-        {packages.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.name} / {item.durationDays} dní{item.isTopPlacement ? ` / TOP ${item.topDays ?? ""} dní` : ""}
-          </option>
-        ))}
-      </select>
-      <select className="select" name="status" defaultValue={job?.status ?? JobStatus.ACTIVE}>
-        <option value={JobStatus.ACTIVE}>Publikovat</option>
-        <option value={JobStatus.DRAFT}>Uložit jako koncept</option>
-      </select>
-      <input className="field" min="1" name="durationDays" placeholder="Aktivní dní" required type="number" defaultValue={30} />
-      <input className="field" min="0" name="topDays" placeholder="Topovat dní" type="number" defaultValue={job?.isTop ? 14 : 0} />
-      <input className="field" name="highlightColor" placeholder="Barva nabídky, např. #fff7ed" defaultValue={job?.highlightColor ?? ""} />
-      <div className="admin-form-section full">Média a kontakt</div>
-      <input className="field" name="previewImageUrl" placeholder="URL fotky do výpisu" defaultValue={job?.previewImageUrl ?? ""} />
-      <input className="field" name="detailImageUrl" placeholder="URL hlavní fotky detailu" defaultValue={job?.detailImageUrl ?? ""} />
-      <input className="field" name="flyerUrl" placeholder="URL letáku / PDF kampaně" defaultValue={job?.flyerUrl ?? ""} />
-      <input className="field" min="0" name="salaryMinCzk" placeholder="Mzda od" type="number" defaultValue={job?.salaryMinCzk ?? ""} />
-      <input className="field" min="0" name="salaryMaxCzk" placeholder="Mzda do" type="number" defaultValue={job?.salaryMaxCzk ?? ""} />
-      <input className="field" name="contactEmail" placeholder="Kontaktní e-mail" type="email" defaultValue={job?.contactEmail ?? ""} />
-      <input className="field" name="contactPhone" placeholder="Kontaktní telefon" defaultValue={job?.contactPhone ?? ""} />
+      <label className="field-group">
+        <span>Balíček</span>
+        <select className="select" name="packageId" defaultValue={job?.packageId ?? ""}>
+          <option value="">Bez balíčku</option>
+          {packages.map((item) => (
+            <option key={item.id} value={item.id}>{item.name} / {item.durationDays} dní{item.isTopPlacement ? ` / TOP ${item.topDays ?? ""} dní` : ""}</option>
+          ))}
+        </select>
+        <small>Balíček může předvyplnit cenu, délku topování a zvýraznění.</small>
+      </label>
+      <label className="field-group">
+        <span>Stav publikace</span>
+        <select className="select" name="status" defaultValue={job?.status ?? JobStatus.ACTIVE}>
+          <option value={JobStatus.ACTIVE}>Publikovat</option>
+          <option value={JobStatus.DRAFT}>Uložit jako koncept</option>
+        </select>
+        <small>Koncept není vidět na veřejném webu.</small>
+      </label>
+      <label className="field-group">
+        <span>Aktivní dní</span>
+        <input className="field" min="1" name="durationDays" required type="number" defaultValue={30} />
+      </label>
+      <label className="field-group">
+        <span>Topovat dní</span>
+        <input className="field" min="0" name="topDays" type="number" defaultValue={job?.isTop ? 14 : 0} />
+      </label>
+      <label className="field-group full">
+        <span>Barva zvýraznění</span>
+        <input className="field" name="highlightColor" placeholder="#fff7ed" defaultValue={job?.highlightColor ?? ""} />
+        <small>Jemná barva pozadí karty. Nechte prázdné pro standardní vzhled.</small>
+      </label>
+      <div className="admin-form-section full">Média, mzda a kontakt</div>
+      <label className="field-group">
+        <span>Fotka do výpisu</span>
+        <input className="field" name="previewImageUrl" placeholder="/ads/fotka.jpg nebo URL" defaultValue={job?.previewImageUrl ?? ""} />
+        <small>Nahrávání souborů doplníme později, zatím cesta nebo externí URL.</small>
+      </label>
+      <label className="field-group">
+        <span>Hlavní fotka detailu</span>
+        <input className="field" name="detailImageUrl" placeholder="/ads/detail.jpg nebo URL" defaultValue={job?.detailImageUrl ?? ""} />
+      </label>
+      <label className="field-group">
+        <span>Leták / PDF</span>
+        <input className="field" name="flyerUrl" placeholder="/ads/letak.pdf nebo URL" defaultValue={job?.flyerUrl ?? ""} />
+      </label>
+      <label className="field-group">
+        <span>Mzda od</span>
+        <input className="field" min="0" name="salaryMinCzk" type="number" defaultValue={job?.salaryMinCzk ?? ""} />
+      </label>
+      <label className="field-group">
+        <span>Mzda do</span>
+        <input className="field" min="0" name="salaryMaxCzk" type="number" defaultValue={job?.salaryMaxCzk ?? ""} />
+      </label>
+      <label className="field-group">
+        <span>Kontaktní e-mail</span>
+        <input className="field" name="contactEmail" placeholder="personalni@firma.cz" type="email" defaultValue={job?.contactEmail ?? ""} />
+      </label>
+      <label className="field-group">
+        <span>Telefon</span>
+        <input className="field" name="contactPhone" placeholder="+420..." defaultValue={job?.contactPhone ?? ""} />
+      </label>
       <div className="admin-form-section full">Zobrazení</div>
-      <label className="tag"><input name="showImageInList" type="checkbox" defaultChecked={job?.showImageInList ?? false} /> Zobrazit fotku ve výpisu</label>
-      <label className="tag"><input name="showSalaryInPreview" type="checkbox" defaultChecked={job?.showSalaryInPreview ?? true} /> Zobrazit mzdu v náhledu</label>
-      <label className="tag"><input name="showOnHomepage" type="checkbox" defaultChecked={job?.showOnHomepage ?? true} /> Zobrazit na hlavní straně</label>
+      <label className="admin-check"><input name="showImageInList" type="checkbox" defaultChecked={job?.showImageInList ?? false} /> Fotka ve výpisu</label>
+      <label className="admin-check"><input name="showSalaryInPreview" type="checkbox" defaultChecked={job?.showSalaryInPreview ?? true} /> Mzda v náhledu</label>
+      <label className="admin-check"><input name="showOnHomepage" type="checkbox" defaultChecked={job?.showOnHomepage ?? true} /> Homepage</label>
       <div className="admin-form-section full">Obsah inzerátu</div>
-      <textarea className="textarea full" name="shortIntro" placeholder="Krátký úvod inzerátu" required defaultValue={job?.shortIntro ?? ""} />
-      <textarea className="textarea full" name="description" placeholder="Náplň práce" required defaultValue={job?.description ?? ""} />
-      <textarea className="textarea full" name="requirements" placeholder="Požadavky" defaultValue={job?.requirements ?? ""} />
-      <textarea className="textarea full" name="benefits" placeholder="Benefity" defaultValue={job?.benefits ?? ""} />
+      <label className="field-group full">
+        <span>Krátký úvod</span>
+        <textarea className="textarea textarea-short" name="shortIntro" placeholder="Jedna až dvě věty, které se zobrazí ve výpisu." required defaultValue={job?.shortIntro ?? ""} />
+        <small>Maximálně stručně: komu je nabídka určená a proč má člověk rozkliknout detail.</small>
+      </label>
+      <label className="field-group full">
+        <span>Hlavní popis inzerátu</span>
+        <textarea className="textarea textarea-large" name="description" placeholder="Popište práci jako souvislý text. Můžete použít odstavce." required defaultValue={job?.description ?? ""} />
+        <small>Sem patří náplň práce, prostředí, směny a vše důležité pro rozhodnutí uchazeče.</small>
+      </label>
+      <div className="content-two-col full">
+        <label className="field-group">
+          <span>Požadavky</span>
+          <textarea className="textarea" name="requirements" placeholder="Praxe, vzdělání, řidičský průkaz, dovednosti." defaultValue={job?.requirements ?? ""} />
+        </label>
+        <label className="field-group">
+          <span>Benefity</span>
+          <textarea className="textarea" name="benefits" placeholder="Mzda, stravenky, dovolená, směny, příspěvky." defaultValue={job?.benefits ?? ""} />
+        </label>
+      </div>
       <div className="full">
         <strong>Vhodné pro</strong>
         <div className="meta" style={{ marginTop: 8 }}>

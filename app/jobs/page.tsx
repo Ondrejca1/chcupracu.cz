@@ -2,11 +2,18 @@ import Link from "next/link";
 import { Newspaper, Search } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
-import { getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { getAdForSlot, getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions, currentIssue] = await Promise.all([getFilters(), searchJobs(params, 80), getSearchSuggestions(), getCurrentIssue()]);
+  const [filters, jobs, suggestions, currentIssue, topAd, sidebarAd] = await Promise.all([
+    getFilters(),
+    searchJobs(params, 80),
+    getSearchSuggestions(),
+    getCurrentIssue(),
+    getAdForSlot("jobs_top_strip"),
+    getAdForSlot("sidebar_box")
+  ]);
   const issue = currentIssue ?? {
     title: "Aktuální vydání Jalovce",
     coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
@@ -43,12 +50,12 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
 
       <section className="commercial-band search-ad-band">
         <div className="container">
-          <a className="commercial-slot issue-slot issue-slot-wide" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-            <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
+          <a className="commercial-slot issue-slot issue-slot-wide" href={topAd?.targetUrl ?? issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+            <img alt={topAd?.name ?? "Aktuální vydání týdeníku Jalovec"} src={topAd?.creativeUrl ?? issue.coverImageUrl} />
             <div>
-              <small>Aktuální vydání Jalovce</small>
-              <strong>{issue.title}</strong>
-              <span>{issue.note ?? "Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň."}</span>
+              <small>{topAd ? "Reklamní partner" : "Aktuální vydání Jalovce"}</small>
+              <strong>{topAd?.name ?? issue.title}</strong>
+              <span>{topAd?.note ?? issue.note ?? "Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň."}</span>
             </div>
           </a>
         </div>
@@ -58,11 +65,11 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         <div className="container grid">
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
-            <a className="side-ad jalovec-issue" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-              <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
+            <a className="side-ad jalovec-issue" href={sidebarAd?.targetUrl ?? issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
+              <img alt={sidebarAd?.name ?? "Aktuální vydání týdeníku Jalovec"} src={sidebarAd?.creativeUrl ?? issue.coverImageUrl} />
               <Newspaper size={24} />
-              <strong>{issue.title}</strong>
-              <p>{issue.note ?? "Boční pozice pro týdeník, lokální firmu nebo sezónní náborovou kampaň."}</p>
+              <strong>{sidebarAd?.name ?? issue.title}</strong>
+              <p>{sidebarAd?.note ?? issue.note ?? "Boční pozice pro týdeník, lokální firmu nebo sezónní náborovou kampaň."}</p>
             </a>
           </aside>
           <section>
