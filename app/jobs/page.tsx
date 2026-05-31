@@ -35,6 +35,19 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         </div>
       </section>
 
+      <section className="commercial-band search-ad-band">
+        <div className="container">
+          <a className="commercial-slot issue-slot issue-slot-wide" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
+            <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
+            <div>
+              <small>Aktuální vydání Jalovce</small>
+              <strong>Viditelný reklamní pruh nad výsledky hledání</strong>
+              <span>Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň.</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
       <main className="section">
         <div className="container grid">
           <aside className="filter-column">

@@ -95,6 +95,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
 
       <section className="commercial-band">
         <div className="container commercial-grid">
+          <a className="commercial-slot issue-slot" href="https://www.jalovec.cz" target="_blank" rel="noreferrer">
+            <img alt="Aktuální vydání týdeníku Jalovec" src="/ads/jalovec-aktualni-vydani.jpg" />
+            <div>
+              <small>Aktuální vydání Jalovce</small>
+              <strong>Týdeník Jalovec plus Sport Jalovec</strong>
+              <span>Ukázka velkého reklamního prostoru pro redakci nebo partnera týdne.</span>
+            </div>
+          </a>
           <div className="commercial-slot">
             <small>Hlavní reklamní pozice</small>
             <strong>Partner týdne: Valašské stavby nabírají</strong>

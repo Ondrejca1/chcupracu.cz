@@ -131,7 +131,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
                   <h2>Další práce, které dávají smysl</h2>
                 </div>
               </div>
-              <Suspense fallback={<div className="similar-loading">Načítám podobné nabídky...</div>}>
+              <Suspense fallback={null}>
                 <SimilarJobs job={{ id: job.id, cityId: job.cityId, categoryId: job.categoryId }} />
               </Suspense>
             </section>
