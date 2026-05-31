@@ -6,22 +6,23 @@ import { prisma } from "@/lib/prisma";
 
 const COOKIE = "chcupracu_admin";
 type SessionSecretError = "config_missing" | "config_short";
+type SessionSecretResult = { ok: true; secret: string } | { ok: false; reason: SessionSecretError };
 export type LoginResult = { ok: true } | { ok: false; reason: "invalid" | SessionSecretError };
 
-function getSessionSecret() {
+function getSessionSecret(): SessionSecretResult {
   const rawSecret = process.env.SESSION_SECRET;
   if (!rawSecret) {
     console.error("SESSION_SECRET is missing.");
-    return { ok: false, reason: "config_missing" as const };
+    return { ok: false, reason: "config_missing" };
   }
 
   const secret = rawSecret.trim();
   if (secret.length < 32) {
     console.error(`SESSION_SECRET must have at least 32 characters. Current length: ${secret.length}.`);
-    return { ok: false, reason: "config_short" as const };
+    return { ok: false, reason: "config_short" };
   }
 
-  return { ok: true, secret } as const;
+  return { ok: true, secret };
 }
 
 function signSession(id: string, expires: number, secret: string) {
