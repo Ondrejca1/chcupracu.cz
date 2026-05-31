@@ -15,8 +15,16 @@ const email = z.string().trim().email("Neplatný e-mail");
 export async function adminLogin(_: unknown, formData: FormData) {
   const parsed = z.object({ email, password: required }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, message: "Vyplňte prosím e-mail a heslo." };
-  const ok = await login(parsed.data.email, parsed.data.password);
-  if (!ok) return { ok: false, message: "Přihlášení se nepovedlo." };
+  const result = await login(parsed.data.email, parsed.data.password);
+  if (!result.ok) {
+    return {
+      ok: false,
+      message:
+        result.reason === "config"
+          ? "Administrace není dokončená. Zkontrolujte prosím SESSION_SECRET na Vercelu."
+          : "Přihlášení se nepovedlo."
+    };
+  }
   redirect("/admin/jobs");
 }
 
