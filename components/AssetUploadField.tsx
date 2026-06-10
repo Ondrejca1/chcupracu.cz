@@ -44,7 +44,7 @@ export function AssetUploadField({
             startTransition(async () => {
               const result = await uploadAdminAsset(formData);
               setMessage(result.message);
-              if (result.ok) setValue(result.url);
+              if (result.ok) setValue(result.url ?? "");
             });
           }}
           type="button"
