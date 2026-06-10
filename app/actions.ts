@@ -882,11 +882,14 @@ export async function upsertJob(formData: FormData) {
 export async function renewJob(formData: FormData) {
   await requirePermission("jobs:write");
   const id = String(formData.get("id"));
-  const days = Number(formData.get("days") ?? 30);
-  const topDays = Number(formData.get("topDays") ?? 0);
-  const highlightColor = String(formData.get("highlightColor") ?? "");
+  const packageId = String(formData.get("packageId") ?? "");
+  const selectedPackage = packageId ? await prisma.pricingPackage.findUnique({ where: { id: packageId } }) : null;
+  const days = selectedPackage?.durationDays ?? Number(formData.get("days") ?? 30);
+  const topDays = selectedPackage?.isTopPlacement ? selectedPackage.topDays ?? 0 : Number(formData.get("topDays") ?? 0);
+  const highlightColor = selectedPackage?.highlightColor ?? String(formData.get("highlightColor") ?? "");
   const job = await prisma.jobPost.update({
     where: { id },
+    include: { company: true },
     data: {
       status: JobStatus.ACTIVE,
       activeFrom: new Date(),
@@ -894,9 +897,22 @@ export async function renewJob(formData: FormData) {
       renewedAt: new Date(),
       isTop: topDays > 0,
       topUntil: topDays > 0 ? addDays(new Date(), Math.min(Math.max(topDays, 1), 365)) : null,
-      highlightColor: highlightColor || null
+      highlightColor: highlightColor || null,
+      packageId: selectedPackage?.id ?? undefined
     }
   });
+  if (selectedPackage) {
+    await prisma.invoice.create({
+      data: {
+        companyId: job.companyId,
+        jobId: job.id,
+        packageId: selectedPackage.id,
+        amountCzk: selectedPackage.priceCzk,
+        status: PaymentStatus.UNPAID,
+        note: "Obnova inzerátu podle vybraného balíčku."
+      }
+    });
+  }
   await logAdminActivity("renew", "jobPost", job.id, `Obnoven/topován inzerát ${job.title}.`);
   revalidatePath("/");
   revalidatePath("/jobs");
