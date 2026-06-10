@@ -1,6 +1,8 @@
 import { BookOpen, CheckCircle2, ExternalLink, Newspaper } from "lucide-react";
 import { createPublicationIssue, setCurrentPublicationIssue } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
+import { AssetUploadField } from "@/components/AssetUploadField";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -79,11 +81,13 @@ export default async function AdminJalovecPage() {
               <input className="field" name="issueNumber" placeholder="např. 23/2026" />
               <small>Interní orientace pro redakci.</small>
             </label>
-            <label className="field-group">
-              <span>Obálka</span>
-              <input className="field" name="coverImageUrl" placeholder="/ads/jalovec-aktualni-vydani.jpg" />
-              <small>Upload zatím řešíme později, tady patří cesta nebo URL obrázku.</small>
-            </label>
+            <AssetUploadField
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              help="Obálku můžete nahrát přímo, případně ponechat externí URL."
+              label="Obálka"
+              name="coverImageUrl"
+              placeholder="/uploads/admin/jalovec.jpg nebo URL"
+            />
             <label className="field-group">
               <span>Cílový odkaz</span>
               <input className="field" name="targetUrl" placeholder="https://www.jalovec.cz" type="url" />
@@ -130,7 +134,9 @@ export default async function AdminJalovecPage() {
               ) : (
                 <form action={setCurrentPublicationIssue}>
                   <input name="id" type="hidden" value={issue.id} />
-                  <button className="admin-mini-button" type="submit">Nastavit jako aktuální</button>
+                  <ConfirmSubmitButton className="admin-mini-button" message={`Nastavit „${issue.title}“ jako aktuální vydání na webu?`}>
+                    Nastavit jako aktuální
+                  </ConfirmSubmitButton>
                 </form>
               )}
             </div>

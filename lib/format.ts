@@ -1,5 +1,5 @@
 export function money(value?: number | null) {
-  if (!value) return "dohodou";
+  if (value == null) return "dohodou";
   return new Intl.NumberFormat("cs-CZ", {
     style: "currency",
     currency: "CZK",
@@ -17,4 +17,15 @@ export function salaryRange(min?: number | null, max?: number | null) {
 export function dateCs(date?: Date | null) {
   if (!date) return "-";
   return new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "long", year: "numeric" }).format(date);
+}
+
+export function dateTimeCs(date?: Date | null) {
+  if (!date) return "-";
+  return new Intl.DateTimeFormat("cs-CZ", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }

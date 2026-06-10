@@ -190,6 +190,7 @@ model Application {
   consentGdpr Boolean
   ipHash      String?
   status      ApplicationStatus @default(NEW)
+  internalNote String?
   job         JobPost           @relation(fields: [jobId], references: [id], onDelete: Cascade)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -224,6 +225,20 @@ model AdminUser {
   name         String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actorEmail  String?
+  action      String
+  entityType  String
+  entityId    String?
+  summary     String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
 }
 
 model PublicationIssue {

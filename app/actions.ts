@@ -1,10 +1,12 @@
 "use server";
 
 import { addDays } from "date-fns";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { AdPlacementStatus, JobStatus, PaymentStatus } from "@prisma/client";
+import { AdPlacementStatus, ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
 import { login, logout, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
@@ -17,6 +19,22 @@ const optionalAssetUrl = z
   .refine((value) => !value || value.startsWith("/") || URL.canParse(value), "Neplatná URL")
   .optional()
   .or(z.literal(""));
+
+async function logAdminActivity(action: string, entityType: string, entityId: string | null, summary: string) {
+  const admin = await requireAdmin();
+  await prisma.activityLog.create({
+    data: {
+      actorId: admin.id,
+      actorEmail: admin.email,
+      action,
+      entityType,
+      entityId,
+      summary
+    }
+  }).catch((error) => {
+    console.error("Unable to write activity log.", error);
+  });
+}
 
 export async function adminLogin(_: unknown, formData: FormData) {
   const parsed = z.object({ email, password: required }).safeParse(Object.fromEntries(formData));
@@ -41,6 +59,35 @@ export async function adminLogout() {
   redirect("/admin");
 }
 
+export async function uploadAdminAsset(formData: FormData) {
+  await requireAdmin();
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, message: "Soubor se nepodařilo načíst." };
+  if (file.size === 0) return { ok: false, message: "Soubor je prázdný." };
+  if (file.size > 5 * 1024 * 1024) return { ok: false, message: "Soubor může mít maximálně 5 MB." };
+
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]);
+  if (!allowedTypes.has(file.type)) return { ok: false, message: "Povoleny jsou obrázky JPG, PNG, WebP, GIF nebo PDF." };
+
+  const extensionByType: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "application/pdf": "pdf"
+  };
+  const originalName = file.name.replace(/\.[^.]+$/, "");
+  const safeName = slugify(originalName || "soubor").slice(0, 70) || "soubor";
+  const extension = extensionByType[file.type] ?? "bin";
+  const directory = path.join(process.cwd(), "public", "uploads", "admin");
+  await mkdir(directory, { recursive: true });
+  const filename = `${safeName}-${Date.now().toString(36)}.${extension}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+  await writeFile(path.join(directory, filename), bytes);
+
+  return { ok: true, message: "Soubor byl nahrán.", url: `/uploads/admin/${filename}` };
+}
+
 export async function createPublicationIssue(formData: FormData) {
   await requireAdmin();
   const parsed = z
@@ -60,7 +107,7 @@ export async function createPublicationIssue(formData: FormData) {
   const isCurrent = parsed.data.isCurrent === "on";
   if (isCurrent) await prisma.publicationIssue.updateMany({ data: { isCurrent: false } });
 
-  await prisma.publicationIssue.create({
+  const issue = await prisma.publicationIssue.create({
     data: {
       title: parsed.data.title,
       issueNumber: parsed.data.issueNumber || null,
@@ -72,6 +119,7 @@ export async function createPublicationIssue(formData: FormData) {
       note: parsed.data.note || null
     }
   });
+  await logAdminActivity("create", "publicationIssue", issue.id, `Přidáno vydání ${issue.title}.`);
 
   revalidatePath("/");
   revalidatePath("/jobs");
@@ -86,6 +134,7 @@ export async function setCurrentPublicationIssue(formData: FormData) {
     prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
     prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
   ]);
+  await logAdminActivity("setCurrent", "publicationIssue", id, "Změněno aktuální vydání Jalovce.");
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/jalovec");
@@ -119,7 +168,7 @@ export async function createAdPlacement(formData: FormData) {
   const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : addDays(startsAt, parsed.data.durationDays);
 
   try {
-    await prisma.adPlacement.create({
+    const ad = await prisma.adPlacement.create({
       data: {
         name: parsed.data.name,
         placementKey: parsed.data.placementKey,
@@ -138,6 +187,7 @@ export async function createAdPlacement(formData: FormData) {
         note: parsed.data.note || null
       }
     });
+    await logAdminActivity("create", "adPlacement", ad.id, `Vytvořena reklamní kampaň ${ad.name}.`);
   } catch (error) {
     console.error("Unable to create ad placement.", error);
     return;
@@ -153,9 +203,11 @@ export async function updateAdPlacementStatus(formData: FormData) {
   await requireAdmin();
   const parsed = z.object({ id: required, status: z.nativeEnum(AdPlacementStatus) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
-  await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } }).catch((error) => {
+  const ad = await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } }).catch((error) => {
     console.error("Unable to update ad placement status.", error);
+    return null;
   });
+  if (ad) await logAdminActivity("status", "adPlacement", ad.id, `Reklama ${ad.name} změněna na ${ad.status}.`);
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/ads");
@@ -196,7 +248,35 @@ export async function createApplication(_: unknown, formData: FormData) {
   });
 
   revalidatePath(`/jobs/${parsed.data.slug}`);
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/applications");
   return { ok: true, message: "Odpověď jsme uložili. Redakce ji předá zaměstnavateli." };
+}
+
+export async function updateApplication(formData: FormData) {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      id: required,
+      status: z.nativeEnum(ApplicationStatus),
+      internalNote: z.string().trim().max(1200).optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const application = await prisma.application.update({
+    where: { id: parsed.data.id },
+    include: { job: true },
+    data: {
+      status: parsed.data.status,
+      internalNote: parsed.data.internalNote || null
+    }
+  });
+  await logAdminActivity("status", "application", application.id, `Reakce ${application.name} u inzerátu ${application.job.title} změněna na ${application.status}.`);
+
+  revalidatePath("/admin/applications");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/jobs");
 }
 
 export async function upsertJob(formData: FormData) {
@@ -283,9 +363,11 @@ export async function upsertJob(formData: FormData) {
   if (parsed.data.id) {
     await prisma.jobPost.update({ where: { id: parsed.data.id }, data });
     await prisma.jobSuitability.deleteMany({ where: { jobId: parsed.data.id } });
+    await logAdminActivity("update", "jobPost", parsed.data.id, `Upraven inzerát ${parsed.data.title}.`);
   } else {
     const job = await prisma.jobPost.create({ data: { ...data, slug: `${baseSlug}-${Date.now().toString(36)}` } });
     jobId = job.id;
+    await logAdminActivity("create", "jobPost", job.id, `Vytvořen inzerát ${job.title}.`);
     if (parsed.data.packageId) {
       if (selectedPackage) {
         await prisma.invoice.create({
@@ -320,7 +402,7 @@ export async function renewJob(formData: FormData) {
   const days = Number(formData.get("days") ?? 30);
   const topDays = Number(formData.get("topDays") ?? 0);
   const highlightColor = String(formData.get("highlightColor") ?? "");
-  await prisma.jobPost.update({
+  const job = await prisma.jobPost.update({
     where: { id },
     data: {
       status: JobStatus.ACTIVE,
@@ -332,16 +414,20 @@ export async function renewJob(formData: FormData) {
       highlightColor: highlightColor || null
     }
   });
+  await logAdminActivity("renew", "jobPost", job.id, `Obnoven/topován inzerát ${job.title}.`);
   revalidatePath("/");
   revalidatePath("/admin/jobs");
+  revalidatePath("/admin/dashboard");
 }
 
 export async function expireJob(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  await prisma.jobPost.update({ where: { id }, data: { status: JobStatus.EXPIRED, activeUntil: new Date() } });
+  const job = await prisma.jobPost.update({ where: { id }, data: { status: JobStatus.EXPIRED, activeUntil: new Date() } });
+  await logAdminActivity("expire", "jobPost", job.id, `Skryt inzerát ${job.title}.`);
   revalidatePath("/");
   revalidatePath("/admin/jobs");
+  revalidatePath("/admin/dashboard");
 }
 
 export async function createCity(formData: FormData) {
@@ -518,10 +604,12 @@ export async function updateInvoiceStatus(formData: FormData) {
   await requireAdmin();
   const parsed = z.object({ id: required, status: z.nativeEnum(PaymentStatus) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
-  await prisma.invoice.update({
+  const invoice = await prisma.invoice.update({
     where: { id: parsed.data.id },
+    include: { company: true },
     data: { status: parsed.data.status, paidAt: parsed.data.status === PaymentStatus.PAID ? new Date() : null }
   });
+  await logAdminActivity("status", "invoice", invoice.id, `Faktura firmy ${invoice.company.name} změněna na ${invoice.status}.`);
   revalidatePath("/admin/finance");
   revalidatePath("/admin/dashboard");
 }
@@ -548,6 +636,7 @@ export async function createMissingInvoicesFromJobs() {
       })),
     skipDuplicates: true
   });
+  await logAdminActivity("repair", "invoice", null, `Doplněny chybějící faktury k ${jobs.length} inzerátům.`);
 
   revalidatePath("/admin/finance");
   revalidatePath("/admin/dashboard");

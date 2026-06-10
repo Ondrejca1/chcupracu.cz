@@ -1,5 +1,6 @@
 import { JobStatus } from "@prisma/client";
 import { upsertJob } from "@/app/actions";
+import { AssetUploadField } from "@/components/AssetUploadField";
 import type { getFilters } from "@/lib/queries";
 
 type Filters = Awaited<ReturnType<typeof getFilters>>;
@@ -115,19 +116,30 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
         <small>Jemná barva pozadí karty. Nechte prázdné pro standardní vzhled.</small>
       </label>
       <div className="admin-form-section full">Média, mzda a kontakt</div>
-      <label className="field-group">
-        <span>Fotka do výpisu</span>
-        <input className="field" name="previewImageUrl" placeholder="/ads/fotka.jpg nebo URL" defaultValue={job?.previewImageUrl ?? ""} />
-        <small>Nahrávání souborů doplníme později, zatím cesta nebo externí URL.</small>
-      </label>
-      <label className="field-group">
-        <span>Hlavní fotka detailu</span>
-        <input className="field" name="detailImageUrl" placeholder="/ads/detail.jpg nebo URL" defaultValue={job?.detailImageUrl ?? ""} />
-      </label>
-      <label className="field-group">
-        <span>Leták / PDF</span>
-        <input className="field" name="flyerUrl" placeholder="/ads/letak.pdf nebo URL" defaultValue={job?.flyerUrl ?? ""} />
-      </label>
+      <AssetUploadField
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        defaultValue={job?.previewImageUrl}
+        help="Zobrazí se ve výpisu, pokud je zapnutá volba Fotka ve výpisu."
+        label="Fotka do výpisu"
+        name="previewImageUrl"
+        placeholder="/uploads/admin/fotka.jpg nebo URL"
+      />
+      <AssetUploadField
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        defaultValue={job?.detailImageUrl}
+        help="Hlavní vizuál detailu nabídky."
+        label="Hlavní fotka detailu"
+        name="detailImageUrl"
+        placeholder="/uploads/admin/detail.jpg nebo URL"
+      />
+      <AssetUploadField
+        accept="application/pdf,image/jpeg,image/png,image/webp"
+        defaultValue={job?.flyerUrl}
+        help="PDF leták nebo obrázek s podklady k inzerátu."
+        label="Leták / PDF"
+        name="flyerUrl"
+        placeholder="/uploads/admin/letak.pdf nebo URL"
+      />
       <label className="field-group">
         <span>Mzda od</span>
         <input className="field" min="0" name="salaryMinCzk" type="number" defaultValue={job?.salaryMinCzk ?? ""} />

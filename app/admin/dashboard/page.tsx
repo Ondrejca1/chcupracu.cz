@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { addDays } from "date-fns";
 import { AdPlacementStatus, ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
-import { ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
+import { ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
-import { dateCs, money } from "@/lib/format";
+import { dateCs, dateTimeCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentIssue, getFeaturedAds } from "@/lib/queries";
@@ -20,6 +20,12 @@ const dashboardTiles = [
     text: "Vyměnit obálku, odkaz a poznámky k právě propagovanému vydání.",
     href: "/admin/jalovec",
     icon: Newspaper
+  },
+  {
+    title: "Reakce uchazečů",
+    text: "Zpracovat nové odpovědi, změnit stav a předat kontakt správné firmě.",
+    href: "/admin/applications",
+    icon: Inbox
   },
   {
     title: "Reklamní plocha",
@@ -53,7 +59,8 @@ export default async function AdminDashboardPage() {
     activeAds,
     paidRevenue,
     monthRevenue,
-    totalViews
+    totalViews,
+    latestActivities
   ] = await Promise.all([
     prisma.jobPost.count({ where: { status: JobStatus.ACTIVE } }),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
@@ -75,7 +82,8 @@ export default async function AdminDashboardPage() {
     prisma.adPlacement.count({ where: { status: AdPlacementStatus.ACTIVE } }).catch(() => 0),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID }, _sum: { amountCzk: true } }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID, paidAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } }, _sum: { amountCzk: true } }),
-    prisma.jobPost.aggregate({ _sum: { views: true } })
+    prisma.jobPost.aggregate({ _sum: { views: true } }),
+    prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }).catch(() => [])
   ]);
 
   const stats = [
@@ -123,7 +131,7 @@ export default async function AdminDashboardPage() {
               <Icon size={24} />
               <strong>{tile.title}</strong>
               <span>{tile.text}</span>
-              <small>
+              <small className="admin-action-cta">
                 Otevřít <ArrowUpRight size={14} />
               </small>
             </Link>
@@ -186,18 +194,40 @@ export default async function AdminDashboardPage() {
             <h2>Poslední reakce</h2>
             <p>Kontakty uchazečů, které je potřeba předat firmám.</p>
           </div>
+          <Link className="admin-link" href="/admin/applications">Zpracovat</Link>
         </div>
         <div className="admin-list">
           {latestApplications.map((application) => (
-            <div className="admin-list-row" key={application.id}>
+            <Link className="admin-list-row" href={`/admin/applications?job=${application.jobId}`} key={application.id}>
               <div>
                 <strong>{application.name}</strong>
                 <span>{application.job.title} · {application.job.company.name} · {application.email}</span>
               </div>
-              <em>{dateCs(application.createdAt)}</em>
-            </div>
+              <em>{dateTimeCs(application.createdAt)}</em>
+            </Link>
           ))}
           {latestApplications.length === 0 && <p className="admin-empty">Zatím nepřišly žádné reakce.</p>}
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <div className="admin-card-head">
+          <div>
+            <h2>Poslední změny v adminu</h2>
+            <p>Rychlá historie zásahů do inzerátů, reakcí, reklam, Jalovce a financí.</p>
+          </div>
+        </div>
+        <div className="admin-list compact">
+          {latestActivities.map((activity) => (
+            <div className="admin-list-row" key={activity.id}>
+              <div>
+                <strong>{activity.summary}</strong>
+                <span>{activity.actorEmail ?? "admin"} · {activity.entityType}</span>
+              </div>
+              <em>{dateTimeCs(activity.createdAt)}</em>
+            </div>
+          ))}
+          {latestActivities.length === 0 && <p className="admin-empty">Zatím tu není žádná historie změn.</p>}
         </div>
       </section>
     </AdminShell>

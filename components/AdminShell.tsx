@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CircleDollarSign, Home, LogOut, Megaphone, Menu, Package, Plus } from "lucide-react";
+import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CircleDollarSign, Home, Inbox, LogOut, Megaphone, Menu, Package, Plus } from "lucide-react";
 import { adminLogout } from "@/app/actions";
+import { AdminNavLink } from "@/components/AdminNavLink";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
@@ -22,30 +23,33 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="admin-nav-links">
-          <Link href="/admin/dashboard">
+          <AdminNavLink href="/admin/dashboard">
             <BarChart3 size={18} /> Dashboard
-          </Link>
-          <Link href="/admin/jobs">
+          </AdminNavLink>
+          <AdminNavLink href="/admin/jobs">
             <BriefcaseBusiness size={18} /> Inzeráty
-          </Link>
-          <Link href="/admin/jobs/new">
+          </AdminNavLink>
+          <AdminNavLink exact href="/admin/jobs/new">
             <Plus size={18} /> Přidat inzerát
-          </Link>
-          <Link href="/admin/ads">
+          </AdminNavLink>
+          <AdminNavLink href="/admin/applications">
+            <Inbox size={18} /> Reakce
+          </AdminNavLink>
+          <AdminNavLink href="/admin/ads">
             <Megaphone size={18} /> Reklamy
-          </Link>
-          <Link href="/admin/jalovec">
+          </AdminNavLink>
+          <AdminNavLink href="/admin/jalovec">
             <BookOpen size={18} /> Jalovec
-          </Link>
-          <Link href="/admin/finance">
+          </AdminNavLink>
+          <AdminNavLink href="/admin/finance">
             <CircleDollarSign size={18} /> Finance
-          </Link>
-          <Link href="/admin/packages">
+          </AdminNavLink>
+          <AdminNavLink href="/admin/packages">
             <Package size={18} /> Balíčky
-          </Link>
-          <Link href="/admin/dictionaries">
+          </AdminNavLink>
+          <AdminNavLink href="/admin/dictionaries">
             <Building2 size={18} /> Města a číselníky
-          </Link>
+          </AdminNavLink>
           <Link href="/">
             <Home size={18} /> Veřejný web
           </Link>

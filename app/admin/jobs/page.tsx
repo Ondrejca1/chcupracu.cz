@@ -4,6 +4,7 @@ import { addDays } from "date-fns";
 import { ArrowUpRight, Eye, Flame, Pencil, Plus, RotateCw } from "lucide-react";
 import { expireJob, renewJob } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, salaryRange } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -148,7 +149,9 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
                 </div>
                 <form action={expireJob}>
                   <input name="id" type="hidden" value={job.id} />
-                  <button className="button danger full" type="submit">Skrýt inzerát</button>
+                  <ConfirmSubmitButton className="button danger full" message={`Opravdu skrýt inzerát „${job.title}“ z veřejného webu?`}>
+                    Skrýt inzerát
+                  </ConfirmSubmitButton>
                 </form>
               </div>
             </article>
@@ -162,7 +165,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
             <h2>Poslední reakce</h2>
             <p>Rychlý přehled nejnovějších odpovědí na pracovní nabídky.</p>
           </div>
-          <ArrowUpRight size={20} />
+          <Link className="admin-link" href="/admin/applications">Všechny <ArrowUpRight size={16} /></Link>
         </div>
         {applications.map((application) => (
           <div className="admin-response-card" key={application.id}>

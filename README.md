@@ -55,3 +55,7 @@ npm run db:deploy
 - Přidat perzistentní úložiště příloh CV, pokud se povolí nahrávání souborů.
 - Připojit e-mailovou službu pro upozornění redakci a uchazečům.
 - Před ostrým spuštěním udělat penetrační kontrolu formulářů a adminu.
+
+## Design podklady
+
+Zadání pro UI/UX design je v [`docs/ui-ux-zadani-pro-design.md`](docs/ui-ux-zadani-pro-design.md). Shrnuje existující strukturu, obrazovky, komponenty, otevřená UX rozhodnutí a checklist výstupů pro předání z Figmy do vývoje.

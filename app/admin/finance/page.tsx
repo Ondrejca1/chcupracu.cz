@@ -51,6 +51,12 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
     return { status, amount: matching.reduce((sum, invoice) => sum + invoice.amountCzk, 0), count: matching.length };
   });
   const maxCompany = Math.max(...byCompany.map((item) => item.amount), 1);
+  const exportParams = new URLSearchParams();
+  if (params.company) exportParams.set("company", params.company);
+  if (params.status) exportParams.set("status", params.status);
+  if (params.min) exportParams.set("min", params.min);
+  if (params.max) exportParams.set("max", params.max);
+  const exportHref = `/admin/finance/export${exportParams.size ? `?${exportParams}` : ""}`;
 
   return (
     <AdminShell>
@@ -60,6 +66,7 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
           <h1>Platby a faktury</h1>
           <p>Přehled kdo kolik zaplatil, co je otevřené a jaký je výkon balíčků.</p>
         </div>
+        <a className="button secondary" href={exportHref}>Export CSV</a>
       </div>
 
       <section className="admin-stat-grid compact">

@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { AdPlacementStatus, type Prisma } from "@prisma/client";
 import { CalendarDays, ExternalLink, LayoutDashboard, Megaphone, Monitor, PanelRight, Search, Star } from "lucide-react";
 import { createAdPlacement, updateAdPlacementStatus } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
+import { AssetUploadField } from "@/components/AssetUploadField";
 import { dateCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -20,32 +22,28 @@ const placementSlots = [
     name: "Homepage reklamní pás",
     location: "Homepage / pod rychlými dlaždicemi",
     format: "Široký banner + text",
-    icon: LayoutDashboard,
-    publicPath: "/"
+    icon: LayoutDashboard
   },
   {
     key: "jobs_top_strip",
     name: "Výsledky hledání",
     location: "Hledání práce / nad výsledky",
     format: "Horizontální reklamní pruh",
-    icon: Search,
-    publicPath: "/jobs"
+    icon: Search
   },
   {
     key: "sidebar_box",
     name: "Boční promo box",
     location: "Homepage a hledání / boční sloupec",
     format: "Obrázek 4:3 + text",
-    icon: PanelRight,
-    publicPath: "/jobs"
+    icon: PanelRight
   },
   {
     key: "job_detail_sidebar",
     name: "Detail inzerátu",
     location: "Detail pracovní nabídky / boční sloupec",
     format: "Karta partnera",
-    icon: Monitor,
-    publicPath: "/jobs"
+    icon: Monitor
   }
 ];
 
@@ -55,9 +53,11 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
   const defaultEnd = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 14).toISOString().slice(0, 10);
+  const selectedSlot = placementSlots.find((slot) => slot.key === params.slot) ?? placementSlots[0];
+  const selectedSlotKey = placementSlots.some((slot) => slot.key === params.slot) ? params.slot : undefined;
   const where: Prisma.AdPlacementWhereInput = {
     ...(params.status && Object.values(AdPlacementStatus).includes(params.status as AdPlacementStatus) ? { status: params.status as AdPlacementStatus } : {}),
-    ...(params.slot ? { placementKey: params.slot } : {}),
+    ...(selectedSlotKey ? { placementKey: selectedSlotKey } : {}),
     ...(params.q
       ? {
           OR: [
@@ -70,18 +70,18 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   };
 
   let ads: Awaited<ReturnType<typeof prisma.adPlacement.findMany>> = [];
-  let allAdStatuses: { status: AdPlacementStatus }[] = [];
+  let allAds: { status: AdPlacementStatus; placementKey: string }[] = [];
 
   try {
-    [ads, allAdStatuses] = await Promise.all([
+    [ads, allAds] = await Promise.all([
       prisma.adPlacement.findMany({ where, orderBy: [{ status: "asc" }, { startsAt: "desc" }, { createdAt: "desc" }] }),
-      prisma.adPlacement.findMany({ select: { status: true }, take: 2000 })
+      prisma.adPlacement.findMany({ select: { status: true, placementKey: true }, take: 2000 })
     ]);
   } catch (error) {
     console.error("Unable to load ad administration data.", error);
   }
 
-  const countFor = (status: AdPlacementStatus) => allAdStatuses.filter((item) => item.status === status).length;
+  const countFor = (status: AdPlacementStatus) => allAds.filter((item) => item.status === status).length;
 
   return (
     <AdminShell>
@@ -110,14 +110,15 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
         <div className="placement-slot-grid">
           {placementSlots.map((slot) => {
             const Icon = slot.icon;
-            const activeCount = ads.filter((ad) => ad.placementKey === slot.key && ad.status === AdPlacementStatus.ACTIVE).length;
+            const activeCount = allAds.filter((ad) => ad.placementKey === slot.key && ad.status === AdPlacementStatus.ACTIVE).length;
+            const isSelected = selectedSlot.key === slot.key;
             return (
-              <a className="placement-slot-card" href={slot.publicPath} target="_blank" rel="noreferrer" key={slot.key}>
+              <Link className={`placement-slot-card ${isSelected ? "active" : ""}`} href={`/admin/ads?slot=${slot.key}#new-ad`} key={slot.key}>
                 <Icon size={22} />
                 <strong>{slot.name}</strong>
                 <span>{slot.location}</span>
-                <small>{slot.format} · {activeCount} aktivní</small>
-              </a>
+                <small>{slot.format} · {activeCount} aktivní · vybrat pro kampaň</small>
+              </Link>
             );
           })}
         </div>
@@ -145,18 +146,18 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
       </section>
 
       <section className="admin-dashboard-grid">
-        <article className="admin-card">
+        <article className="admin-card" id="new-ad">
           <div className="admin-card-head">
             <div>
               <h2>Nová reklamní kampaň</h2>
-              <p>Vyberte slot, obchodní podmínky, klienta a termín.</p>
+              <p>Vybraný slot: {selectedSlot.name}. Karta výše nastaví, kam se kampaň propíše.</p>
             </div>
             <Megaphone size={26} />
           </div>
           <form action={createAdPlacement} className="admin-form single">
             <label className="field-group">
               <span>Slot na webu</span>
-              <select className="select" name="placementKey" required defaultValue="homepage_strip">
+              <select className="select" name="placementKey" required defaultValue={selectedSlot.key}>
                 {placementSlots.map((slot) => <option key={slot.key} value={slot.key}>{slot.name}</option>)}
               </select>
               <small>Určuje, kam se aktivní reklama propíše na veřejném webu.</small>
@@ -168,12 +169,12 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
             </label>
             <label className="field-group">
               <span>Umístění</span>
-              <input className="field" name="location" placeholder="Homepage / horní pás" required />
+              <input className="field" name="location" placeholder="Homepage / horní pás" required defaultValue={selectedSlot.location} />
               <small>Popis pro obchodní tým, kde přesně kampaň běží.</small>
             </label>
             <label className="field-group">
               <span>Formát</span>
-              <input className="field" name="format" placeholder="Široký banner + text" required />
+              <input className="field" name="format" placeholder="Široký banner + text" required defaultValue={selectedSlot.format} />
               <small>Rozměr, typ kreativy nebo požadavek na podklady.</small>
             </label>
             <label className="field-group">
@@ -181,11 +182,13 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
               <input className="field" name="clientName" placeholder="Název firmy" />
               <small>Kdo kampaň objednal nebo platí.</small>
             </label>
-            <label className="field-group">
-              <span>Kreativa</span>
-              <input className="field" name="creativeUrl" placeholder="/ads/banner.jpg nebo URL" />
-              <small>Upload budeme řešit později, zatím cesta nebo externí URL.</small>
-            </label>
+            <AssetUploadField
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              help="Nahrajte obrázek nebo ponechte externí URL."
+              label="Kreativa"
+              name="creativeUrl"
+              placeholder="/uploads/admin/banner.jpg nebo URL"
+            />
             <label className="field-group">
               <span>Cílový odkaz</span>
               <input className="field" name="targetUrl" placeholder="https://..." type="url" />
