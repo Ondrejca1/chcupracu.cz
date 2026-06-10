@@ -1,10 +1,11 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight, Building2, Newspaper, Sparkles } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { money } from "@/lib/format";
-import { getAdForSlot, getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { getAdForSlot, getCurrentIssue, getFeaturedCompanies, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 type HomepageJob = Awaited<ReturnType<typeof searchJobs>>[number];
 
@@ -31,13 +32,14 @@ function arrangeHomepageJobs(jobs: HomepageJob[]) {
 
 export default async function Home({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions, currentIssue, homepageAd, sidebarAd] = await Promise.all([
+  const [filters, jobs, suggestions, currentIssue, homepageAd, sidebarAd, featuredCompanies] = await Promise.all([
     getFilters(),
     searchJobs(params, 80, { homepageOnly: true }),
     getSearchSuggestions(),
     getCurrentIssue(),
     getAdForSlot("homepage_strip"),
-    getAdForSlot("sidebar_box")
+    getAdForSlot("sidebar_box"),
+    getFeaturedCompanies(4)
   ]);
   const homepageJobs = arrangeHomepageJobs(jobs);
   const issue = currentIssue ?? {
@@ -136,26 +138,20 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             </Link>
           </div>
           <div className="company-grid">
-            <Link href="/jobs?q=Valašské%20stavby" className="company-tile dark">
-              <Building2 size={24} />
-              <span>Partner náboru</span>
-              <strong>Valašské stavby</strong>
-            </Link>
-            <Link href="/jobs?q=Automotive%20Rožnov" className="company-tile light">
-              <Building2 size={24} />
-              <span>Výroba</span>
-              <strong>Automotive Rožnov</strong>
-            </Link>
-            <Link href="/jobs?q=Hotel%20Horal" className="company-tile dark">
-              <Building2 size={24} />
-              <span>Cestovní ruch</span>
-              <strong>Hotel Horal</strong>
-            </Link>
-            <Link href="/jobs?q=Region%20servis" className="company-tile light">
-              <Building2 size={24} />
-              <span>Obchod</span>
-              <strong>Region servis</strong>
-            </Link>
+            {featuredCompanies.map((company, index) => (
+              <Link href={`/firmy/${company.slug}`} className={`company-tile ${index % 2 === 0 ? "dark" : "light"}`} key={company.id} style={{ "--company-accent": company.brandColor ?? undefined } as CSSProperties}>
+                <Building2 size={24} />
+                <span>{company._count.jobs} aktivních nabídek</span>
+                <strong>{company.name}</strong>
+              </Link>
+            ))}
+            {featuredCompanies.length === 0 && (
+              <div className="company-tile light">
+                <Building2 size={24} />
+                <span>Firmy v regionu</span>
+                <strong>Po vložení inzerátů se zde zobrazí zaměstnavatelé.</strong>
+              </div>
+            )}
           </div>
         </div>
       </section>

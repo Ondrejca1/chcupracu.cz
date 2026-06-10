@@ -1,6 +1,7 @@
 import { ApplicationStatus, type Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
 
 function csvCell(value: unknown) {
   const text = value == null ? "" : String(value);
@@ -33,6 +34,8 @@ export async function GET(request: Request) {
     select: {
       createdAt: true,
       status: true,
+      tags: true,
+      internalNote: true,
       name: true,
       email: true,
       phone: true,
@@ -44,17 +47,19 @@ export async function GET(request: Request) {
   });
 
   const rows = [
-    ["Datum", "Stav", "Jméno", "E-mail", "Telefon", "Inzerát", "Firma", "Město", "Zpráva"],
+    ["Datum", "Stav", "Štítky", "Jméno", "E-mail", "Telefon", "Inzerát", "Firma", "Město", "Zpráva", "Interní poznámka"],
     ...applications.map((application) => [
       application.createdAt.toISOString(),
-      application.status,
+      applicationStatusLabels[application.status],
+      application.tags.map((tag) => applicationTagLabels[tag]).join("; "),
       application.name,
       application.email,
       application.phone ?? "",
       application.job.title,
       application.job.company.name,
       application.job.city.name,
-      application.message
+      application.message,
+      application.internalNote ?? ""
     ])
   ];
 

@@ -20,8 +20,30 @@ export function SearchForm({
   suggestions?: string[];
   values?: JobSearchParams;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(fieldValue(values.q));
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const activeChips = useMemo(() => {
+    const entries = [
+      { key: "q", value: fieldValue(values.q), label: fieldValue(values.q) },
+      { key: "city", value: fieldValue(values.city), label: filters.cities.find((item) => item.slug === fieldValue(values.city))?.name },
+      { key: "category", value: fieldValue(values.category), label: filters.categories.find((item) => item.slug === fieldValue(values.category))?.name },
+      { key: "education", value: fieldValue(values.education), label: filters.educations.find((item) => item.slug === fieldValue(values.education))?.name },
+      { key: "employment", value: fieldValue(values.employment), label: filters.employmentTypes.find((item) => item.slug === fieldValue(values.employment))?.name },
+      { key: "suitable", value: fieldValue(values.suitable), label: filters.suitabilities.find((item) => item.slug === fieldValue(values.suitable))?.name },
+      { key: "salaryMin", value: fieldValue(values.salaryMin), label: fieldValue(values.salaryMin) ? `od ${fieldValue(values.salaryMin)} Kč` : "" },
+      { key: "salaryMax", value: fieldValue(values.salaryMax), label: fieldValue(values.salaryMax) ? `do ${fieldValue(values.salaryMax)} Kč` : "" },
+      { key: "sort", value: fieldValue(values.sort), label: fieldValue(values.sort) === "salary" ? "řazení: mzda" : fieldValue(values.sort) === "newest" ? "řazení: nejnovější" : "" }
+    ];
+    return entries.filter((item) => item.value && item.label);
+  }, [filters, values]);
+  const chipHref = (key: string) => {
+    const params = new URLSearchParams();
+    for (const [name, value] of Object.entries(values)) {
+      const first = fieldValue(value);
+      if (first && name !== key) params.set(name, first);
+    }
+    return `/jobs${params.size ? `?${params}` : ""}`;
+  };
   const matches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!isSuggestOpen || normalized.length < 2) return [];
@@ -131,6 +153,14 @@ export function SearchForm({
             </select>
           </label>
           <label className="filter-field">
+            <span>Řazení</span>
+            <select className="select" name="sort" defaultValue={fieldValue(values.sort)}>
+              <option value="">Topované a doporučené</option>
+              <option value="newest">Nejnovější</option>
+              <option value="salary">Mzda</option>
+            </select>
+          </label>
+          <label className="filter-field">
             <span>Mzda od</span>
             <input className="field" min="0" name="salaryMin" placeholder="např. 30000" type="number" defaultValue={fieldValue(values.salaryMin)} />
           </label>
@@ -138,6 +168,16 @@ export function SearchForm({
             <span>Mzda do</span>
             <input className="field" min="0" name="salaryMax" placeholder="např. 50000" type="number" defaultValue={fieldValue(values.salaryMax)} />
           </label>
+          {activeChips.length > 0 && (
+            <div className="active-filter-chips">
+              {activeChips.map((chip) => (
+                <a className="filter-chip" href={chipHref(chip.key)} key={chip.key}>
+                  {chip.label} <span>×</span>
+                </a>
+              ))}
+              <a className="filter-chip clear" href="/jobs">Vyčistit</a>
+            </div>
+          )}
           <button className="button" type="submit">
             Upřesnit hledání
           </button>

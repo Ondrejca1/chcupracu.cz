@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { JobStatus, type Prisma } from "@prisma/client";
-import { addDays } from "date-fns";
 import { ArrowUpRight, Eye, Flame, Pencil, Plus, RotateCw } from "lucide-react";
 import { expireJob, renewJob } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
@@ -8,11 +7,13 @@ import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, salaryRange } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { activeJobWhere, activeTopJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
 
 export default async function AdminJobsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; city?: string; top?: string; homepage?: string }> }) {
   await requireAdmin();
+  await syncExpiredBusinessState();
   const params = await searchParams;
-  const soon = addDays(new Date(), 7);
+  const now = new Date();
   const where: Prisma.JobPostWhereInput = {};
   const q = params.q?.trim();
   if (q) {
@@ -48,10 +49,10 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
       orderBy: { createdAt: "desc" },
       take: 10
     }),
-    prisma.jobPost.count({ where: { status: JobStatus.ACTIVE } }),
+    prisma.jobPost.count({ where: activeJobWhere(now) }),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
-    prisma.jobPost.count({ where: { status: JobStatus.ACTIVE, activeUntil: { lte: soon } } }),
-    prisma.jobPost.count({ where: { isTop: true, status: JobStatus.ACTIVE } }),
+    prisma.jobPost.count({ where: expiringJobWhere(now) }),
+    prisma.jobPost.count({ where: activeTopJobWhere(now) }),
     prisma.city.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
     prisma.jobPost.count({ where })
   ]);
@@ -87,7 +88,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
           <input className="field" name="q" placeholder="Název, firma nebo text" defaultValue={params.q ?? ""} />
           <select className="select" name="status" defaultValue={params.status ?? ""}>
             <option value="">Všechny stavy</option>
-            {Object.values(JobStatus).map((status) => <option key={status} value={status}>{status}</option>)}
+            {Object.values(JobStatus).map((status) => <option key={status} value={status}>{jobStatusLabels[status]}</option>)}
           </select>
           <select className="select" name="city" defaultValue={params.city ?? ""}>
             <option value="">Všechna města</option>
@@ -119,7 +120,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
           {jobs.map((job) => (
             <article className="job-admin-item" key={job.id}>
               <div className="job-admin-main">
-                <span className={`status-pill status-${job.status.toLowerCase()}`}>{job.status}</span>
+                <span className={`status-pill status-${job.status.toLowerCase()}`}>{jobStatusLabels[job.status]}</span>
                 {job.isTop && <span className="status-pill status-active"><Flame size={13} /> Topováno</span>}
                 <h3>{job.title}</h3>
                 <p>{job.shortIntro}</p>

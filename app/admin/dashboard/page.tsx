@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { addDays } from "date-fns";
-import { AdPlacementStatus, ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
-import { ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
+import { ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
+import { AlertTriangle, ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentIssue, getFeaturedAds } from "@/lib/queries";
+import { activeAdWhere, activeJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
+import { getOperationalWarnings } from "@/lib/admin-insights";
 
 const dashboardTiles = [
   {
@@ -43,15 +44,8 @@ const dashboardTiles = [
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
+  await syncExpiredBusinessState();
   const now = new Date();
-  const soon = addDays(now, 7);
-  const activityLogDelegate = (prisma as unknown as {
-    activityLog?: {
-      findMany(args: { orderBy: { createdAt: "desc" }; take: number }): Promise<
-        { id: string; summary: string; actorEmail: string | null; entityType: string; createdAt: Date }[]
-      >;
-    };
-  }).activityLog;
 
   const [
     activeJobs,
@@ -67,11 +61,12 @@ export default async function AdminDashboardPage() {
     paidRevenue,
     monthRevenue,
     totalViews,
-    latestActivities
+    latestActivities,
+    warnings
   ] = await Promise.all([
-    prisma.jobPost.count({ where: { status: JobStatus.ACTIVE } }),
+    prisma.jobPost.count({ where: activeJobWhere(now) }),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
-    prisma.jobPost.count({ where: { status: JobStatus.ACTIVE, activeUntil: { lte: soon } } }),
+    prisma.jobPost.count({ where: expiringJobWhere(now) }),
     prisma.application.count({ where: { status: ApplicationStatus.NEW } }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.UNPAID }, _sum: { amountCzk: true }, _count: true }),
     getCurrentIssue(),
@@ -93,11 +88,12 @@ export default async function AdminDashboardPage() {
       take: 6
     }),
     getFeaturedAds(4),
-    prisma.adPlacement.count({ where: { status: AdPlacementStatus.ACTIVE } }).catch(() => 0),
+    prisma.adPlacement.count({ where: activeAdWhere(now) }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID }, _sum: { amountCzk: true } }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID, paidAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } }, _sum: { amountCzk: true } }),
     prisma.jobPost.aggregate({ _sum: { views: true } }),
-    activityLogDelegate?.findMany({ orderBy: { createdAt: "desc" }, take: 8 }).catch(() => []) ?? []
+    prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
+    getOperationalWarnings()
   ]);
 
   const stats = [
@@ -169,7 +165,7 @@ export default async function AdminDashboardPage() {
                   <strong>{job.title}</strong>
                   <span>{job.company.name} · {job.city.name}</span>
                 </div>
-                <em>{job.status}</em>
+                <em>{jobStatusLabels[job.status]}</em>
               </Link>
             ))}
           </div>
@@ -221,6 +217,38 @@ export default async function AdminDashboardPage() {
             </Link>
           ))}
           {latestApplications.length === 0 && <p className="admin-empty">Zatím nepřišly žádné reakce.</p>}
+        </div>
+      </section>
+
+      <section className="admin-card warning-card">
+        <div className="admin-card-head">
+          <div>
+            <h2>Úkoly redakce</h2>
+            <p>Kontroly, které hlídají obchodní a provozní jistotu webu.</p>
+          </div>
+          <Link className="admin-link" href="/admin/tasks">Otevřít úkoly</Link>
+        </div>
+        <div className="warning-grid">
+          <Link className="warning-item" href="/admin/jobs?status=ACTIVE">
+            <AlertTriangle size={18} />
+            <strong>{warnings.counts.expiringJobs}</strong>
+            <span>Končí do 7 dní</span>
+          </Link>
+          <Link className="warning-item" href="/admin/finance">
+            <AlertTriangle size={18} />
+            <strong>{warnings.counts.activeWithoutInvoice}</strong>
+            <span>Aktivní bez faktury</span>
+          </Link>
+          <Link className="warning-item" href="/admin/finance?status=PAID">
+            <AlertTriangle size={18} />
+            <strong>{warnings.counts.paidButInactive}</strong>
+            <span>Zaplaceno, ale neaktivní</span>
+          </Link>
+          <Link className="warning-item" href="/admin/ads">
+            <AlertTriangle size={18} />
+            <strong>{warnings.counts.adsWithoutCreative}</strong>
+            <span>Reklama bez kreativy</span>
+          </Link>
         </div>
       </section>
 

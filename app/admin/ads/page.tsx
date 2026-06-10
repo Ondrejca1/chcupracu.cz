@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AdPlacementStatus, type Prisma } from "@prisma/client";
+import { AdPlacementStatus, AdProductType, type Prisma } from "@prisma/client";
 import { CalendarDays, ExternalLink, LayoutDashboard, Megaphone, Monitor, PanelRight, Search, Star } from "lucide-react";
 import { createAdPlacement, updateAdPlacementStatus } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
@@ -7,13 +7,12 @@ import { AssetUploadField } from "@/components/AssetUploadField";
 import { dateCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { adStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
 
-const adStatusLabels: Record<AdPlacementStatus, string> = {
-  AVAILABLE: "Volné",
-  RESERVED: "Rezervované",
-  ACTIVE: "Aktivní",
-  PAUSED: "Pozastavené",
-  EXPIRED: "Ukončené"
+const adProductTypeLabels: Record<AdProductType, string> = {
+  PAID_AD: "Placená reklama",
+  JALOVEC: "Jalovec",
+  PARTNER_OF_WEEK: "Partner týdne"
 };
 
 const placementSlots = [
@@ -47,8 +46,9 @@ const placementSlots = [
   }
 ];
 
-export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ status?: string; slot?: string; q?: string }> }) {
+export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ status?: string; slot?: string; q?: string; error?: string; notice?: string }> }) {
   await requireAdmin();
+  await syncExpiredBusinessState();
   const params = await searchParams;
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
@@ -70,19 +70,20 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   };
 
   let ads: Awaited<ReturnType<typeof prisma.adPlacement.findMany>> = [];
-  let allAds: { status: AdPlacementStatus; placementKey: string }[] = [];
+  let allAds: { status: AdPlacementStatus; placementKey: string; startsAt: Date | null; endsAt: Date | null; availableSlots: number }[] = [];
 
   try {
     [ads, allAds] = await Promise.all([
       prisma.adPlacement.findMany({ where, orderBy: [{ status: "asc" }, { startsAt: "desc" }, { createdAt: "desc" }] }),
-      prisma.adPlacement.findMany({ select: { status: true, placementKey: true }, take: 2000 })
+      prisma.adPlacement.findMany({ select: { status: true, placementKey: true, startsAt: true, endsAt: true, availableSlots: true }, take: 2000 })
     ]);
   } catch (error) {
     console.error("Unable to load ad administration data.", error);
   }
 
   const countFor = (status: AdPlacementStatus) => allAds.filter((item) => item.status === status).length;
-
+  const isLive = (ad: { status: AdPlacementStatus; startsAt: Date | null; endsAt: Date | null }) =>
+    ad.status === AdPlacementStatus.ACTIVE && (!ad.startsAt || ad.startsAt <= today) && (!ad.endsAt || ad.endsAt >= today);
   return (
     <AdminShell>
       <div className="admin-page-head">
@@ -90,6 +91,10 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
           <span className="admin-kicker">Obchodní pozice</span>
           <h1>Reklamy</h1>
           <p>Reklamní kampaně napojené na konkrétní pozice na veřejném webu.</p>
+          {params.error === "slot-full" && <p className="admin-error">Vybraný reklamní slot je v daném termínu obsazený.</p>}
+          {params.error === "date" && <p className="admin-error">Zkontrolujte termín kampaně. Konec musí být po začátku.</p>}
+          {params.notice === "created" && <p className="admin-success">Kampaň byla vytvořena.</p>}
+          {params.notice === "status" && <p className="admin-success">Stav kampaně byl změněn.</p>}
         </div>
       </div>
 
@@ -110,14 +115,16 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
         <div className="placement-slot-grid">
           {placementSlots.map((slot) => {
             const Icon = slot.icon;
-            const activeCount = allAds.filter((ad) => ad.placementKey === slot.key && ad.status === AdPlacementStatus.ACTIVE).length;
+            const slotAds = allAds.filter((ad) => ad.placementKey === slot.key);
+            const activeCount = slotAds.filter(isLive).length;
+            const capacity = Math.max(1, ...slotAds.map((ad) => ad.availableSlots));
             const isSelected = selectedSlot.key === slot.key;
             return (
               <Link className={`placement-slot-card ${isSelected ? "active" : ""}`} href={`/admin/ads?slot=${slot.key}#new-ad`} key={slot.key}>
                 <Icon size={22} />
                 <strong>{slot.name}</strong>
                 <span>{slot.location}</span>
-                <small>{slot.format} · {activeCount} aktivní · vybrat pro kampaň</small>
+                <small>{slot.format} · {activeCount}/{capacity} obsazeno · vybrat pro kampaň</small>
               </Link>
             );
           })}
@@ -161,6 +168,13 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
                 {placementSlots.map((slot) => <option key={slot.key} value={slot.key}>{slot.name}</option>)}
               </select>
               <small>Určuje, kam se aktivní reklama propíše na veřejném webu.</small>
+            </label>
+            <label className="field-group">
+              <span>Typ kampaně</span>
+              <select className="select" name="productType" defaultValue={AdProductType.PAID_AD}>
+                {Object.values(AdProductType).map((type) => <option key={type} value={type}>{adProductTypeLabels[type]}</option>)}
+              </select>
+              <small>Pomáhá rozlišit placenou reklamu, Jalovec a partnera týdne.</small>
             </label>
             <label className="field-group">
               <span>Název kampaně</span>
@@ -271,6 +285,7 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
               <div className="ad-placement-top">
                 <span className={`status-pill status-${ad.status.toLowerCase()}`}>{adStatusLabels[ad.status]}</span>
                 <span className="status-pill">{placementSlots.find((slot) => slot.key === ad.placementKey)?.name ?? ad.placementKey}</span>
+                <span className="status-pill">{adProductTypeLabels[ad.productType]}</span>
                 {ad.isFeatured && <span className="status-pill"><Star size={13} /> Dashboard</span>}
               </div>
               <h3>{ad.name}</h3>

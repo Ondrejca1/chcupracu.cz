@@ -1,4 +1,5 @@
-import { AdPlacementStatus, JobStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { activeAdWhere, activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 
 export type JobSearchParams = {
@@ -10,12 +11,8 @@ export type JobSearchParams = {
   suitable?: string | string[];
   salaryMin?: string | string[];
   salaryMax?: string | string[];
+  sort?: string | string[];
 };
-
-const activeJobWhere = () => ({
-  status: JobStatus.ACTIVE,
-  OR: [{ activeUntil: null }, { activeUntil: { gte: new Date() } }]
-});
 
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
 
@@ -31,6 +28,7 @@ export async function getFilters() {
 }
 
 export async function getSearchSuggestions() {
+  await syncExpiredBusinessState();
   const [jobs, companies, categories] = await Promise.all([
     prisma.jobPost.findMany({
       where: activeJobWhere(),
@@ -79,9 +77,11 @@ export async function getCurrentIssue() {
 }
 
 export async function getFeaturedAds(limit = 4) {
+  await syncExpiredBusinessState();
   try {
+    const now = new Date();
     return await prisma.adPlacement.findMany({
-      where: { status: AdPlacementStatus.ACTIVE },
+      where: activeAdWhere(now),
       orderBy: [{ isFeatured: "desc" }, { startsAt: "desc" }, { createdAt: "desc" }],
       take: Math.min(Math.max(limit, 1), 8)
     });
@@ -92,9 +92,11 @@ export async function getFeaturedAds(limit = 4) {
 }
 
 export async function getAdForSlot(placementKey: string) {
+  await syncExpiredBusinessState();
   try {
+    const now = new Date();
     return await prisma.adPlacement.findFirst({
-      where: { placementKey, status: AdPlacementStatus.ACTIVE },
+      where: activeAdWhere(now, placementKey),
       orderBy: [{ isFeatured: "desc" }, { startsAt: "desc" }, { createdAt: "desc" }]
     });
   } catch (error) {
@@ -103,7 +105,24 @@ export async function getAdForSlot(placementKey: string) {
   }
 }
 
+export async function getFeaturedCompanies(limit = 4) {
+  await syncExpiredBusinessState();
+  return prisma.company.findMany({
+    where: { jobs: { some: activeJobWhere() } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      brandColor: true,
+      _count: { select: { jobs: { where: activeJobWhere() } } }
+    },
+    orderBy: { updatedAt: "desc" },
+    take: Math.min(Math.max(limit, 1), 8)
+  });
+}
+
 export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {
+  await syncExpiredBusinessState();
   const q = firstParam(params.q)?.trim();
   const city = firstParam(params.city);
   const category = firstParam(params.category);
@@ -112,6 +131,7 @@ export async function searchJobs(params: JobSearchParams, limit = 40, options: {
   const suitable = firstParam(params.suitable);
   const salaryMin = Number(firstParam(params.salaryMin));
   const salaryMax = Number(firstParam(params.salaryMax));
+  const sort = firstParam(params.sort);
   const where: Prisma.JobPostWhereInput = activeJobWhere();
 
   if (options.homepageOnly) where.showOnHomepage = true;
@@ -136,6 +156,13 @@ export async function searchJobs(params: JobSearchParams, limit = 40, options: {
   if (!Number.isNaN(salaryMin) && salaryMin > 0) where.salaryMaxCzk = { gte: salaryMin };
   if (!Number.isNaN(salaryMax) && salaryMax > 0) where.salaryMinCzk = { lte: salaryMax };
 
+  const orderBy: Prisma.JobPostOrderByWithRelationInput[] =
+    sort === "salary"
+      ? [{ salaryMaxCzk: "desc" }, { salaryMinCzk: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }]
+      : sort === "newest"
+        ? [{ renewedAt: "desc" }, { createdAt: "desc" }]
+        : [{ isTop: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }];
+
   return prisma.jobPost.findMany({
     where,
     include: {
@@ -146,12 +173,13 @@ export async function searchJobs(params: JobSearchParams, limit = 40, options: {
       employmentType: true,
       suitabilities: { include: { suitability: true } }
     },
-    orderBy: [{ isTop: "desc" }, { renewedAt: "desc" }, { createdAt: "desc" }],
+    orderBy,
     take: Math.min(Math.max(limit, 1), 80)
   });
 }
 
 export async function getSimilarJobs(job: { id: string; cityId: string; categoryId: string }) {
+  await syncExpiredBusinessState();
   return prisma.jobPost.findMany({
     where: {
       id: { not: job.id },

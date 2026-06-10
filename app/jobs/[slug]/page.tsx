@@ -3,19 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { Briefcase, CalendarDays, FileText, Mail, MapPin, Phone, Sparkles } from "lucide-react";
-import { JobStatus } from "@prisma/client";
 import { ApplicationForm } from "@/components/ApplicationForm";
 import { JobCard } from "@/components/JobCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAdForSlot, getSimilarJobs } from "@/lib/queries";
+import { activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 
 export default async function JobDetail({ params }: { params: Promise<{ slug: string }> }) {
+  await syncExpiredBusinessState();
   const { slug } = await params;
-  const now = new Date();
-  const job = await prisma.jobPost.findUnique({
-    where: { slug },
+  const job = await prisma.jobPost.findFirst({
+    where: { slug, ...activeJobWhere() },
     include: {
       company: true,
       city: true,
@@ -26,7 +26,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
     }
   });
 
-  if (!job || job.status !== JobStatus.ACTIVE || (job.activeUntil && job.activeUntil < now)) notFound();
+  if (!job) notFound();
 
   after(async () => {
     await prisma.jobPost.update({ where: { id: job.id }, data: { views: { increment: 1 } } }).catch(() => null);
@@ -51,7 +51,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
             <div className="detail-company-line">
               <span className="company-logo">{job.company.name.slice(0, 2).toUpperCase()}</span>
               <div>
-                <strong>{job.company.name}</strong>
+                <Link href={`/firmy/${job.company.slug}`}>{job.company.name}</Link>
                 <div className="meta">Ověřená regionální firma · {job.city.name}</div>
               </div>
             </div>
@@ -153,6 +153,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
             )}
           </aside>
         </section>
+        <a className="mobile-apply-cta" href="#kontakt">Odpovědět na nabídku</a>
       </main>
     </>
   );

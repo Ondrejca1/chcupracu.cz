@@ -28,13 +28,21 @@ type EditableJob = {
   salaryMinCzk: number | null;
   salaryMaxCzk: number | null;
   highlightColor: string | null;
-  status: "DRAFT" | "ACTIVE" | "EXPIRED" | "ARCHIVED";
+  status: JobStatus;
+  activeUntil: Date | null;
+  topUntil: Date | null;
   isTop: boolean;
   suitabilities: { suitabilityId: string }[];
 };
 
 export function JobEditor({ filters, packages, job }: { filters: Filters; packages: { id: string; name: string; durationDays: number; isTopPlacement: boolean; topDays: number | null }[]; job?: EditableJob }) {
   const selectedSuitabilities = new Set(job?.suitabilities.map((item) => item.suitabilityId) ?? []);
+  const remainingDays = (date?: Date | null) => {
+    if (!date) return 30;
+    const days = Math.ceil((date.getTime() - Date.now()) / 86_400_000);
+    return Math.max(days, 1);
+  };
+  const remainingTopDays = job?.isTop ? remainingDays(job.topUntil) : 0;
   return (
     <form action={async (formData) => {
   "use server";
@@ -96,19 +104,22 @@ export function JobEditor({ filters, packages, job }: { filters: Filters; packag
       </label>
       <label className="field-group">
         <span>Stav publikace</span>
-        <select className="select" name="status" defaultValue={job?.status ?? JobStatus.ACTIVE}>
-          <option value={JobStatus.ACTIVE}>Publikovat</option>
+        <select className="select" name="status" defaultValue={job?.status ?? JobStatus.PENDING_PAYMENT}>
           <option value={JobStatus.DRAFT}>Uložit jako koncept</option>
+          <option value={JobStatus.PENDING_PAYMENT}>Čeká na platbu</option>
+          <option value={JobStatus.ACTIVE}>Aktivní / publikovat</option>
+          <option value={JobStatus.EXPIRED}>Expirovaný</option>
+          <option value={JobStatus.ARCHIVED}>Archiv</option>
         </select>
-        <small>Koncept není vidět na veřejném webu.</small>
+        <small>Na veřejném webu se zobrazí jen aktivní inzerát v platném termínu.</small>
       </label>
       <label className="field-group">
         <span>Aktivní dní</span>
-        <input className="field" min="1" name="durationDays" required type="number" defaultValue={30} />
+        <input className="field" min="1" name="durationDays" required type="number" defaultValue={job ? remainingDays(job.activeUntil) : 30} />
       </label>
       <label className="field-group">
         <span>Topovat dní</span>
-        <input className="field" min="0" name="topDays" type="number" defaultValue={job?.isTop ? 14 : 0} />
+        <input className="field" min="0" name="topDays" type="number" defaultValue={remainingTopDays} />
       </label>
       <label className="field-group full">
         <span>Barva zvýraznění</span>

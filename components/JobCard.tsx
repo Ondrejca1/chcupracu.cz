@@ -9,7 +9,7 @@ type JobCardProps = {
     shortIntro: string;
     salaryMinCzk?: number | null;
     salaryMaxCzk?: number | null;
-    company: { name: string };
+    company: { name: string; slug?: string };
     city: { name: string };
     category: { name: string };
     employmentType: { name: string };
@@ -47,7 +47,7 @@ export function JobCard({ job, wide = false }: JobCardProps) {
         </h2>
         <p>{job.shortIntro}</p>
         <div className="meta job-card-foot">
-          <strong>{job.company.name}</strong>
+          {job.company.slug ? <Link href={`/firmy/${job.company.slug}`}>{job.company.name}</Link> : <strong>{job.company.name}</strong>}
           {job.showSalaryInPreview !== false && <span>{salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}</span>}
         </div>
       </div>

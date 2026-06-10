@@ -1,18 +1,12 @@
 import Link from "next/link";
-import { ApplicationStatus, type Prisma } from "@prisma/client";
-import { Mail, Phone, Search, UserCheck, UsersRound } from "lucide-react";
+import { ApplicationStatus, ApplicationTag, type Prisma } from "@prisma/client";
+import { Mail, MessageSquareText, Phone, Search, UserCheck, UsersRound } from "lucide-react";
 import { updateApplication } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { dateTimeCs } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-const applicationStatusLabels: Record<ApplicationStatus, string> = {
-  NEW: "Nová",
-  CONTACTED: "Kontaktováno",
-  REJECTED: "Nevybráno",
-  HIRED: "Přijato"
-};
+import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
 
 export default async function AdminApplicationsPage({
   searchParams
@@ -50,7 +44,10 @@ export default async function AdminApplicationsPage({
         phone: true,
         message: true,
         status: true,
+        tags: true,
+        internalNote: true,
         createdAt: true,
+        _count: { select: { communications: true } },
         job: { select: { title: true, company: { select: { name: true } }, city: { select: { name: true } } } }
       },
       orderBy: { createdAt: "desc" },
@@ -139,13 +136,22 @@ export default async function AdminApplicationsPage({
                     <Phone size={16} /> Zavolat
                   </a>
                 )}
+                <Link className="admin-icon-link" href={`/admin/applications/${application.id}`}>
+                  <MessageSquareText size={16} /> Detail ({application._count.communications})
+                </Link>
                 <Link className="admin-icon-link" href={`/admin/jobs/${application.jobId}/edit`}>
                   Inzerát
                 </Link>
               </div>
+              {application.tags.length > 0 && (
+                <div className="meta application-tags">
+                  {application.tags.map((tag) => <span className="job-chip" key={tag}>{applicationTagLabels[tag]}</span>)}
+                </div>
+              )}
             </div>
             <form action={updateApplication} className="application-workflow">
               <input name="id" type="hidden" value={application.id} />
+              <input name="returnTo" type="hidden" value="/admin/applications" />
               <label className="field-group">
                 <span>Stav</span>
                 <select className="select" name="status" defaultValue={application.status}>
@@ -153,8 +159,23 @@ export default async function AdminApplicationsPage({
                 </select>
               </label>
               <label className="field-group">
+                <span>Štítky</span>
+                <div className="tag-check-grid">
+                  {Object.values(ApplicationTag).map((tag) => (
+                    <label className="tag" key={tag}>
+                      <input name="tags" type="checkbox" value={tag} defaultChecked={application.tags.includes(tag)} /> {applicationTagLabels[tag]}
+                    </label>
+                  ))}
+                </div>
+              </label>
+              <label className="field-group">
                 <span>Interní poznámka</span>
-                <textarea className="textarea textarea-short" name="internalNote" placeholder="Co už redakce vyřešila, komu se reakce předala..." />
+                <textarea className="textarea textarea-short" name="internalNote" placeholder="Co už redakce vyřešila, komu se reakce předala..." defaultValue={application.internalNote ?? ""} />
+              </label>
+              <label className="field-group">
+                <span>Nový záznam komunikace</span>
+                <textarea className="textarea textarea-short" name="communicationBody" placeholder="Např. voláno uchazeči, předáno firmě, čekáme na odpověď..." />
+                <input name="communicationChannel" type="hidden" value="note" />
               </label>
               <button className="button secondary" type="submit">Uložit zpracování</button>
             </form>

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CircleDollarSign, Home, Inbox, LogOut, Megaphone, Menu, Package, Plus } from "lucide-react";
+import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CheckSquare, CircleDollarSign, HeartPulse, Home, Inbox, LogOut, Megaphone, Menu, Package, Plus } from "lucide-react";
 import { adminLogout } from "@/app/actions";
 import { AdminNavLink } from "@/components/AdminNavLink";
+import { AdminToastHost } from "@/components/AdminToastHost";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
@@ -25,6 +26,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <nav className="admin-nav-links">
           <AdminNavLink href="/admin/dashboard">
             <BarChart3 size={18} /> Dashboard
+          </AdminNavLink>
+          <AdminNavLink href="/admin/tasks">
+            <CheckSquare size={18} /> Úkoly redakce
           </AdminNavLink>
           <AdminNavLink href="/admin/jobs">
             <BriefcaseBusiness size={18} /> Inzeráty
@@ -50,6 +54,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <AdminNavLink href="/admin/dictionaries">
             <Building2 size={18} /> Města a číselníky
           </AdminNavLink>
+          <AdminNavLink href="/admin/health">
+            <HeartPulse size={18} /> Healthcheck
+          </AdminNavLink>
           <Link href="/">
             <Home size={18} /> Veřejný web
           </Link>
@@ -60,7 +67,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
         </form>
       </aside>
-      <main className="admin-main">{children}</main>
+      <main className="admin-main">
+        <AdminToastHost />
+        {children}
+      </main>
     </div>
   );
 }

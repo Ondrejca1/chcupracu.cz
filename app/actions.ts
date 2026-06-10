@@ -6,8 +6,9 @@ import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { AdPlacementStatus, ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
+import { AdPlacementStatus, ApplicationStatus, ApplicationTag, JobStatus, PaymentStatus } from "@prisma/client";
 import { login, logout, requireAdmin } from "@/lib/auth";
+import { activeAdWhere, activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 
@@ -21,37 +22,80 @@ const optionalAssetUrl = z
   .or(z.literal(""));
 
 async function logAdminActivity(action: string, entityType: string, entityId: string | null, summary: string) {
-  try {
-    const admin = await requireAdmin();
-    const activityLog = (prisma as unknown as {
-      activityLog?: {
-        create(args: {
-          data: {
-            actorId: string;
-            actorEmail: string;
-            action: string;
-            entityType: string;
-            entityId: string | null;
-            summary: string;
-          };
-        }): Promise<unknown>;
-      };
-    }).activityLog;
-    if (!activityLog) return;
+  const admin = await requireAdmin();
+  await prisma.activityLog.create({
+    data: {
+      actorId: admin.id,
+      actorEmail: admin.email,
+      action,
+      entityType,
+      entityId,
+      summary
+    }
+  });
+}
 
-    await activityLog.create({
-      data: {
-        actorId: admin.id,
-        actorEmail: admin.email,
-        action,
-        entityType,
-        entityId,
-        summary
-      }
-    });
-  } catch (error) {
-    console.error("Unable to write activity log.", error);
+async function logSystemActivity(action: string, entityType: string, entityId: string | null, summary: string) {
+  await prisma.activityLog.create({
+    data: {
+      actorId: null,
+      actorEmail: "system",
+      action,
+      entityType,
+      entityId,
+      summary
+    }
+  });
+}
+
+async function sendTransactionalEmail(input: { to: string; subject: string; html: string; replyTo?: string }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.MAIL_FROM ?? "Chci práci <noreply@chcupracu.cz>";
+  if (!apiKey) return { ok: false, skipped: true };
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      reply_to: input.replyTo
+    })
+  });
+
+  if (!response.ok) {
+    console.error("Unable to send transactional email.", await response.text());
+    return { ok: false, skipped: false };
   }
+
+  return { ok: true, skipped: false };
+}
+
+async function checkAdSlotCapacity(placementKey: string, startsAt: Date, endsAt: Date, availableSlots: number, ignoredId?: string) {
+  const overlapping = await prisma.adPlacement.count({
+    where: {
+      placementKey,
+      id: ignoredId ? { not: ignoredId } : undefined,
+      status: { in: [AdPlacementStatus.RESERVED, AdPlacementStatus.ACTIVE] },
+      AND: [
+        { OR: [{ startsAt: null }, { startsAt: { lte: endsAt } }] },
+        { OR: [{ endsAt: null }, { endsAt: { gte: startsAt } }] }
+      ]
+    }
+  });
+
+  return overlapping < Math.max(availableSlots, 1);
+}
+
+function withActionResult(path: string, key: "notice" | "error", value: string) {
+  const url = new URL(path, "https://admin.local");
+  url.searchParams.set(key, value);
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 async function markPublicationIssueCurrent(id: string) {
@@ -199,6 +243,7 @@ export async function createAdPlacement(formData: FormData) {
     .object({
       name: required.max(120),
       placementKey: required.max(80),
+      productType: z.enum(["PAID_AD", "JALOVEC", "PARTNER_OF_WEEK"]).optional(),
       location: required.max(120),
       format: required.max(80),
       clientName: z.string().trim().max(120).optional(),
@@ -218,12 +263,22 @@ export async function createAdPlacement(formData: FormData) {
 
   const startsAt = parsed.data.startsAt ? new Date(parsed.data.startsAt) : new Date();
   const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : addDays(startsAt, parsed.data.durationDays);
+  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt < startsAt) {
+    redirect(`/admin/ads?slot=${parsed.data.placementKey}&error=date#new-ad`);
+  }
+
+  const checksCapacity = parsed.data.status === AdPlacementStatus.RESERVED || parsed.data.status === AdPlacementStatus.ACTIVE;
+  if (checksCapacity) {
+    const hasCapacity = await checkAdSlotCapacity(parsed.data.placementKey, startsAt, endsAt, parsed.data.availableSlots ?? 1);
+    if (!hasCapacity) redirect(`/admin/ads?slot=${parsed.data.placementKey}&error=slot-full#new-ad`);
+  }
 
   try {
     const ad = await prisma.adPlacement.create({
       data: {
         name: parsed.data.name,
         placementKey: parsed.data.placementKey,
+        productType: parsed.data.productType ?? "PAID_AD",
         location: parsed.data.location,
         format: parsed.data.format,
         clientName: parsed.data.clientName || null,
@@ -249,24 +304,34 @@ export async function createAdPlacement(formData: FormData) {
   revalidatePath("/jobs");
   revalidatePath("/admin/ads");
   revalidatePath("/admin/dashboard");
+  redirect(`/admin/ads?slot=${parsed.data.placementKey}&notice=created`);
 }
 
 export async function updateAdPlacementStatus(formData: FormData) {
   await requireAdmin();
   const parsed = z.object({ id: required, status: z.nativeEnum(AdPlacementStatus) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
-  const ad = await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } }).catch((error) => {
-    console.error("Unable to update ad placement status.", error);
-    return null;
-  });
+  const existing = await prisma.adPlacement.findUnique({ where: { id: parsed.data.id } });
+  if (!existing) return;
+  if (
+    parsed.data.status === AdPlacementStatus.ACTIVE &&
+    existing.startsAt &&
+    existing.endsAt &&
+    !(await checkAdSlotCapacity(existing.placementKey, existing.startsAt, existing.endsAt, existing.availableSlots, existing.id))
+  ) {
+    redirect(`/admin/ads?slot=${existing.placementKey}&error=slot-full`);
+  }
+  const ad = await prisma.adPlacement.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } });
   if (ad) await logAdminActivity("status", "adPlacement", ad.id, `Reklama ${ad.name} změněna na ${ad.status}.`);
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/ads");
   revalidatePath("/admin/dashboard");
+  redirect(`/admin/ads?slot=${ad.placementKey}&notice=status`);
 }
 
 export async function createApplication(_: unknown, formData: FormData) {
+  await syncExpiredBusinessState();
   const parsed = z
     .object({
       jobId: required,
@@ -284,20 +349,51 @@ export async function createApplication(_: unknown, formData: FormData) {
   }
 
   const job = await prisma.jobPost.findFirst({
-    where: { id: parsed.data.jobId, status: JobStatus.ACTIVE }
+    where: { id: parsed.data.jobId, ...activeJobWhere() },
+    include: { company: true }
   });
   if (!job) return { ok: false, message: "Tato nabídka už není aktivní." };
 
-  await prisma.application.create({
+  const application = await prisma.application.create({
     data: {
       jobId: parsed.data.jobId,
       name: parsed.data.name,
       email: parsed.data.email,
       phone: parsed.data.phone,
       message: parsed.data.message,
-      consentGdpr: true
+      consentGdpr: true,
+      communications: {
+        create: {
+          channel: "form",
+          direction: "inbound",
+          subject: `Reakce na inzerát ${job.title}`,
+          body: parsed.data.message,
+          actorEmail: parsed.data.email
+        }
+      }
     }
   });
+  await logSystemActivity("create", "application", application.id, `Nová reakce od ${application.name} na inzerát ${job.title}.`);
+
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (adminEmail) {
+    await sendTransactionalEmail({
+      to: adminEmail,
+      replyTo: parsed.data.email,
+      subject: `Nová reakce: ${job.title}`,
+      html: `<p><strong>${parsed.data.name}</strong> odpověděl/a na inzerát <strong>${job.title}</strong>.</p><p>${parsed.data.message}</p><p>E-mail: ${parsed.data.email}<br>Telefon: ${parsed.data.phone ?? "-"}</p>`
+    });
+  }
+
+  const companyEmail = job.contactEmail || job.company.email;
+  if (companyEmail && process.env.AUTO_NOTIFY_COMPANY === "true") {
+    await sendTransactionalEmail({
+      to: companyEmail,
+      replyTo: parsed.data.email,
+      subject: `Nová reakce z chcupracu.cz: ${job.title}`,
+      html: `<p>Dobrý den, přišla nová reakce na pozici <strong>${job.title}</strong>.</p><p><strong>${parsed.data.name}</strong><br>${parsed.data.email}<br>${parsed.data.phone ?? ""}</p><p>${parsed.data.message}</p>`
+    });
+  }
 
   revalidatePath(`/jobs/${parsed.data.slug}`);
   revalidatePath("/admin/dashboard");
@@ -307,38 +403,92 @@ export async function createApplication(_: unknown, formData: FormData) {
 
 export async function updateApplication(formData: FormData) {
   await requireAdmin();
+  const tagValues = formData
+    .getAll("tags")
+    .map(String)
+    .filter((value): value is ApplicationTag => Object.values(ApplicationTag).includes(value as ApplicationTag));
   const parsed = z
     .object({
       id: required,
       status: z.nativeEnum(ApplicationStatus),
-      internalNote: z.string().trim().max(1200).optional()
+      internalNote: z.string().trim().max(1200).optional(),
+      communicationBody: z.string().trim().max(2000).optional(),
+      communicationChannel: z.string().trim().max(40).optional(),
+      returnTo: z.string().trim().startsWith("/").optional()
     })
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
   let application: { id: string; name: string; status: ApplicationStatus; job: { title: string } };
-  try {
-    application = await prisma.application.update({
-      where: { id: parsed.data.id },
-      include: { job: true },
-      data: {
-        status: parsed.data.status,
-        internalNote: parsed.data.internalNote || null
-      }
-    });
-  } catch (error) {
-    console.error("Unable to update application note, retrying status only.", error);
-    application = await prisma.application.update({
-      where: { id: parsed.data.id },
-      include: { job: true },
-      data: { status: parsed.data.status }
-    });
-  }
+  application = await prisma.application.update({
+    where: { id: parsed.data.id },
+    include: { job: true },
+    data: {
+      status: parsed.data.status,
+      tags: tagValues,
+      internalNote: parsed.data.internalNote || null,
+      communications: parsed.data.communicationBody
+        ? {
+            create: {
+              channel: parsed.data.communicationChannel || "note",
+              direction: "internal",
+              subject: "Poznámka redakce",
+              body: parsed.data.communicationBody
+            }
+          }
+        : undefined
+    }
+  });
   await logAdminActivity("status", "application", application.id, `Reakce ${application.name} u inzerátu ${application.job.title} změněna na ${application.status}.`);
 
   revalidatePath("/admin/applications");
+  revalidatePath(`/admin/applications/${application.id}`);
   revalidatePath("/admin/dashboard");
   revalidatePath("/admin/jobs");
+  if (parsed.data.returnTo) redirect(withActionResult(parsed.data.returnTo, "notice", "status"));
+}
+
+export async function forwardApplicationToCompany(formData: FormData) {
+  await requireAdmin();
+  const parsed = z.object({ id: required }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const application = await prisma.application.findUnique({
+    where: { id: parsed.data.id },
+    include: { job: { include: { company: true } } }
+  });
+  if (!application) return;
+
+  const to = application.job.contactEmail || application.job.company.email;
+  if (!to) redirect(`/admin/applications/${application.id}?error=no-company-email`);
+
+  await sendTransactionalEmail({
+    to,
+    replyTo: application.email,
+    subject: `Reakce na pozici ${application.job.title}`,
+    html: `<p>Dobrý den, předáváme reakci na pozici <strong>${application.job.title}</strong>.</p><p><strong>${application.name}</strong><br>${application.email}<br>${application.phone ?? ""}</p><p>${application.message}</p>`
+  });
+
+  await prisma.application.update({
+    where: { id: application.id },
+    data: {
+      status: ApplicationStatus.FORWARDED,
+      tags: { set: Array.from(new Set([...application.tags, ApplicationTag.FORWARDED_TO_COMPANY])) },
+      communications: {
+        create: {
+          channel: "email",
+          direction: "outbound",
+          subject: `Předáno firmě: ${application.job.title}`,
+          body: `Reakce byla předána na ${to}.`
+        }
+      }
+    }
+  });
+  await logAdminActivity("forward", "application", application.id, `Reakce ${application.name} předána firmě ${application.job.company.name}.`);
+
+  revalidatePath("/admin/applications");
+  revalidatePath(`/admin/applications/${application.id}`);
+  redirect(`/admin/applications/${application.id}?notice=forwarded`);
 }
 
 export async function upsertJob(formData: FormData) {
@@ -385,11 +535,33 @@ export async function upsertJob(formData: FormData) {
     create: { name: parsed.data.companyName, slug: companySlug }
   });
 
+  const existingJob = parsed.data.id ? await prisma.jobPost.findUnique({ where: { id: parsed.data.id } }) : null;
   const baseSlug = slugify(parsed.data.title);
-  const activeFrom = parsed.data.status === JobStatus.ACTIVE ? new Date() : null;
-  const activeUntil = parsed.data.status === JobStatus.ACTIVE ? addDays(new Date(), parsed.data.durationDays) : null;
+  const now = new Date();
+  const activeFrom =
+    parsed.data.status === JobStatus.ACTIVE
+      ? existingJob?.status === JobStatus.ACTIVE
+        ? existingJob.activeFrom
+        : now
+      : existingJob?.activeFrom ?? null;
+  const activeUntil =
+    parsed.data.status === JobStatus.ACTIVE
+      ? existingJob?.status === JobStatus.ACTIVE && existingJob.activeUntil && existingJob.activeUntil > now
+        ? existingJob.activeUntil
+        : addDays(now, parsed.data.durationDays)
+      : parsed.data.status === JobStatus.EXPIRED
+        ? existingJob?.activeUntil && existingJob.activeUntil < now
+          ? existingJob.activeUntil
+          : now
+        : existingJob?.activeUntil ?? null;
+  const renewedAt =
+    parsed.data.status === JobStatus.ACTIVE
+      ? existingJob?.status === JobStatus.ACTIVE
+        ? existingJob.renewedAt
+        : now
+      : existingJob?.renewedAt ?? null;
   const selectedPackage = parsed.data.packageId ? await prisma.pricingPackage.findUnique({ where: { id: parsed.data.packageId } }) : null;
-  const topDays = parsed.data.topDays || selectedPackage?.topDays || 0;
+  const topDays = parsed.data.topDays || (!existingJob ? selectedPackage?.topDays : 0) || 0;
   const data = {
     title: parsed.data.title,
     shortIntro: parsed.data.shortIntro,
@@ -408,11 +580,11 @@ export async function upsertJob(formData: FormData) {
     salaryMaxCzk: parsed.data.salaryMaxCzk || null,
     highlightColor: parsed.data.highlightColor || selectedPackage?.highlightColor || null,
     isTop: Boolean(topDays),
-    topUntil: topDays ? addDays(new Date(), topDays) : null,
+    topUntil: topDays ? addDays(now, topDays) : null,
     status: parsed.data.status,
     activeFrom,
     activeUntil,
-    renewedAt: activeFrom,
+    renewedAt,
     companyId: company.id,
     cityId: parsed.data.cityId,
     categoryId: parsed.data.categoryId,
@@ -454,8 +626,11 @@ export async function upsertJob(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidatePath("/jobs");
+  if (existingJob) revalidatePath(`/jobs/${existingJob.slug}`);
   revalidatePath("/admin/jobs");
-  redirect("/admin/jobs");
+  revalidatePath("/admin/dashboard");
+  redirect("/admin/jobs?notice=saved");
 }
 
 export async function renewJob(formData: FormData) {
@@ -478,8 +653,11 @@ export async function renewJob(formData: FormData) {
   });
   await logAdminActivity("renew", "jobPost", job.id, `Obnoven/topován inzerát ${job.title}.`);
   revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${job.slug}`);
   revalidatePath("/admin/jobs");
   revalidatePath("/admin/dashboard");
+  redirect("/admin/jobs?notice=status");
 }
 
 export async function expireJob(formData: FormData) {
@@ -488,8 +666,11 @@ export async function expireJob(formData: FormData) {
   const job = await prisma.jobPost.update({ where: { id }, data: { status: JobStatus.EXPIRED, activeUntil: new Date() } });
   await logAdminActivity("expire", "jobPost", job.id, `Skryt inzerát ${job.title}.`);
   revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${job.slug}`);
   revalidatePath("/admin/jobs");
   revalidatePath("/admin/dashboard");
+  redirect("/admin/jobs?notice=status");
 }
 
 export async function createCity(formData: FormData) {

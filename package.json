@@ -8,6 +8,8 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "next lint",
+    "test:smoke": "node scripts/smoke-flow.mjs",
+    "ci:prisma": "prisma validate && prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

@@ -1,4 +1,4 @@
-import { AdPlacementStatus, JobStatus, PrismaClient } from "@prisma/client";
+import { AdPlacementStatus, AdProductType, JobStatus, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -145,6 +145,7 @@ async function main() {
       id: "homepage-hero-partner",
       placementKey: "homepage_strip",
       name: "Partner týdne",
+      productType: AdProductType.PARTNER_OF_WEEK,
       location: "Homepage / horní reklamní pás",
       format: "Velký horizontální banner",
       priceCzk: 4900,
@@ -158,6 +159,7 @@ async function main() {
       id: "jobs-results-strip",
       placementKey: "jobs_top_strip",
       name: "Reklamní pruh ve výsledcích",
+      productType: AdProductType.PAID_AD,
       location: "Hledání práce / nad výsledky",
       format: "Horizontální banner s obrázkem",
       priceCzk: 2900,
@@ -171,6 +173,7 @@ async function main() {
       id: "sidebar-jalovec",
       placementKey: "sidebar_box",
       name: "Boční box Jalovec / partner",
+      productType: AdProductType.JALOVEC,
       location: "Homepage a výsledky / boční sloupec",
       format: "Obrázek 4:3 + text",
       priceCzk: 1900,

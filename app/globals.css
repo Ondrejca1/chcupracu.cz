@@ -1529,11 +1529,18 @@ textarea {
 }
 
 .status-draft,
+.status-pending_payment,
 .status-reserved,
 .status-unpaid,
-.status-new {
+.status-new,
+.status-waiting {
   background: #fffbeb;
   color: #92400e;
+}
+
+.status-forwarded {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .status-expired,
@@ -1964,6 +1971,267 @@ textarea {
   grid-template-columns: minmax(220px, 1.4fr) minmax(170px, 0.8fr) minmax(240px, 1.3fr) auto auto;
 }
 
+.active-filter-chips,
+.tag-check-grid,
+.warning-grid,
+.health-grid,
+.timeline-list,
+.job-detail-admin-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.active-filter-chips {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
+}
+
+.filter-chip {
+  align-items: center;
+  background: #fff1f1;
+  border: 1px solid rgba(224, 9, 9, 0.18);
+  border-radius: 999px;
+  color: var(--brand-strong);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 6px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 11px;
+}
+
+.filter-chip.clear {
+  background: #f8fafc;
+  border-color: #e7edf4;
+  color: #475569;
+}
+
+.warning-card {
+  border-color: #fed7aa;
+}
+
+.warning-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.warning-item {
+  align-items: center;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: var(--radius);
+  color: #9a3412;
+  display: grid;
+  gap: 6px;
+  min-height: 120px;
+  padding: 16px;
+}
+
+.warning-item strong,
+.admin-big-number {
+  color: #111827;
+  font-size: 32px;
+  letter-spacing: -0.04em;
+}
+
+.success-card {
+  align-items: center;
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #166534;
+  display: flex;
+  gap: 14px;
+}
+
+.health-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.health-check {
+  align-items: flex-start;
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+}
+
+.health-check.ok svg {
+  color: #16a34a;
+}
+
+.health-check.fail {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.health-check.fail svg {
+  color: #b91c1c;
+}
+
+.health-check strong,
+.health-check span {
+  display: block;
+}
+
+.health-check span {
+  color: #667085;
+  margin-top: 4px;
+}
+
+.tag-check-grid {
+  grid-template-columns: repeat(2, minmax(0, max-content));
+}
+
+.application-tags {
+  margin-top: 4px;
+}
+
+.application-detail-card {
+  align-content: start;
+  display: grid;
+  gap: 14px;
+}
+
+.timeline-item {
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.timeline-item span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.timeline-item p {
+  color: #475569;
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.job-detail-admin-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.job-detail-admin-grid .admin-card {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+}
+
+.job-detail-admin-grid .admin-card:nth-child(1),
+.job-detail-admin-grid .admin-card:nth-child(5) {
+  grid-column: span 2;
+}
+
+.company-page {
+  background: #fff;
+}
+
+.company-hero {
+  align-items: center;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  padding: 54px 0 30px;
+}
+
+.company-logo.large {
+  border-radius: 20px;
+  font-size: 34px;
+  height: 110px;
+  width: 110px;
+}
+
+.company-hero h1 {
+  font-size: clamp(40px, 6vw, 72px);
+  letter-spacing: -0.055em;
+  line-height: 1;
+  margin: 0 0 12px;
+}
+
+.company-hero p {
+  color: #4b5563;
+  line-height: 1.55;
+  margin: 0 0 16px;
+  max-width: 740px;
+}
+
+.company-tile.dark {
+  background: linear-gradient(135deg, var(--company-accent, #111827), #111827);
+}
+
+.job-card-foot a {
+  color: #111827;
+  font-weight: 950;
+}
+
+.mobile-apply-cta {
+  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+  border-radius: var(--radius);
+  bottom: 14px;
+  box-shadow: 0 18px 38px rgba(224, 9, 9, 0.28);
+  color: white;
+  display: none;
+  font-weight: 950;
+  left: 14px;
+  min-height: 52px;
+  place-items: center;
+  position: fixed;
+  right: 14px;
+  z-index: 40;
+}
+
+.admin-error,
+.admin-success {
+  border-radius: var(--radius);
+  font-weight: 850;
+  margin-top: 10px !important;
+  padding: 10px 12px;
+}
+
+.admin-toast {
+  border-radius: var(--radius);
+  box-shadow: 0 18px 42px rgba(31, 41, 55, 0.16);
+  font-weight: 900;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 13px 16px;
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  z-index: 90;
+}
+
+.admin-toast.success {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.admin-toast.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.admin-error {
+  background: #fef2f2;
+  color: #991b1b !important;
+}
+
+.admin-success {
+  background: #ecfdf5;
+  color: #166534 !important;
+}
+
 @media (max-width: 820px) {
   .search-box,
   .grid,
@@ -1995,6 +2263,10 @@ textarea {
   .dictionary-edit-row,
   .application-card,
   .applications-filter,
+  .warning-grid,
+  .health-grid,
+  .job-detail-admin-grid,
+  .company-hero,
   .asset-upload-row,
   .form-grid,
   .hero-inner,
@@ -2095,6 +2367,19 @@ textarea {
 
   .apply-panel {
     position: static;
+  }
+
+  .mobile-apply-cta {
+    display: grid;
+  }
+
+  .detail-page-shell {
+    padding-bottom: 78px;
+  }
+
+  .job-detail-admin-grid .admin-card:nth-child(1),
+  .job-detail-admin-grid .admin-card:nth-child(5) {
+    grid-column: auto;
   }
 
   .admin-shell {
