@@ -3,7 +3,7 @@ import { BarChart3, CircleDollarSign, ReceiptText } from "lucide-react";
 import { createMissingInvoicesFromJobs, updateInvoiceStatus } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, money } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const statusLabels: Record<PaymentStatus, string> = {
@@ -13,7 +13,7 @@ const statusLabels: Record<PaymentStatus, string> = {
 };
 
 export default async function AdminFinancePage({ searchParams }: { searchParams: Promise<{ company?: string; status?: string; min?: string; max?: string }> }) {
-  await requireAdmin();
+  await requirePermission("finance:write");
   const params = await searchParams;
   const where: Prisma.InvoiceWhereInput = {};
   if (params.company) where.company = { name: { contains: params.company, mode: "insensitive" } };

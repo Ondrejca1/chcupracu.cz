@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
 import { JobEditor } from "@/components/JobEditor";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getFilters } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
 import { jobStatusLabels } from "@/lib/business-rules";
 
 export default async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  await requirePermission("jobs:write");
   const { id } = await params;
   const [filters, packages, job, activities] = await Promise.all([
     getFilters(),

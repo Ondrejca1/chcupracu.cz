@@ -1,5 +1,5 @@
 import { ApplicationStatus, type Prisma } from "@prisma/client";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
 
@@ -9,7 +9,7 @@ function csvCell(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  await requireAdmin();
+  await requirePermission("applications:write");
   const url = new URL(request.url);
   const where: Prisma.ApplicationWhereInput = {};
   const q = url.searchParams.get("q")?.trim();

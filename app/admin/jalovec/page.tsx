@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/AdminShell";
 import { AssetUploadField } from "@/components/AssetUploadField";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, money } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type JalovecIssue = {
@@ -34,7 +34,7 @@ const errorMessages: Record<string, string> = {
 };
 
 export default async function AdminJalovecPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
-  await requireAdmin();
+  await requirePermission("jalovec:write");
   const params = await searchParams;
   let issues: JalovecIssue[] = [];
 

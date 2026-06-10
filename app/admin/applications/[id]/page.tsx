@@ -5,7 +5,7 @@ import { ArrowLeft, Mail, Phone, Send } from "lucide-react";
 import { forwardApplicationToCompany, updateApplication } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { dateTimeCs } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
 
@@ -16,7 +16,7 @@ export default async function AdminApplicationDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ notice?: string; error?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("applications:write");
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const application = await prisma.application.findUnique({
     where: { id },

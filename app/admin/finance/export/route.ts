@@ -1,5 +1,5 @@
 import { PaymentStatus, type Prisma } from "@prisma/client";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 function csvCell(value: unknown) {
@@ -8,7 +8,7 @@ function csvCell(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  await requireAdmin();
+  await requirePermission("finance:write");
   const url = new URL(request.url);
   const where: Prisma.InvoiceWhereInput = {};
   const company = url.searchParams.get("company")?.trim();

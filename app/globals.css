@@ -228,6 +228,11 @@ textarea {
   color: var(--brand-strong);
 }
 
+.button.ghost {
+  background: #eef2f7;
+  color: #344054;
+}
+
 .button.danger {
   background: var(--danger);
 }
@@ -1081,6 +1086,25 @@ textarea {
   margin-top: 2px;
 }
 
+.admin-user-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+}
+
+.admin-user-card strong {
+  color: #fff;
+}
+
+.admin-user-card span {
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .admin-nav-links {
   display: grid;
   gap: 6px;
@@ -1335,6 +1359,36 @@ textarea {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.password-field {
+  display: grid;
+  position: relative;
+}
+
+.password-field .field {
+  padding-right: 48px;
+}
+
+.password-field button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #667085;
+  cursor: pointer;
+  display: inline-flex;
+  height: 100%;
+  justify-content: center;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 46px;
+}
+
+.admin-login-link {
+  color: var(--brand-strong);
+  font-weight: 900;
+  text-align: center;
+}
+
 .admin-form,
 .job-editor-form {
   display: grid;
@@ -1441,6 +1495,52 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.admin-user-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-user-item {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px rgba(31, 41, 55, 0.07);
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.admin-profile-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-profile-list.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-profile-list div {
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.admin-profile-list span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-profile-list strong {
+  color: #111827;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
 .full {
   grid-column: 1 / -1;
 }
@@ -1520,6 +1620,7 @@ textarea {
 }
 
 .status-active,
+.status-pill.active,
 .status-available,
 .status-paid,
 .status-contacted,
@@ -1529,6 +1630,7 @@ textarea {
 }
 
 .status-draft,
+.status-pill.pending,
 .status-pending_payment,
 .status-reserved,
 .status-unpaid,
@@ -1544,12 +1646,14 @@ textarea {
 }
 
 .status-expired,
+.status-pill.suspended,
 .status-paused {
   background: #f1f5f9;
   color: #475569;
 }
 
 .status-archived,
+.status-pill.archived,
 .status-cancelled,
 .status-rejected {
   background: #fef2f2;
@@ -2434,6 +2538,11 @@ textarea {
   .admin-page-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .admin-user-grid,
+  .admin-profile-list.compact {
+    grid-template-columns: 1fr;
   }
 
   .admin-list-row,

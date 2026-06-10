@@ -2,18 +2,21 @@
 
 import { addDays } from "date-fns";
 import { mkdir, writeFile } from "node:fs/promises";
+import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { AdPlacementStatus, ApplicationStatus, ApplicationTag, JobStatus, PaymentStatus } from "@prisma/client";
-import { login, logout, requireAdmin } from "@/lib/auth";
+import { AdPlacementStatus, AdminRole, AdminUserStatus, ApplicationStatus, ApplicationTag, JobStatus, PaymentStatus } from "@prisma/client";
+import { login, logout, requireAdmin, requirePermission } from "@/lib/auth";
 import { activeAdWhere, activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 
 const required = z.string().trim().min(1, "Povinné pole");
 const email = z.string().trim().email("Neplatný e-mail");
+const password = z.string().min(10, "Heslo musí mít alespoň 10 znaků.");
 const optionalAssetUrl = z
   .string()
   .trim()
@@ -98,6 +101,8 @@ function withActionResult(path: string, key: "notice" | "error", value: string) 
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
+
 async function markPublicationIssueCurrent(id: string) {
   try {
     await prisma.$transaction([
@@ -118,7 +123,7 @@ async function markPublicationIssueCurrent(id: string) {
 }
 
 export async function adminLogin(_: unknown, formData: FormData) {
-  const parsed = z.object({ email, password: required }).safeParse(Object.fromEntries(formData));
+  const parsed = z.object({ email: required, password: required }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, message: "Vyplňte prosím e-mail a heslo." };
   const result = await login(parsed.data.email, parsed.data.password);
   if (!result.ok) {
@@ -129,15 +134,240 @@ export async function adminLogin(_: unknown, formData: FormData) {
 
     return {
       ok: false,
-      message: result.reason === "invalid" ? "Přihlášení se nepovedlo." : configMessage
+      message:
+        result.reason === "invalid"
+          ? "Přihlášení se nepovedlo."
+          : result.reason === "inactive"
+            ? "Účet není aktivní. Kontaktujte správce administrace."
+            : result.reason === "locked"
+              ? "Účet je dočasně uzamčený po opakovaných pokusech."
+              : configMessage
     };
   }
-  redirect("/admin/dashboard");
+  redirect(result.forcePasswordChange ? "/admin/profile?notice=change-password" : "/admin/dashboard");
 }
 
 export async function adminLogout() {
   await logout();
   redirect("/admin");
+}
+
+export async function requestPasswordReset(_: unknown, formData: FormData) {
+  const parsed = z.object({ email }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: true, message: "Pokud účet existuje, pošleme odkaz pro obnovu hesla." };
+
+  const user = await prisma.adminUser.findUnique({ where: { email: parsed.data.email.toLowerCase() } });
+  if (!user || user.status === AdminUserStatus.ARCHIVED) {
+    return { ok: true, message: "Pokud účet existuje, pošleme odkaz pro obnovu hesla." };
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      tokenHash: tokenHash(token),
+      expiresAt: new Date(Date.now() + 30 * 60_000)
+    }
+  });
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "https://chcupracu.vercel.app");
+  const resetUrl = `${baseUrl}/admin/reset-password?token=${token}`;
+  await sendTransactionalEmail({
+    to: user.email,
+    subject: "Obnova hesla do administrace chcupracu.cz",
+    html: `<p>Dobrý den,</p><p>pro obnovu hesla použijte tento odkaz. Platí 30 minut.</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Pokud jste obnovu nevyžádali, zprávu ignorujte.</p>`
+  });
+
+  return { ok: true, message: "Pokud účet existuje, pošleme odkaz pro obnovu hesla." };
+}
+
+export async function resetPassword(_: unknown, formData: FormData) {
+  const parsed = z
+    .object({
+      token: required,
+      password,
+      passwordConfirm: required
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success || parsed.data.password !== parsed.data.passwordConfirm) {
+    return { ok: false, message: "Hesla se neshodují nebo jsou příliš krátká." };
+  }
+
+  const reset = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: tokenHash(parsed.data.token) },
+    include: { user: true }
+  });
+  if (!reset || reset.usedAt || reset.expiresAt < new Date() || reset.user.status === AdminUserStatus.ARCHIVED) {
+    return { ok: false, message: "Odkaz pro obnovu hesla je neplatný nebo vypršel." };
+  }
+
+  await prisma.$transaction([
+    prisma.adminUser.update({
+      where: { id: reset.userId },
+      data: {
+        passwordHash: await bcrypt.hash(parsed.data.password, 12),
+        status: AdminUserStatus.ACTIVE,
+        forcePasswordChange: false,
+        failedLoginCount: 0,
+        lockedUntil: null
+      }
+    }),
+    prisma.passwordResetToken.update({ where: { id: reset.id }, data: { usedAt: new Date() } })
+  ]);
+
+  return { ok: true, message: "Heslo bylo změněno. Můžete se přihlásit." };
+}
+
+export async function changeOwnPassword(formData: FormData) {
+  const admin = await requireAdmin();
+  const parsed = z
+    .object({
+      currentPassword: z.string().optional(),
+      password,
+      passwordConfirm: required
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success || parsed.data.password !== parsed.data.passwordConfirm) redirect("/admin/profile?error=password");
+
+  const user = await prisma.adminUser.findUniqueOrThrow({ where: { id: admin.id } });
+  if (!user.forcePasswordChange) {
+    const ok = parsed.data.currentPassword ? await bcrypt.compare(parsed.data.currentPassword, user.passwordHash) : false;
+    if (!ok) redirect("/admin/profile?error=current-password");
+  }
+
+  await prisma.adminUser.update({
+    where: { id: admin.id },
+    data: {
+      passwordHash: await bcrypt.hash(parsed.data.password, 12),
+      forcePasswordChange: false,
+      status: AdminUserStatus.ACTIVE
+    }
+  });
+  await logAdminActivity("password", "adminUser", admin.id, "Uživatel změnil vlastní heslo.");
+  redirect("/admin/profile?notice=password");
+}
+
+export async function createAdminUser(formData: FormData) {
+  await requirePermission("users:manage");
+  const parsed = z
+    .object({
+      firstName: required.max(80),
+      lastName: required.max(80),
+      username: required.max(60),
+      email,
+      role: z.nativeEnum(AdminRole),
+      status: z.nativeEnum(AdminUserStatus),
+      password,
+      forcePasswordChange: z.string().optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin/users?error=invalid");
+
+  const fullName = `${parsed.data.firstName} ${parsed.data.lastName}`.trim();
+  try {
+    const user = await prisma.adminUser.create({
+      data: {
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+        name: fullName,
+        username: parsed.data.username.toLowerCase(),
+        email: parsed.data.email.toLowerCase(),
+        role: parsed.data.role,
+        status: parsed.data.status,
+        passwordHash: await bcrypt.hash(parsed.data.password, 12),
+        forcePasswordChange: parsed.data.forcePasswordChange === "on"
+      }
+    });
+    await logAdminActivity("create", "adminUser", user.id, `Vytvořen redakční účet ${user.email}.`);
+  } catch (error) {
+    console.error("Unable to create admin user.", error);
+    redirect("/admin/users?error=user-exists");
+  }
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?notice=created");
+}
+
+export async function updateAdminUser(formData: FormData) {
+  const actor = await requirePermission("users:manage");
+  const parsed = z
+    .object({
+      id: required,
+      firstName: required.max(80),
+      lastName: required.max(80),
+      username: required.max(60),
+      email,
+      role: z.nativeEnum(AdminRole),
+      status: z.nativeEnum(AdminUserStatus)
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin/users?error=invalid");
+  if (parsed.data.id === actor.id && parsed.data.status !== AdminUserStatus.ACTIVE) redirect("/admin/users?error=self-disable");
+
+  const fullName = `${parsed.data.firstName} ${parsed.data.lastName}`.trim();
+  try {
+    const user = await prisma.adminUser.update({
+      where: { id: parsed.data.id },
+      data: {
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+        name: fullName,
+        username: parsed.data.username.toLowerCase(),
+        email: parsed.data.email.toLowerCase(),
+        role: parsed.data.role,
+        status: parsed.data.status
+      }
+    });
+    await logAdminActivity("update", "adminUser", user.id, `Upraven redakční účet ${user.email}.`);
+  } catch (error) {
+    console.error("Unable to update admin user.", error);
+    redirect("/admin/users?error=user-exists");
+  }
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?notice=saved");
+}
+
+export async function setAdminUserPassword(formData: FormData) {
+  await requirePermission("users:manage");
+  const parsed = z
+    .object({
+      id: required,
+      password,
+      forcePasswordChange: z.string().optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin/users?error=password");
+
+  const user = await prisma.adminUser.update({
+    where: { id: parsed.data.id },
+    data: {
+      passwordHash: await bcrypt.hash(parsed.data.password, 12),
+      forcePasswordChange: parsed.data.forcePasswordChange === "on",
+      failedLoginCount: 0,
+      lockedUntil: null
+    }
+  });
+  await logAdminActivity("password", "adminUser", user.id, `Správce změnil heslo účtu ${user.email}.`);
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?notice=password");
+}
+
+export async function archiveAdminUser(formData: FormData) {
+  const actor = await requirePermission("users:manage");
+  const parsed = z.object({ id: required, status: z.nativeEnum(AdminUserStatus) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  if (parsed.data.id === actor.id) redirect("/admin/users?error=self-disable");
+
+  const nextStatus = parsed.data.status === AdminUserStatus.ACTIVE ? AdminUserStatus.SUSPENDED : AdminUserStatus.ACTIVE;
+  const user = await prisma.adminUser.update({ where: { id: parsed.data.id }, data: { status: nextStatus } });
+  await logAdminActivity("status", "adminUser", user.id, `Účet ${user.email} změněn na ${user.status}.`);
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?notice=status");
 }
 
 export async function uploadAdminAsset(formData: FormData) {
@@ -175,7 +405,7 @@ export async function uploadAdminAsset(formData: FormData) {
 }
 
 export async function createPublicationIssue(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("jalovec:write");
   const parsed = z
     .object({
       title: required.max(140),
@@ -226,7 +456,7 @@ export async function createPublicationIssue(formData: FormData) {
 }
 
 export async function setCurrentPublicationIssue(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("jalovec:write");
   const id = String(formData.get("id"));
   const currentOk = await markPublicationIssueCurrent(id);
   if (currentOk) await logAdminActivity("setCurrent", "publicationIssue", id, "Změněno aktuální vydání Jalovce.");
@@ -238,7 +468,7 @@ export async function setCurrentPublicationIssue(formData: FormData) {
 }
 
 export async function createAdPlacement(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("ads:write");
   const parsed = z
     .object({
       name: required.max(120),
@@ -308,7 +538,7 @@ export async function createAdPlacement(formData: FormData) {
 }
 
 export async function updateAdPlacementStatus(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("ads:write");
   const parsed = z.object({ id: required, status: z.nativeEnum(AdPlacementStatus) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
   const existing = await prisma.adPlacement.findUnique({ where: { id: parsed.data.id } });
@@ -402,7 +632,7 @@ export async function createApplication(_: unknown, formData: FormData) {
 }
 
 export async function updateApplication(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("applications:write");
   const tagValues = formData
     .getAll("tags")
     .map(String)
@@ -449,7 +679,7 @@ export async function updateApplication(formData: FormData) {
 }
 
 export async function forwardApplicationToCompany(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("applications:write");
   const parsed = z.object({ id: required }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
@@ -492,7 +722,7 @@ export async function forwardApplicationToCompany(formData: FormData) {
 }
 
 export async function upsertJob(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("jobs:write");
   const raw = Object.fromEntries(formData);
   const suitabilityIds = formData.getAll("suitabilityIds").map(String);
   const parsed = z
@@ -634,7 +864,7 @@ export async function upsertJob(formData: FormData) {
 }
 
 export async function renewJob(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("jobs:write");
   const id = String(formData.get("id"));
   const days = Number(formData.get("days") ?? 30);
   const topDays = Number(formData.get("topDays") ?? 0);
@@ -661,7 +891,7 @@ export async function renewJob(formData: FormData) {
 }
 
 export async function expireJob(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("jobs:write");
   const id = String(formData.get("id"));
   const job = await prisma.jobPost.update({ where: { id }, data: { status: JobStatus.EXPIRED, activeUntil: new Date() } });
   await logAdminActivity("expire", "jobPost", job.id, `Skryt inzerát ${job.title}.`);
@@ -674,7 +904,7 @@ export async function expireJob(formData: FormData) {
 }
 
 export async function createCity(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("dictionaries:write");
   const parsed = z.object({ name: required.max(80), region: z.string().max(80).optional() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
   await prisma.city.upsert({
@@ -689,7 +919,7 @@ export async function createCity(formData: FormData) {
 const dictionaryType = z.enum(["city", "category", "education", "employmentType", "suitability"]);
 
 export async function createDictionaryItem(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("dictionaries:write");
   const parsed = z
     .object({
       type: dictionaryType,
@@ -719,7 +949,7 @@ export async function createDictionaryItem(formData: FormData) {
 }
 
 export async function toggleDictionaryItem(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("dictionaries:write");
   const parsed = z.object({ type: dictionaryType, id: required, isActive: z.string() }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
   const data = { isActive: parsed.data.isActive !== "true" };
@@ -735,7 +965,7 @@ export async function toggleDictionaryItem(formData: FormData) {
 }
 
 export async function updateDictionaryItem(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("dictionaries:write");
   const parsed = z
     .object({
       type: dictionaryType,
@@ -769,7 +999,7 @@ export async function updateDictionaryItem(formData: FormData) {
 }
 
 export async function toggleCity(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("dictionaries:write");
   const id = String(formData.get("id"));
   const isActive = String(formData.get("isActive")) === "true";
   await prisma.city.update({ where: { id }, data: { isActive: !isActive } });
@@ -778,7 +1008,7 @@ export async function toggleCity(formData: FormData) {
 }
 
 export async function createPackage(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("packages:write");
   const parsed = z
     .object({
       name: required.max(80),
@@ -806,7 +1036,7 @@ export async function createPackage(formData: FormData) {
 }
 
 export async function togglePackage(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("packages:write");
   const id = String(formData.get("id"));
   const isActive = String(formData.get("isActive")) === "true";
   await prisma.pricingPackage.update({ where: { id }, data: { isActive: !isActive } });
@@ -814,7 +1044,7 @@ export async function togglePackage(formData: FormData) {
 }
 
 export async function updatePackage(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("packages:write");
   const parsed = z
     .object({
       id: required,
@@ -844,7 +1074,7 @@ export async function updatePackage(formData: FormData) {
 }
 
 export async function updateInvoiceStatus(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("finance:write");
   const parsed = z.object({ id: required, status: z.nativeEnum(PaymentStatus) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
   const invoice = await prisma.invoice.update({
@@ -858,7 +1088,7 @@ export async function updateInvoiceStatus(formData: FormData) {
 }
 
 export async function createMissingInvoicesFromJobs() {
-  await requireAdmin();
+  await requirePermission("finance:write");
   const jobs = await prisma.jobPost.findMany({
     where: { packageId: { not: null }, invoices: { none: {} } },
     include: { package: true, company: true },

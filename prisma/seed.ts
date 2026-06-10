@@ -1,4 +1,4 @@
-import { AdPlacementStatus, AdProductType, JobStatus, PrismaClient } from "@prisma/client";
+import { AdPlacementStatus, AdProductType, AdminRole, AdminUserStatus, JobStatus, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -605,14 +605,25 @@ async function main() {
     }
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL ?? "redakce@chcupracu.cz";
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "redakce@chcupracu.cz").toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "change-this-before-production";
   await prisma.adminUser.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: {
+      username: adminEmail.split("@")[0],
+      firstName: "Redakce",
+      lastName: "Chci práci",
+      role: AdminRole.ADMIN,
+      status: AdminUserStatus.ACTIVE
+    },
     create: {
       email: adminEmail,
+      username: adminEmail.split("@")[0],
+      firstName: "Redakce",
+      lastName: "Chci práci",
       name: "Redakce",
+      role: AdminRole.ADMIN,
+      status: AdminUserStatus.ACTIVE,
       passwordHash: await bcrypt.hash(adminPassword, 12)
     }
   });

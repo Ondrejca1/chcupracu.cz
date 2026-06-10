@@ -1,11 +1,11 @@
 import { createPackage, togglePackage, updatePackage } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { money } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminPackagesPage() {
-  await requireAdmin();
+  await requirePermission("packages:write");
   const packages = await prisma.pricingPackage.findMany({ orderBy: [{ isActive: "desc" }, { priceCzk: "asc" }] });
   const activeCount = packages.filter((item) => item.isActive).length;
 

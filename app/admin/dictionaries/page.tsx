@@ -1,6 +1,6 @@
 import { createDictionaryItem, updateDictionaryItem } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const dictionaryLabels = {
@@ -12,7 +12,7 @@ const dictionaryLabels = {
 } as const;
 
 export default async function AdminDictionariesPage() {
-  await requireAdmin();
+  await requirePermission("dictionaries:write");
   const [cities, categories, educations, employmentTypes, suitabilities] = await Promise.all([
     prisma.city.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
     prisma.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),

@@ -3,7 +3,7 @@ import { ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
 import { AlertTriangle, ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { hasPermission, requirePermission, type AdminPermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentIssue, getFeaturedAds } from "@/lib/queries";
 import { activeAdWhere, activeJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
@@ -14,36 +14,41 @@ const dashboardTiles = [
     title: "Přidat pracovní inzerát",
     text: "Kompletní zadání včetně mzdy, obrázků, topování a zobrazení na homepage.",
     href: "/admin/jobs/new",
-    icon: FilePlus2
+    icon: FilePlus2,
+    permission: "jobs:write"
   },
   {
     title: "Aktuální číslo Jalovce",
     text: "Vyměnit obálku, odkaz a poznámky k právě propagovanému vydání.",
     href: "/admin/jalovec",
-    icon: Newspaper
+    icon: Newspaper,
+    permission: "jalovec:write"
   },
   {
     title: "Reakce uchazečů",
     text: "Zpracovat nové odpovědi, změnit stav a předat kontakt správné firmě.",
     href: "/admin/applications",
-    icon: Inbox
+    icon: Inbox,
+    permission: "applications:write"
   },
   {
     title: "Reklamní plocha",
     text: "Zadat partnera, cenu, délku kampaně, dostupné sloty a stav kampaně.",
     href: "/admin/ads",
-    icon: Megaphone
+    icon: Megaphone,
+    permission: "ads:write"
   },
   {
     title: "Číselníky a finance",
     text: "Správa měst, balíčků, faktur a základních ekonomických filtrů.",
     href: "/admin/finance",
-    icon: CircleDollarSign
+    icon: CircleDollarSign,
+    permission: "finance:write"
   }
-];
+] satisfies Array<{ title: string; text: string; href: string; icon: typeof FilePlus2; permission: AdminPermission }>;
 
 export default async function AdminDashboardPage() {
-  await requireAdmin();
+  const admin = await requirePermission("dashboard:view");
   await syncExpiredBusinessState();
   const now = new Date();
 
@@ -134,7 +139,7 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="admin-tile-grid">
-        {dashboardTiles.map((tile) => {
+        {dashboardTiles.filter((tile) => hasPermission(admin, tile.permission)).map((tile) => {
           const Icon = tile.icon;
           return (
             <Link className="admin-action-tile" href={tile.href} key={tile.title}>

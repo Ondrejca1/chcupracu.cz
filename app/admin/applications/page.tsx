@@ -4,7 +4,7 @@ import { Mail, MessageSquareText, Phone, Search, UserCheck, UsersRound } from "l
 import { updateApplication } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { dateTimeCs } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
 
@@ -13,7 +13,7 @@ export default async function AdminApplicationsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string; job?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("applications:write");
   const params = await searchParams;
   const where: Prisma.ApplicationWhereInput = {};
   const q = params.q?.trim();

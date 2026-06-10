@@ -51,6 +51,20 @@ enum AdProductType {
   PARTNER_OF_WEEK
 }
 
+enum AdminRole {
+  ADMIN
+  EDITOR
+  SALES
+  VIEWER
+}
+
+enum AdminUserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
 model City {
   id        String    @id @default(cuid())
   name      String    @unique
@@ -251,12 +265,34 @@ model Invoice {
 }
 
 model AdminUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  username            String?            @unique
+  passwordHash        String
+  name                String
+  firstName           String?
+  lastName            String?
+  role                AdminRole          @default(EDITOR)
+  status              AdminUserStatus    @default(ACTIVE)
+  forcePasswordChange Boolean            @default(false)
+  lastLoginAt         DateTime?
+  failedLoginCount    Int                @default(0)
+  lockedUntil         DateTime?
+  resetTokens         PasswordResetToken[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model ActivityLog {

@@ -5,13 +5,13 @@ import { expireJob, renewJob } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, salaryRange } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { activeTopJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
 import { getJobVisibilityCounts } from "@/lib/queries";
 
 export default async function AdminJobsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; city?: string; top?: string; homepage?: string }> }) {
-  await requireAdmin();
+  await requirePermission("jobs:write");
   await syncExpiredBusinessState();
   const params = await searchParams;
   const now = new Date();

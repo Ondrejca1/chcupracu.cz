@@ -1,6 +1,6 @@
 import { Activity, CheckCircle2, Database, KeyRound, XCircle } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type Check = {
@@ -10,7 +10,7 @@ type Check = {
 };
 
 export default async function AdminHealthPage() {
-  await requireAdmin();
+  await requirePermission("health:view");
   const checks: Check[] = [];
   let migrations: { migration_name: string; finished_at: Date | null }[] = [];
 
@@ -37,7 +37,9 @@ export default async function AdminHealthPage() {
     { key: "DATABASE_URL", required: true },
     { key: "SESSION_SECRET", required: true },
     { key: "ADMIN_NOTIFICATION_EMAIL", required: false },
-    { key: "RESEND_API_KEY", required: false }
+    { key: "RESEND_API_KEY", required: false },
+    { key: "MAIL_FROM", required: false },
+    { key: "NEXT_PUBLIC_SITE_URL", required: false }
   ];
   for (const item of envChecks) {
     const isSet = Boolean(process.env[item.key]);

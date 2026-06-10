@@ -5,7 +5,7 @@ import { createAdPlacement, updateAdPlacementStatus } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { AssetUploadField } from "@/components/AssetUploadField";
 import { dateCs, money } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { adStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
 
@@ -47,7 +47,7 @@ const placementSlots = [
 ];
 
 export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ status?: string; slot?: string; q?: string; error?: string; notice?: string }> }) {
-  await requireAdmin();
+  await requirePermission("ads:write");
   await syncExpiredBusinessState();
   const params = await searchParams;
   const today = new Date();

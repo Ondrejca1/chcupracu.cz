@@ -2,12 +2,12 @@ import Link from "next/link";
 import { AlertTriangle, BriefcaseBusiness, CheckCircle2, Megaphone, ReceiptText } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, money } from "@/lib/format";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getOperationalWarnings } from "@/lib/admin-insights";
 import { adStatusLabels, jobStatusLabels } from "@/lib/business-rules";
 
 export default async function AdminTasksPage() {
-  await requireAdmin();
+  await requirePermission("tasks:view");
   const warnings = await getOperationalWarnings();
   const total =
     warnings.counts.expiringJobs +
