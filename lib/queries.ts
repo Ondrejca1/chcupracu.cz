@@ -59,7 +59,18 @@ export async function getCurrentIssue() {
   try {
     return await prisma.publicationIssue.findFirst({
       where: { isCurrent: true },
-      orderBy: { publishedAt: "desc" }
+      orderBy: { publishedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        issueNumber: true,
+        publishedAt: true,
+        coverImageUrl: true,
+        targetUrl: true,
+        priceCzk: true,
+        isCurrent: true,
+        note: true
+      }
     });
   } catch (error) {
     console.error("Unable to load current publication issue.", error);

@@ -127,22 +127,30 @@ export async function createPublicationIssue(formData: FormData) {
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
-  const isCurrent = parsed.data.isCurrent === "on";
-  if (isCurrent) await prisma.publicationIssue.updateMany({ data: { isCurrent: false } });
+  try {
+    const isCurrent = parsed.data.isCurrent === "on";
+    const publishedAt = parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date();
+    if (Number.isNaN(publishedAt.getTime())) return;
 
-  const issue = await prisma.publicationIssue.create({
-    data: {
-      title: parsed.data.title,
-      issueNumber: parsed.data.issueNumber || null,
-      coverImageUrl: parsed.data.coverImageUrl || "/ads/jalovec-aktualni-vydani.jpg",
-      targetUrl: parsed.data.targetUrl || "https://www.jalovec.cz",
-      priceCzk: parsed.data.priceCzk || null,
-      publishedAt: parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date(),
-      isCurrent,
-      note: parsed.data.note || null
-    }
-  });
-  await logAdminActivity("create", "publicationIssue", issue.id, `Přidáno vydání ${issue.title}.`);
+    if (isCurrent) await prisma.publicationIssue.updateMany({ data: { isCurrent: false } });
+
+    const issue = await prisma.publicationIssue.create({
+      data: {
+        title: parsed.data.title,
+        issueNumber: parsed.data.issueNumber || null,
+        coverImageUrl: parsed.data.coverImageUrl || "/ads/jalovec-aktualni-vydani.jpg",
+        targetUrl: parsed.data.targetUrl || "https://www.jalovec.cz",
+        priceCzk: parsed.data.priceCzk || null,
+        publishedAt,
+        isCurrent,
+        note: parsed.data.note || null
+      }
+    });
+    await logAdminActivity("create", "publicationIssue", issue.id, `Přidáno vydání ${issue.title}.`);
+  } catch (error) {
+    console.error("Unable to create publication issue.", error);
+    return;
+  }
 
   revalidatePath("/");
   revalidatePath("/jobs");

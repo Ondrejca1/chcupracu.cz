@@ -7,12 +7,38 @@ import { dateCs, money } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+type JalovecIssue = {
+  id: string;
+  title: string;
+  issueNumber: string | null;
+  publishedAt: Date;
+  coverImageUrl: string;
+  targetUrl: string | null;
+  priceCzk: number | null;
+  isCurrent: boolean;
+  note: string | null;
+};
+
 export default async function AdminJalovecPage() {
   await requireAdmin();
-  let issues: Awaited<ReturnType<typeof prisma.publicationIssue.findMany>> = [];
+  let issues: JalovecIssue[] = [];
 
   try {
-    issues = await prisma.publicationIssue.findMany({ orderBy: [{ isCurrent: "desc" }, { publishedAt: "desc" }], take: 24 });
+    issues = await prisma.publicationIssue.findMany({
+      orderBy: [{ isCurrent: "desc" }, { publishedAt: "desc" }],
+      select: {
+        id: true,
+        title: true,
+        issueNumber: true,
+        publishedAt: true,
+        coverImageUrl: true,
+        targetUrl: true,
+        priceCzk: true,
+        isCurrent: true,
+        note: true
+      },
+      take: 24
+    });
   } catch (error) {
     console.error("Unable to load Jalovec issues.", error);
   }
@@ -40,7 +66,7 @@ export default async function AdminJalovecPage() {
           </div>
           {currentIssue ? (
             <div className="jalovec-preview">
-              <img alt={currentIssue.title} src={currentIssue.coverImageUrl} />
+              <img alt={currentIssue.title} src={currentIssue.coverImageUrl || "/ads/jalovec-aktualni-vydani.jpg"} />
               <div>
                 <span className="status-pill status-active"><CheckCircle2 size={14} /> Aktivní</span>
                 <h3>{currentIssue.title}</h3>
