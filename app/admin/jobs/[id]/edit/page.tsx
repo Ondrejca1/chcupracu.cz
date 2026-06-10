@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { renewJob } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { JobEditor } from "@/components/JobEditor";
 import { requirePermission } from "@/lib/auth";
@@ -99,6 +100,31 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
             {activities.length === 0 && <p className="admin-empty">Zatím bez auditní historie.</p>}
           </div>
         </article>
+      </section>
+      <section className="admin-card job-renew-panel">
+        <div>
+          <span className="admin-kicker">Obnovení inzerátu</span>
+          <h2>Rychlé prodloužení</h2>
+          <p>Jedním klikem nastavíte stav aktivní, nové datum „Aktivní od“, „Aktivní do“ a případné topování.</p>
+        </div>
+        <div className="job-renew-actions">
+          {[
+            { label: "14 dní", days: 14, topDays: 0 },
+            { label: "30 dní", days: 30, topDays: 0 },
+            { label: "45 dní + TOP", days: 45, topDays: 14 }
+          ].map((item) => (
+            <form action={renewJob} key={item.label}>
+              <input name="id" type="hidden" value={job.id} />
+              <input name="days" type="hidden" value={item.days} />
+              <input name="topDays" type="hidden" value={item.topDays} />
+              <input name="highlightColor" type="hidden" value={job.highlightColor ?? ""} />
+              <button className="renew-choice-button" type="submit">
+                <strong>{item.label}</strong>
+                <span>{item.topDays ? `Topovat ${item.topDays} dní` : "Bez topování"}</span>
+              </button>
+            </form>
+          ))}
+        </div>
       </section>
       <JobEditor filters={filters} packages={packages} job={job} />
     </AdminShell>

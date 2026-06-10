@@ -1396,6 +1396,131 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.job-editor-modern {
+  display: grid;
+  gap: 16px;
+}
+
+.job-editor-hero,
+.job-renew-panel {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.job-editor-hero h2,
+.job-renew-panel h2 {
+  font-size: 28px;
+  letter-spacing: -0.04em;
+  margin: 0 0 6px;
+}
+
+.job-editor-hero p,
+.job-renew-panel p {
+  color: #667085;
+  margin: 0;
+}
+
+.job-editor-tabs {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px rgba(31, 41, 55, 0.06);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+}
+
+.job-editor-tabs a,
+.renew-choice-button {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  color: #344054;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 950;
+  gap: 8px;
+  min-height: 44px;
+  padding: 11px 14px;
+}
+
+.job-editor-tabs a:hover,
+.renew-choice-button:hover {
+  background: #fff1f1;
+  border-color: #fecaca;
+  color: var(--brand-strong);
+}
+
+.job-editor-section {
+  scroll-margin-top: 92px;
+}
+
+.job-editor-date-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.job-toggle-grid,
+.job-renew-actions {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.job-suitability-box {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.job-renew-actions form {
+  display: grid;
+}
+
+.renew-choice-button {
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+}
+
+.renew-choice-button strong,
+.renew-choice-button span {
+  display: block;
+}
+
+.renew-choice-button span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-editor-savebar {
+  align-items: center;
+  background: #111827;
+  border-radius: var(--radius);
+  bottom: 16px;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.22);
+  color: #dbe3ef;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  padding: 14px 16px;
+  position: sticky;
+  z-index: 30;
+}
+
+.job-editor-savebar span {
+  font-weight: 800;
+}
+
 .admin-form.wide {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -2538,6 +2663,27 @@ textarea {
   .admin-page-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .job-editor-hero,
+  .job-renew-panel,
+  .job-editor-savebar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .job-editor-tabs {
+    position: static;
+  }
+
+  .job-editor-tabs a {
+    flex: 1 1 160px;
+  }
+
+  .job-editor-date-grid,
+  .job-toggle-grid,
+  .job-renew-actions {
+    grid-template-columns: 1fr;
   }
 
   .admin-user-grid,

@@ -1,10 +1,10 @@
 import { Suspense, type CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { after } from "next/server";
 import { Briefcase, CalendarDays, FileText, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { ApplicationForm } from "@/components/ApplicationForm";
 import { JobCard } from "@/components/JobCard";
+import { JobViewTracker } from "@/components/JobViewTracker";
 import { SiteHeader } from "@/components/SiteHeader";
 import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -28,16 +28,13 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
 
   if (!job) notFound();
 
-  after(async () => {
-    await prisma.jobPost.update({ where: { id: job.id }, data: { views: { increment: 1 } } }).catch(() => null);
-  });
-
   const companyColor = job.company.brandColor || job.highlightColor || "#e00909";
   const heroImage = job.detailImageUrl || job.previewImageUrl || "/preview-assets/hero-workers.png";
   const detailAd = await getAdForSlot("job_detail_sidebar");
 
   return (
     <>
+      <JobViewTracker slug={job.slug} />
       <SiteHeader />
       <main className="detail-page-shell" style={{ "--company-color": companyColor } as CSSProperties}>
         <section className="container detail-hero">
@@ -100,7 +97,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
                 <div className="meta">
                   <span className="job-chip">Ověřená firma</span>
                   <span className="job-chip">{job.city.name}</span>
-                  <span className="job-chip">{job.views + 1} zobrazení</span>
+                  <span className="job-chip">{job.views} zobrazení</span>
                 </div>
               </article>
             </div>

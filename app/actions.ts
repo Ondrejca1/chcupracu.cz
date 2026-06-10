@@ -103,6 +103,12 @@ function withActionResult(path: string, key: "notice" | "error", value: string) 
 
 const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
 
+function parseOptionalDate(value?: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
 async function markPublicationIssueCurrent(id: string) {
   try {
     await prisma.$transaction([
@@ -751,7 +757,12 @@ export async function upsertJob(formData: FormData) {
       salaryMaxCzk: z.coerce.number().int().optional(),
       highlightColor: z.string().optional(),
       topDays: z.coerce.number().int().optional(),
+      topUntil: z.string().trim().optional(),
       durationDays: z.coerce.number().int().min(1).max(365),
+      createdAt: z.string().trim().optional(),
+      activeFrom: z.string().trim().optional(),
+      activeUntil: z.string().trim().optional(),
+      renewedAt: z.string().trim().optional(),
       status: z.nativeEnum(JobStatus)
     })
     .safeParse(raw);
@@ -768,30 +779,34 @@ export async function upsertJob(formData: FormData) {
   const existingJob = parsed.data.id ? await prisma.jobPost.findUnique({ where: { id: parsed.data.id } }) : null;
   const baseSlug = slugify(parsed.data.title);
   const now = new Date();
+  const createdAtInput = parseOptionalDate(parsed.data.createdAt);
+  const activeFromInput = parseOptionalDate(parsed.data.activeFrom);
+  const activeUntilInput = parseOptionalDate(parsed.data.activeUntil);
+  const renewedAtInput = parseOptionalDate(parsed.data.renewedAt);
+  const topUntilInput = parseOptionalDate(parsed.data.topUntil);
+  if ([createdAtInput, activeFromInput, activeUntilInput, renewedAtInput, topUntilInput].some((value) => value === undefined)) {
+    return { ok: false, message: "Inzerát nejde uložit. Zkontrolujte datumy." };
+  }
+  if (activeFromInput && activeUntilInput && activeUntilInput < activeFromInput) {
+    return { ok: false, message: "Inzerát nejde uložit. Datum ukončení je před začátkem." };
+  }
   const activeFrom =
     parsed.data.status === JobStatus.ACTIVE
-      ? existingJob?.status === JobStatus.ACTIVE
-        ? existingJob.activeFrom
-        : now
-      : existingJob?.activeFrom ?? null;
+      ? activeFromInput ?? existingJob?.activeFrom ?? now
+      : activeFromInput;
   const activeUntil =
     parsed.data.status === JobStatus.ACTIVE
-      ? existingJob?.status === JobStatus.ACTIVE && existingJob.activeUntil && existingJob.activeUntil > now
-        ? existingJob.activeUntil
-        : addDays(now, parsed.data.durationDays)
+      ? activeUntilInput ?? addDays(activeFrom ?? now, parsed.data.durationDays)
       : parsed.data.status === JobStatus.EXPIRED
-        ? existingJob?.activeUntil && existingJob.activeUntil < now
-          ? existingJob.activeUntil
-          : now
-        : existingJob?.activeUntil ?? null;
+        ? activeUntilInput ?? now
+        : activeUntilInput;
   const renewedAt =
     parsed.data.status === JobStatus.ACTIVE
-      ? existingJob?.status === JobStatus.ACTIVE
-        ? existingJob.renewedAt
-        : now
-      : existingJob?.renewedAt ?? null;
+      ? renewedAtInput ?? existingJob?.renewedAt ?? now
+      : renewedAtInput;
   const selectedPackage = parsed.data.packageId ? await prisma.pricingPackage.findUnique({ where: { id: parsed.data.packageId } }) : null;
   const topDays = parsed.data.topDays || (!existingJob ? selectedPackage?.topDays : 0) || 0;
+  const topUntil = topUntilInput ?? (topDays ? addDays(renewedAt ?? now, topDays) : null);
   const data = {
     title: parsed.data.title,
     shortIntro: parsed.data.shortIntro,
@@ -809,12 +824,13 @@ export async function upsertJob(formData: FormData) {
     salaryMinCzk: parsed.data.salaryMinCzk || null,
     salaryMaxCzk: parsed.data.salaryMaxCzk || null,
     highlightColor: parsed.data.highlightColor || selectedPackage?.highlightColor || null,
-    isTop: Boolean(topDays),
-    topUntil: topDays ? addDays(now, topDays) : null,
+    isTop: Boolean(topUntil && topUntil > now),
+    topUntil,
     status: parsed.data.status,
     activeFrom,
     activeUntil,
     renewedAt,
+    ...(createdAtInput ? { createdAt: createdAtInput } : {}),
     companyId: company.id,
     cityId: parsed.data.cityId,
     categoryId: parsed.data.categoryId,
