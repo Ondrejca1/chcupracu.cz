@@ -27,7 +27,7 @@ const noticeMessages: Record<string, string> = {
 };
 
 const errorMessages: Record<string, string> = {
-  create: "Vydání se nepodařilo uložit. Zkontrolujte prosím hodnoty a zkuste to znovu.",
+  create: "Vydání se nepodařilo uložit do databáze. Pravděpodobně chybí produkční migrace pro Jalovec/Reklamy.",
   current: "Vydání se nepodařilo nastavit jako aktuální.",
   date: "Datum vydání není platné.",
   invalid: "Formulář není vyplněný správně."
