@@ -45,6 +45,13 @@ export default async function AdminDashboardPage() {
   await requireAdmin();
   const now = new Date();
   const soon = addDays(now, 7);
+  const activityLogDelegate = (prisma as unknown as {
+    activityLog?: {
+      findMany(args: { orderBy: { createdAt: "desc" }; take: number }): Promise<
+        { id: string; summary: string; actorEmail: string | null; entityType: string; createdAt: Date }[]
+      >;
+    };
+  }).activityLog;
 
   const [
     activeJobs,
@@ -69,7 +76,14 @@ export default async function AdminDashboardPage() {
     prisma.invoice.aggregate({ where: { status: PaymentStatus.UNPAID }, _sum: { amountCzk: true }, _count: true }),
     getCurrentIssue(),
     prisma.application.findMany({
-      include: { job: { include: { company: true } } },
+      select: {
+        id: true,
+        jobId: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        job: { select: { title: true, company: { select: { name: true } } } }
+      },
       orderBy: { createdAt: "desc" },
       take: 5
     }),
@@ -83,7 +97,7 @@ export default async function AdminDashboardPage() {
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID }, _sum: { amountCzk: true } }),
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID, paidAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } }, _sum: { amountCzk: true } }),
     prisma.jobPost.aggregate({ _sum: { views: true } }),
-    prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }).catch(() => [])
+    activityLogDelegate?.findMany({ orderBy: { createdAt: "desc" }, take: 8 }).catch(() => []) ?? []
   ]);
 
   const stats = [

@@ -32,12 +32,19 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
   const [jobs, applications, activeJobs, draftJobs, expiringJobs, topJobs, cities, totalMatches] = await Promise.all([
     prisma.jobPost.findMany({
       where,
-      include: { company: true, city: true, applications: true, package: true },
+      include: { company: true, city: true, package: true, _count: { select: { applications: true } } },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       take: 100
     }),
     prisma.application.findMany({
-      include: { job: { include: { company: true } } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        message: true,
+        job: { select: { title: true, company: { select: { name: true } } } }
+      },
       orderBy: { createdAt: "desc" },
       take: 10
     }),
@@ -120,7 +127,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
                   <strong>{job.company.name}</strong>
                   <span>{job.city.name}</span>
                   <span>{salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}</span>
-                  <span>{job.applications.length} reakcí</span>
+                  <span>{job._count.applications} reakcí</span>
                   <span>Aktivní do {dateCs(job.activeUntil)}</span>
                 </div>
               </div>
