@@ -7,7 +7,8 @@ import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, salaryRange } from "@/lib/format";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { activeJobWhere, activeTopJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeTopJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
+import { getJobVisibilityCounts } from "@/lib/queries";
 
 export default async function AdminJobsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; city?: string; top?: string; homepage?: string }> }) {
   await requireAdmin();
@@ -30,7 +31,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
   if (params.homepage === "yes") where.showOnHomepage = true;
   if (params.homepage === "no") where.showOnHomepage = false;
 
-  const [jobs, applications, activeJobs, draftJobs, expiringJobs, topJobs, cities, totalMatches] = await Promise.all([
+  const [jobs, applications, jobCounts, draftJobs, expiringJobs, topJobs, cities, totalMatches] = await Promise.all([
     prisma.jobPost.findMany({
       where,
       include: { company: true, city: true, package: true, _count: { select: { applications: true } } },
@@ -49,7 +50,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
       orderBy: { createdAt: "desc" },
       take: 10
     }),
-    prisma.jobPost.count({ where: activeJobWhere(now) }),
+    getJobVisibilityCounts(),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
     prisma.jobPost.count({ where: expiringJobWhere(now) }),
     prisma.jobPost.count({ where: activeTopJobWhere(now) }),
@@ -71,7 +72,8 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <section className="admin-stat-grid compact">
-        <article className="admin-stat"><span>Aktivní</span><strong>{activeJobs}</strong><small>veřejně dostupné nabídky</small></article>
+        <article className="admin-stat"><span>Aktivní</span><strong>{jobCounts.active}</strong><small>veřejně dostupné nabídky</small></article>
+        <article className="admin-stat"><span>Na homepage</span><strong>{jobCounts.homepage}</strong><small>vybrané pro titulní stranu</small></article>
         <article className="admin-stat"><span>Koncepty</span><strong>{draftJobs}</strong><small>čekají na doplnění</small></article>
         <article className="admin-stat"><span>Končí brzy</span><strong>{expiringJobs}</strong><small>do 7 dní</small></article>
         <article className="admin-stat"><span>Topované</span><strong>{topJobs}</strong><small>zvýrazněné nabídky</small></article>

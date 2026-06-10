@@ -5,7 +5,7 @@ import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { money } from "@/lib/format";
-import { getAdForSlot, getCurrentIssue, getFeaturedCompanies, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
+import { getAdForSlot, getCurrentIssue, getFeaturedCompanies, getFilters, getJobVisibilityCounts, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 type HomepageJob = Awaited<ReturnType<typeof searchJobs>>[number];
 
@@ -32,14 +32,15 @@ function arrangeHomepageJobs(jobs: HomepageJob[]) {
 
 export default async function Home({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
   const params = await searchParams;
-  const [filters, jobs, suggestions, currentIssue, homepageAd, sidebarAd, featuredCompanies] = await Promise.all([
+  const [filters, jobs, suggestions, currentIssue, homepageAd, sidebarAd, featuredCompanies, jobCounts] = await Promise.all([
     getFilters(),
     searchJobs(params, 80, { homepageOnly: true }),
     getSearchSuggestions(),
     getCurrentIssue(),
     getAdForSlot("homepage_strip"),
     getAdForSlot("sidebar_box"),
-    getFeaturedCompanies(4)
+    getFeaturedCompanies(4),
+    getJobVisibilityCounts()
   ]);
   const homepageJobs = arrangeHomepageJobs(jobs);
   const issue = currentIssue ?? {
@@ -171,9 +172,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             <div className="section-head jobs-head">
               <div>
                 <span className="eyebrow">Vybrané pracovní nabídky</span>
-                <h2>{homepageJobs.length > 0 ? `${homepageJobs.length} aktivních nabídek` : "Nabídky už se připravují"}</h2>
+                <h2>{jobCounts.active > 0 ? `${jobCounts.active} aktivních nabídek` : "Nabídky už se připravují"}</h2>
               </div>
-              <p>Mzdu můžete filtrovat, ale není nutná pro hlavní hledání.</p>
+              <p>Na homepage je vybráno {jobCounts.homepage} z nich. Všechny aktivní nabídky najdete ve vyhledávání.</p>
             </div>
             <div className="cards job-grid">
               {homepageJobs.map(({ job, wide }) => (
@@ -181,7 +182,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
               ))}
               {homepageJobs.length === 0 && (
                 <div className="empty-marketing">
-                  <span>0 aktivních nabídek</span>
+                  <span>0 vybraných nabídek na homepage</span>
                   <h2>Zatím čekáme na první ostré inzeráty.</h2>
                   <p>Struktura webu, filtry a redakční administrace jsou připravené. Jakmile se na Vercelu spustí seed nebo redakce vloží první nabídky, zobrazí se tady v profesionálním výpisu.</p>
                   <Link className="button secondary" href="/admin">

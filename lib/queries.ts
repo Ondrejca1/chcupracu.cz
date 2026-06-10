@@ -121,6 +121,17 @@ export async function getFeaturedCompanies(limit = 4) {
   });
 }
 
+export async function getJobVisibilityCounts() {
+  await syncExpiredBusinessState();
+  const now = new Date();
+  const [active, homepage] = await Promise.all([
+    prisma.jobPost.count({ where: activeJobWhere(now) }),
+    prisma.jobPost.count({ where: { ...activeJobWhere(now), showOnHomepage: true } })
+  ]);
+
+  return { active, homepage };
+}
+
 export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {
   await syncExpiredBusinessState();
   const q = firstParam(params.q)?.trim();
