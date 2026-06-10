@@ -42,7 +42,17 @@ export default async function AdminApplicationsPage({
   const [applications, allStatuses, jobs] = await Promise.all([
     prisma.application.findMany({
       where,
-      include: { job: { include: { company: true, city: true } } },
+      select: {
+        id: true,
+        jobId: true,
+        name: true,
+        email: true,
+        phone: true,
+        message: true,
+        status: true,
+        createdAt: true,
+        job: { select: { title: true, company: { select: { name: true } }, city: { select: { name: true } } } }
+      },
       orderBy: { createdAt: "desc" },
       take: 100
     }),
@@ -144,7 +154,7 @@ export default async function AdminApplicationsPage({
               </label>
               <label className="field-group">
                 <span>Interní poznámka</span>
-                <textarea className="textarea textarea-short" name="internalNote" placeholder="Co už redakce vyřešila, komu se reakce předala..." defaultValue={application.internalNote ?? ""} />
+                <textarea className="textarea textarea-short" name="internalNote" placeholder="Co už redakce vyřešila, komu se reakce předala..." />
               </label>
               <button className="button secondary" type="submit">Uložit zpracování</button>
             </form>

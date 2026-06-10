@@ -30,13 +30,21 @@ export async function GET(request: Request) {
 
   const applications = await prisma.application.findMany({
     where,
-    include: { job: { include: { company: true, city: true } } },
+    select: {
+      createdAt: true,
+      status: true,
+      name: true,
+      email: true,
+      phone: true,
+      message: true,
+      job: { select: { title: true, company: { select: { name: true } }, city: { select: { name: true } } } }
+    },
     orderBy: { createdAt: "desc" },
     take: 2000
   });
 
   const rows = [
-    ["Datum", "Stav", "Jméno", "E-mail", "Telefon", "Inzerát", "Firma", "Město", "Zpráva", "Interní poznámka"],
+    ["Datum", "Stav", "Jméno", "E-mail", "Telefon", "Inzerát", "Firma", "Město", "Zpráva"],
     ...applications.map((application) => [
       application.createdAt.toISOString(),
       application.status,
@@ -46,8 +54,7 @@ export async function GET(request: Request) {
       application.job.title,
       application.job.company.name,
       application.job.city.name,
-      application.message,
-      application.internalNote ?? ""
+      application.message
     ])
   ];
 

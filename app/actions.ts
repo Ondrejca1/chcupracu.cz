@@ -21,19 +21,37 @@ const optionalAssetUrl = z
   .or(z.literal(""));
 
 async function logAdminActivity(action: string, entityType: string, entityId: string | null, summary: string) {
-  const admin = await requireAdmin();
-  await prisma.activityLog.create({
-    data: {
-      actorId: admin.id,
-      actorEmail: admin.email,
-      action,
-      entityType,
-      entityId,
-      summary
-    }
-  }).catch((error) => {
+  try {
+    const admin = await requireAdmin();
+    const activityLog = (prisma as unknown as {
+      activityLog?: {
+        create(args: {
+          data: {
+            actorId: string;
+            actorEmail: string;
+            action: string;
+            entityType: string;
+            entityId: string | null;
+            summary: string;
+          };
+        }): Promise<unknown>;
+      };
+    }).activityLog;
+    if (!activityLog) return;
+
+    await activityLog.create({
+      data: {
+        actorId: admin.id,
+        actorEmail: admin.email,
+        action,
+        entityType,
+        entityId,
+        summary
+      }
+    });
+  } catch (error) {
     console.error("Unable to write activity log.", error);
-  });
+  }
 }
 
 export async function adminLogin(_: unknown, formData: FormData) {
@@ -80,12 +98,17 @@ export async function uploadAdminAsset(formData: FormData) {
   const safeName = slugify(originalName || "soubor").slice(0, 70) || "soubor";
   const extension = extensionByType[file.type] ?? "bin";
   const directory = path.join(process.cwd(), "public", "uploads", "admin");
-  await mkdir(directory, { recursive: true });
-  const filename = `${safeName}-${Date.now().toString(36)}.${extension}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(directory, filename), bytes);
+  try {
+    await mkdir(directory, { recursive: true });
+    const filename = `${safeName}-${Date.now().toString(36)}.${extension}`;
+    const bytes = Buffer.from(await file.arrayBuffer());
+    await writeFile(path.join(directory, filename), bytes);
 
-  return { ok: true, message: "Soubor byl nahrán.", url: `/uploads/admin/${filename}` };
+    return { ok: true, message: "Soubor byl nahrán.", url: `/uploads/admin/${filename}` };
+  } catch (error) {
+    console.error("Unable to upload admin asset.", error);
+    return { ok: false, message: "Nahrávání souborů není v tomto prostředí dostupné. Vložte prosím URL ručně." };
+  }
 }
 
 export async function createPublicationIssue(formData: FormData) {
@@ -130,11 +153,16 @@ export async function createPublicationIssue(formData: FormData) {
 export async function setCurrentPublicationIssue(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  await prisma.$transaction([
-    prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
-    prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
-  ]);
-  await logAdminActivity("setCurrent", "publicationIssue", id, "Změněno aktuální vydání Jalovce.");
+  try {
+    await prisma.$transaction([
+      prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
+      prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
+    ]);
+    await logAdminActivity("setCurrent", "publicationIssue", id, "Změněno aktuální vydání Jalovce.");
+  } catch (error) {
+    console.error("Unable to set current publication issue.", error);
+    return;
+  }
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/jalovec");
@@ -264,14 +292,24 @@ export async function updateApplication(formData: FormData) {
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
-  const application = await prisma.application.update({
-    where: { id: parsed.data.id },
-    include: { job: true },
-    data: {
-      status: parsed.data.status,
-      internalNote: parsed.data.internalNote || null
-    }
-  });
+  let application: { id: string; name: string; status: ApplicationStatus; job: { title: string } };
+  try {
+    application = await prisma.application.update({
+      where: { id: parsed.data.id },
+      include: { job: true },
+      data: {
+        status: parsed.data.status,
+        internalNote: parsed.data.internalNote || null
+      }
+    });
+  } catch (error) {
+    console.error("Unable to update application note, retrying status only.", error);
+    application = await prisma.application.update({
+      where: { id: parsed.data.id },
+      include: { job: true },
+      data: { status: parsed.data.status }
+    });
+  }
   await logAdminActivity("status", "application", application.id, `Reakce ${application.name} u inzerátu ${application.job.title} změněna na ${application.status}.`);
 
   revalidatePath("/admin/applications");
