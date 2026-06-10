@@ -54,6 +54,25 @@ async function logAdminActivity(action: string, entityType: string, entityId: st
   }
 }
 
+async function markPublicationIssueCurrent(id: string) {
+  try {
+    await prisma.$transaction([
+      prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
+      prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
+    ]);
+    return true;
+  } catch (error) {
+    console.error("Unable to set current publication issue with transaction, retrying single update.", error);
+    try {
+      await prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } });
+      return true;
+    } catch (retryError) {
+      console.error("Unable to set current publication issue.", retryError);
+      return false;
+    }
+  }
+}
+
 export async function adminLogin(_: unknown, formData: FormData) {
   const parsed = z.object({ email, password: required }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, message: "Vyplňte prosím e-mail a heslo." };
@@ -125,15 +144,14 @@ export async function createPublicationIssue(formData: FormData) {
       note: z.string().trim().max(500).optional()
     })
     .safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return;
+  if (!parsed.success) redirect("/admin/jalovec?error=invalid");
 
+  const isCurrent = parsed.data.isCurrent === "on";
+  const publishedAt = parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date();
+  if (Number.isNaN(publishedAt.getTime())) redirect("/admin/jalovec?error=date");
+
+  let target = "/admin/jalovec?notice=created";
   try {
-    const isCurrent = parsed.data.isCurrent === "on";
-    const publishedAt = parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date();
-    if (Number.isNaN(publishedAt.getTime())) return;
-
-    if (isCurrent) await prisma.publicationIssue.updateMany({ data: { isCurrent: false } });
-
     const issue = await prisma.publicationIssue.create({
       data: {
         title: parsed.data.title,
@@ -142,39 +160,37 @@ export async function createPublicationIssue(formData: FormData) {
         targetUrl: parsed.data.targetUrl || "https://www.jalovec.cz",
         priceCzk: parsed.data.priceCzk || null,
         publishedAt,
-        isCurrent,
+        isCurrent: false,
         note: parsed.data.note || null
       }
     });
+    if (isCurrent) {
+      const currentOk = await markPublicationIssueCurrent(issue.id);
+      target = currentOk ? "/admin/jalovec?notice=created-current" : "/admin/jalovec?notice=created-not-current";
+    }
     await logAdminActivity("create", "publicationIssue", issue.id, `Přidáno vydání ${issue.title}.`);
   } catch (error) {
     console.error("Unable to create publication issue.", error);
-    return;
+    redirect("/admin/jalovec?error=create");
   }
 
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/jalovec");
   revalidatePath("/admin/dashboard");
+  redirect(target);
 }
 
 export async function setCurrentPublicationIssue(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  try {
-    await prisma.$transaction([
-      prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
-      prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
-    ]);
-    await logAdminActivity("setCurrent", "publicationIssue", id, "Změněno aktuální vydání Jalovce.");
-  } catch (error) {
-    console.error("Unable to set current publication issue.", error);
-    return;
-  }
+  const currentOk = await markPublicationIssueCurrent(id);
+  if (currentOk) await logAdminActivity("setCurrent", "publicationIssue", id, "Změněno aktuální vydání Jalovce.");
   revalidatePath("/");
   revalidatePath("/jobs");
   revalidatePath("/admin/jalovec");
   revalidatePath("/admin/dashboard");
+  redirect(currentOk ? "/admin/jalovec?notice=current" : "/admin/jalovec?error=current");
 }
 
 export async function createAdPlacement(formData: FormData) {

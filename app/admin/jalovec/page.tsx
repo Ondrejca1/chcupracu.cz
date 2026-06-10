@@ -19,8 +19,23 @@ type JalovecIssue = {
   note: string | null;
 };
 
-export default async function AdminJalovecPage() {
+const noticeMessages: Record<string, string> = {
+  created: "Vydání bylo uložené do archivu.",
+  "created-current": "Vydání bylo uložené a nastavené jako aktuální pro web.",
+  "created-not-current": "Vydání bylo uložené, ale nepodařilo se ho nastavit jako aktuální. Zkuste ho přepnout v archivu níže.",
+  current: "Aktuální vydání pro web bylo změněné."
+};
+
+const errorMessages: Record<string, string> = {
+  create: "Vydání se nepodařilo uložit. Zkontrolujte prosím hodnoty a zkuste to znovu.",
+  current: "Vydání se nepodařilo nastavit jako aktuální.",
+  date: "Datum vydání není platné.",
+  invalid: "Formulář není vyplněný správně."
+};
+
+export default async function AdminJalovecPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
   await requireAdmin();
+  const params = await searchParams;
   let issues: JalovecIssue[] = [];
 
   try {
@@ -54,6 +69,8 @@ export default async function AdminJalovecPage() {
           <p>Aktuální čísla, obálky a promo odkazy pro reklamní bloky na webu.</p>
         </div>
       </div>
+      {params.notice && noticeMessages[params.notice] && <p className="notice">{noticeMessages[params.notice]}</p>}
+      {params.error && errorMessages[params.error] && <p className="notice error">{errorMessages[params.error]}</p>}
 
       <section className="admin-dashboard-grid">
         <article className="admin-card jalovec-current">
