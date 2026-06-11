@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AdPlacementStatus, AdminRole, AdminUserStatus, ApplicationStatus, ApplicationTag, JobStatus, PaymentStatus } from "@prisma/client";
 import { login, logout, requireAdmin, requirePermission } from "@/lib/auth";
+import { getAdSlotDefinition } from "@/lib/ad-slots";
 import { activeAdWhere, activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
@@ -480,13 +481,11 @@ export async function createAdPlacement(formData: FormData) {
       name: required.max(120),
       placementKey: required.max(80),
       productType: z.enum(["PAID_AD", "JALOVEC", "PARTNER_OF_WEEK"]).optional(),
-      location: required.max(120),
-      format: required.max(80),
       clientName: z.string().trim().max(120).optional(),
       creativeUrl: optionalAssetUrl,
       targetUrl: optionalAssetUrl,
-      priceCzk: z.coerce.number().int().min(0),
-      durationDays: z.coerce.number().int().min(1).max(365),
+      priceCzk: z.coerce.number().int().min(0).optional(),
+      durationDays: z.coerce.number().int().min(1).max(365).optional(),
       availableSlots: z.coerce.number().int().min(0).max(20).optional(),
       status: z.nativeEnum(AdPlacementStatus),
       startsAt: z.string().optional(),
@@ -497,32 +496,35 @@ export async function createAdPlacement(formData: FormData) {
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
+  const slot = getAdSlotDefinition(parsed.data.placementKey);
   const startsAt = parsed.data.startsAt ? new Date(parsed.data.startsAt) : new Date();
-  const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : addDays(startsAt, parsed.data.durationDays);
+  const durationDays = parsed.data.durationDays ?? slot.defaultDurationDays;
+  const availableSlots = parsed.data.availableSlots ?? slot.availableSlots;
+  const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : addDays(startsAt, durationDays);
   if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt < startsAt) {
-    redirect(`/admin/ads?slot=${parsed.data.placementKey}&error=date#new-ad`);
+    redirect(`/admin/ads?slot=${slot.key}&error=date#new-ad`);
   }
 
   const checksCapacity = parsed.data.status === AdPlacementStatus.RESERVED || parsed.data.status === AdPlacementStatus.ACTIVE;
   if (checksCapacity) {
-    const hasCapacity = await checkAdSlotCapacity(parsed.data.placementKey, startsAt, endsAt, parsed.data.availableSlots ?? 1);
-    if (!hasCapacity) redirect(`/admin/ads?slot=${parsed.data.placementKey}&error=slot-full#new-ad`);
+    const hasCapacity = await checkAdSlotCapacity(slot.key, startsAt, endsAt, availableSlots);
+    if (!hasCapacity) redirect(`/admin/ads?slot=${slot.key}&error=slot-full#new-ad`);
   }
 
   try {
     const ad = await prisma.adPlacement.create({
       data: {
         name: parsed.data.name,
-        placementKey: parsed.data.placementKey,
-        productType: parsed.data.productType ?? "PAID_AD",
-        location: parsed.data.location,
-        format: parsed.data.format,
+        placementKey: slot.key,
+        productType: parsed.data.productType ?? slot.productType,
+        location: slot.location,
+        format: `${slot.format} · ${slot.recommendedSize}`,
         clientName: parsed.data.clientName || null,
         creativeUrl: parsed.data.creativeUrl || null,
         targetUrl: parsed.data.targetUrl || null,
-        priceCzk: parsed.data.priceCzk,
-        durationDays: parsed.data.durationDays,
-        availableSlots: parsed.data.availableSlots ?? 1,
+        priceCzk: parsed.data.priceCzk ?? slot.defaultPriceCzk,
+        durationDays,
+        availableSlots,
         status: parsed.data.status,
         startsAt,
         endsAt,
@@ -540,7 +542,91 @@ export async function createAdPlacement(formData: FormData) {
   revalidatePath("/jobs");
   revalidatePath("/admin/ads");
   revalidatePath("/admin/dashboard");
-  redirect(`/admin/ads?slot=${parsed.data.placementKey}&notice=created`);
+  redirect(`/admin/ads?slot=${slot.key}&notice=created`);
+}
+
+export async function updateAdPlacement(formData: FormData) {
+  await requirePermission("ads:write");
+  const parsed = z
+    .object({
+      id: required,
+      name: required.max(120),
+      placementKey: required.max(80),
+      productType: z.enum(["PAID_AD", "JALOVEC", "PARTNER_OF_WEEK"]).optional(),
+      clientName: z.string().trim().max(120).optional(),
+      creativeUrl: optionalAssetUrl,
+      targetUrl: optionalAssetUrl,
+      priceCzk: z.coerce.number().int().min(0).optional(),
+      durationDays: z.coerce.number().int().min(1).max(365).optional(),
+      availableSlots: z.coerce.number().int().min(0).max(20).optional(),
+      status: z.nativeEnum(AdPlacementStatus),
+      startsAt: z.string().optional(),
+      endsAt: z.string().optional(),
+      isFeatured: z.string().optional(),
+      note: z.string().trim().max(700).optional()
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin/ads?error=invalid");
+
+  const slot = getAdSlotDefinition(parsed.data.placementKey);
+  const existing = await prisma.adPlacement.findUnique({ where: { id: parsed.data.id } });
+  if (!existing) redirect("/admin/ads?error=invalid");
+  const startsAt = parsed.data.startsAt ? new Date(parsed.data.startsAt) : existing.startsAt ?? new Date();
+  const durationDays = parsed.data.durationDays ?? slot.defaultDurationDays;
+  const availableSlots = parsed.data.availableSlots ?? slot.availableSlots;
+  const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : addDays(startsAt, durationDays);
+  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt < startsAt) {
+    redirect(`/admin/ads?slot=${slot.key}&error=date`);
+  }
+  if (
+    (parsed.data.status === AdPlacementStatus.RESERVED || parsed.data.status === AdPlacementStatus.ACTIVE) &&
+    !(await checkAdSlotCapacity(slot.key, startsAt, endsAt, availableSlots, parsed.data.id))
+  ) {
+    redirect(`/admin/ads?slot=${slot.key}&error=slot-full`);
+  }
+
+  const ad = await prisma.adPlacement.update({
+    where: { id: parsed.data.id },
+    data: {
+      name: parsed.data.name,
+      placementKey: slot.key,
+      productType: parsed.data.productType ?? slot.productType,
+      location: slot.location,
+      format: `${slot.format} · ${slot.recommendedSize}`,
+      clientName: parsed.data.clientName || null,
+      creativeUrl: parsed.data.creativeUrl || null,
+      targetUrl: parsed.data.targetUrl || null,
+      priceCzk: parsed.data.priceCzk ?? slot.defaultPriceCzk,
+      durationDays,
+      availableSlots,
+      status: parsed.data.status,
+      startsAt,
+      endsAt,
+      isFeatured: parsed.data.isFeatured === "on",
+      note: parsed.data.note || null
+    }
+  });
+  await logAdminActivity("update", "adPlacement", ad.id, `Upravena reklamní kampaň ${ad.name}.`);
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/ads");
+  revalidatePath("/admin/dashboard");
+  redirect(`/admin/ads?slot=${slot.key}&notice=saved`);
+}
+
+export async function endAdPlacementNow(formData: FormData) {
+  await requirePermission("ads:write");
+  const id = String(formData.get("id") ?? "");
+  const ad = await prisma.adPlacement.update({
+    where: { id },
+    data: { status: AdPlacementStatus.EXPIRED, endsAt: new Date() }
+  });
+  await logAdminActivity("expire", "adPlacement", ad.id, `Reklama ${ad.name} byla ukončena.`);
+  revalidatePath("/");
+  revalidatePath("/jobs");
+  revalidatePath("/admin/ads");
+  revalidatePath("/admin/dashboard");
+  redirect(`/admin/ads?slot=${ad.placementKey}&notice=ended`);
 }
 
 export async function updateAdPlacementStatus(formData: FormData) {

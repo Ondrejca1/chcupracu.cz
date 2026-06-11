@@ -9,6 +9,7 @@ const notices: Record<string, string> = {
   current: "Aktuální položka byla změněna.",
   saved: "Změny byly uloženy.",
   status: "Stav byl změněn.",
+  ended: "Kampaň byla ukončena.",
   forwarded: "Reakce byla předána firmě.",
   password: "Heslo bylo změněno.",
   "change-password": "Než budete pokračovat, nastavte nové heslo."

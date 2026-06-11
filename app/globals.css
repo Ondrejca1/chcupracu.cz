@@ -2182,6 +2182,110 @@ textarea {
   gap: 10px;
 }
 
+.ads-inventory-board,
+.ad-ops-card {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px rgba(31, 41, 55, 0.07);
+}
+
+.ads-inventory-board {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.ad-slot-select {
+  display: grid;
+  gap: 12px;
+}
+
+.ad-slot-select-preview {
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+}
+
+.ad-slot-select-preview strong,
+.ad-slot-select-preview span,
+.ad-slot-select-preview small,
+.ad-slot-select-preview em {
+  display: block;
+}
+
+.ad-slot-select-preview span,
+.ad-slot-select-preview small {
+  color: #667085;
+  line-height: 1.4;
+}
+
+.ad-slot-select-preview em {
+  color: var(--brand-strong);
+  font-style: normal;
+  font-weight: 950;
+}
+
+.ad-ops-list {
+  display: grid;
+  gap: 14px;
+}
+
+.ad-ops-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.ad-ops-title {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.ad-ops-title > div {
+  min-width: 0;
+}
+
+.ad-ops-title h3 {
+  font-size: 23px;
+  letter-spacing: -0.035em;
+  margin: 10px 0 6px;
+}
+
+.ad-ops-title p {
+  color: #667085;
+  font-weight: 800;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ad-edit-panel {
+  background: #f8fafc;
+  border: 1px solid #e7edf4;
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.ad-edit-panel summary {
+  align-items: center;
+  color: #344054;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 950;
+  gap: 8px;
+}
+
+.ad-edit-panel .admin-form {
+  margin-top: 14px;
+}
+
 .admin-empty {
   color: #667085;
   margin: 0;
@@ -2252,6 +2356,19 @@ textarea {
 .placement-slot-card small {
   color: #667085;
   line-height: 1.4;
+}
+
+.placement-slot-card em {
+  background: #fff;
+  border: 1px solid #e7edf4;
+  border-radius: 999px;
+  color: #344054;
+  display: inline-flex;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 950;
+  padding: 7px 9px;
+  width: fit-content;
 }
 
 .jalovec-preview {
@@ -2810,6 +2927,7 @@ textarea {
   .admin-form.wide,
   .job-admin-item,
   .renew-form,
+  .ad-ops-list,
   .ad-placement-grid,
   .admin-filter-bar,
   .placement-slot-grid,
@@ -2835,6 +2953,11 @@ textarea {
   .commercial-grid,
   .job-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ad-ops-title {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .bar {

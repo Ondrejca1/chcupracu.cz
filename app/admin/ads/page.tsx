@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { AdPlacementStatus, AdProductType, type Prisma } from "@prisma/client";
-import { CalendarDays, ExternalLink, LayoutDashboard, Megaphone, Monitor, PanelRight, Search, Star } from "lucide-react";
-import { createAdPlacement, updateAdPlacementStatus } from "@/app/actions";
+import { CalendarDays, Edit3, ExternalLink, Eye, LayoutDashboard, Megaphone, Monitor, PanelRight, Search, ShieldOff, SquarePen, Star } from "lucide-react";
+import { createAdPlacement, endAdPlacementNow, updateAdPlacement, updateAdPlacementStatus } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
+import { AdSlotSelect } from "@/components/AdSlotSelect";
 import { AssetUploadField } from "@/components/AssetUploadField";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { adSlotDefinitions } from "@/lib/ad-slots";
 import { dateCs, money } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -15,46 +18,34 @@ const adProductTypeLabels: Record<AdProductType, string> = {
   PARTNER_OF_WEEK: "Partner týdne"
 };
 
-const placementSlots = [
-  {
-    key: "homepage_strip",
-    name: "Homepage reklamní pás",
-    location: "Homepage / pod rychlými dlaždicemi",
-    format: "Široký banner + text",
-    icon: LayoutDashboard
-  },
-  {
-    key: "jobs_top_strip",
-    name: "Výsledky hledání",
-    location: "Hledání práce / nad výsledky",
-    format: "Horizontální reklamní pruh",
-    icon: Search
-  },
-  {
-    key: "sidebar_box",
-    name: "Boční promo box",
-    location: "Homepage a hledání / boční sloupec",
-    format: "Obrázek 4:3 + text",
-    icon: PanelRight
-  },
-  {
-    key: "job_detail_sidebar",
-    name: "Detail inzerátu",
-    location: "Detail pracovní nabídky / boční sloupec",
-    format: "Karta partnera",
-    icon: Monitor
-  }
-];
+const slotIcons: Record<string, typeof LayoutDashboard> = {
+  homepage_strip: LayoutDashboard,
+  jobs_top_strip: Search,
+  sidebar_box: PanelRight,
+  job_detail_sidebar: Monitor
+};
+
+function daysUntil(date?: Date | null) {
+  if (!date) return null;
+  return Math.ceil((date.getTime() - Date.now()) / 86_400_000);
+}
+
+function dateInput(date?: Date | null) {
+  if (!date) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+function slotFor(key: string) {
+  return adSlotDefinitions.find((slot) => slot.key === key) ?? adSlotDefinitions[0];
+}
 
 export default async function AdminAdsPage({ searchParams }: { searchParams: Promise<{ status?: string; slot?: string; q?: string; error?: string; notice?: string }> }) {
   await requirePermission("ads:write");
   await syncExpiredBusinessState();
   const params = await searchParams;
   const today = new Date();
-  const defaultStart = today.toISOString().slice(0, 10);
-  const defaultEnd = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 14).toISOString().slice(0, 10);
-  const selectedSlot = placementSlots.find((slot) => slot.key === params.slot) ?? placementSlots[0];
-  const selectedSlotKey = placementSlots.some((slot) => slot.key === params.slot) ? params.slot : undefined;
+  const selectedSlot = slotFor(params.slot ?? adSlotDefinitions[0].key);
+  const selectedSlotKey = adSlotDefinitions.some((slot) => slot.key === params.slot) ? params.slot : undefined;
   const where: Prisma.AdPlacementWhereInput = {
     ...(params.status && Object.values(AdPlacementStatus).includes(params.status as AdPlacementStatus) ? { status: params.status as AdPlacementStatus } : {}),
     ...(selectedSlotKey ? { placementKey: selectedSlotKey } : {}),
@@ -70,12 +61,12 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   };
 
   let ads: Awaited<ReturnType<typeof prisma.adPlacement.findMany>> = [];
-  let allAds: { status: AdPlacementStatus; placementKey: string; startsAt: Date | null; endsAt: Date | null; availableSlots: number }[] = [];
+  let allAds: { status: AdPlacementStatus; placementKey: string; startsAt: Date | null; endsAt: Date | null; availableSlots: number; creativeUrl: string | null }[] = [];
 
   try {
     [ads, allAds] = await Promise.all([
       prisma.adPlacement.findMany({ where, orderBy: [{ status: "asc" }, { startsAt: "desc" }, { createdAt: "desc" }] }),
-      prisma.adPlacement.findMany({ select: { status: true, placementKey: true, startsAt: true, endsAt: true, availableSlots: true }, take: 2000 })
+      prisma.adPlacement.findMany({ select: { status: true, placementKey: true, startsAt: true, endsAt: true, availableSlots: true, creativeUrl: true }, take: 2000 })
     ]);
   } catch (error) {
     console.error("Unable to load ad administration data.", error);
@@ -84,71 +75,71 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   const countFor = (status: AdPlacementStatus) => allAds.filter((item) => item.status === status).length;
   const isLive = (ad: { status: AdPlacementStatus; startsAt: Date | null; endsAt: Date | null }) =>
     ad.status === AdPlacementStatus.ACTIVE && (!ad.startsAt || ad.startsAt <= today) && (!ad.endsAt || ad.endsAt >= today);
+  const missingCreative = allAds.filter(
+    (item) => (item.status === AdPlacementStatus.ACTIVE || item.status === AdPlacementStatus.RESERVED) && !item.creativeUrl
+  ).length;
+
   return (
     <AdminShell>
       <div className="admin-page-head">
         <div>
-          <span className="admin-kicker">Obchodní pozice</span>
+          <span className="admin-kicker">Reklamní inventory</span>
           <h1>Reklamy</h1>
-          <p>Reklamní kampaně napojené na konkrétní pozice na veřejném webu.</p>
-          {params.error === "slot-full" && <p className="admin-error">Vybraný reklamní slot je v daném termínu obsazený.</p>}
-          {params.error === "date" && <p className="admin-error">Zkontrolujte termín kampaně. Konec musí být po začátku.</p>}
-          {params.notice === "created" && <p className="admin-success">Kampaň byla vytvořena.</p>}
-          {params.notice === "status" && <p className="admin-success">Stav kampaně byl změněn.</p>}
+          <p>Přehled obsazenosti pozic, termínů, kreativ a obchodních kampaní napojených na veřejný web.</p>
         </div>
       </div>
 
       <section className="admin-stat-grid compact">
         <article className="admin-stat"><span>Aktivní</span><strong>{countFor(AdPlacementStatus.ACTIVE)}</strong><small>zobrazuje se na webu</small></article>
         <article className="admin-stat"><span>Rezervované</span><strong>{countFor(AdPlacementStatus.RESERVED)}</strong><small>čeká na podklady nebo platbu</small></article>
-        <article className="admin-stat"><span>Volné</span><strong>{countFor(AdPlacementStatus.AVAILABLE)}</strong><small>pro obchodní nabídku</small></article>
+        <article className="admin-stat"><span>Bez kreativy</span><strong>{missingCreative}</strong><small>aktivní nebo rezervované bez obrázku</small></article>
         <article className="admin-stat"><span>Ukončené</span><strong>{countFor(AdPlacementStatus.EXPIRED)}</strong><small>historie kampaní</small></article>
       </section>
 
-      <section className="admin-card">
-        <div className="admin-card-head">
+      <section className="ads-inventory-board">
+        <div className="jobs-board-head">
           <div>
-            <h2>Reklamní pozice na webu</h2>
-            <p>Každá kampaň se váže na jeden slot. Tím je jasné, kde se zobrazí.</p>
+            <span className="admin-kicker">Pozice na webu</span>
+            <h2>Obsazenost slotů</h2>
           </div>
+          <span>{adSlotDefinitions.length} pozice</span>
         </div>
         <div className="placement-slot-grid">
-          {placementSlots.map((slot) => {
-            const Icon = slot.icon;
+          {adSlotDefinitions.map((slot) => {
+            const Icon = slotIcons[slot.key] ?? Megaphone;
             const slotAds = allAds.filter((ad) => ad.placementKey === slot.key);
             const activeCount = slotAds.filter(isLive).length;
-            const capacity = Math.max(1, ...slotAds.map((ad) => ad.availableSlots));
+            const reservedCount = slotAds.filter((ad) => ad.status === AdPlacementStatus.RESERVED).length;
             const isSelected = selectedSlot.key === slot.key;
             return (
               <Link className={`placement-slot-card ${isSelected ? "active" : ""}`} href={`/admin/ads?slot=${slot.key}#new-ad`} key={slot.key}>
                 <Icon size={22} />
                 <strong>{slot.name}</strong>
                 <span>{slot.location}</span>
-                <small>{slot.format} · {activeCount}/{capacity} obsazeno · vybrat pro kampaň</small>
+                <small>{slot.format} · {slot.recommendedSize}</small>
+                <em>{activeCount}/{slot.availableSlots} aktivní · {reservedCount} rezervace</em>
               </Link>
             );
           })}
         </div>
       </section>
 
-      <section className="admin-card">
-        <div className="admin-card-head">
-          <div>
-            <h2>Filtry reklam</h2>
-            <p>Najděte kampaň podle klienta, slotu nebo stavu.</p>
-          </div>
-        </div>
-        <form className="admin-filter-bar">
-          <input className="field" name="q" placeholder="Klient, název nebo pozice" defaultValue={params.q ?? ""} />
-          <select className="select" name="slot" defaultValue={params.slot ?? ""}>
-            <option value="">Všechny sloty</option>
-            {placementSlots.map((slot) => <option key={slot.key} value={slot.key}>{slot.name}</option>)}
+      <section className="jobs-command-panel">
+        <form className="jobs-filter-grid">
+          <label>
+            <Search size={16} />
+            <input name="q" placeholder="Klient, název nebo pozice" defaultValue={params.q ?? ""} />
+          </label>
+          <select name="slot" defaultValue={params.slot ?? ""}>
+            <option value="">Všechny pozice</option>
+            {adSlotDefinitions.map((slot) => <option key={slot.key} value={slot.key}>{slot.name}</option>)}
           </select>
-          <select className="select" name="status" defaultValue={params.status ?? ""}>
+          <select name="status" defaultValue={params.status ?? ""}>
             <option value="">Všechny stavy</option>
             {Object.values(AdPlacementStatus).map((status) => <option key={status} value={status}>{adStatusLabels[status]}</option>)}
           </select>
           <button className="button" type="submit">Filtrovat</button>
+          <Link className="button secondary" href="/admin/ads">Vyčistit</Link>
         </form>
       </section>
 
@@ -157,44 +148,25 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
           <div className="admin-card-head">
             <div>
               <h2>Nová reklamní kampaň</h2>
-              <p>Vybraný slot: {selectedSlot.name}. Karta výše nastaví, kam se kampaň propíše.</p>
+              <p>Vyberte pozici. Umístění, formát, doporučený rozměr a výchozí cena se doplní automaticky.</p>
             </div>
             <Megaphone size={26} />
           </div>
           <form action={createAdPlacement} className="admin-form single">
-            <label className="field-group">
-              <span>Slot na webu</span>
-              <select className="select" name="placementKey" required defaultValue={selectedSlot.key}>
-                {placementSlots.map((slot) => <option key={slot.key} value={slot.key}>{slot.name}</option>)}
-              </select>
-              <small>Určuje, kam se aktivní reklama propíše na veřejném webu.</small>
-            </label>
+            <AdSlotSelect defaultValue={selectedSlot.key} slots={adSlotDefinitions} />
             <label className="field-group">
               <span>Typ kampaně</span>
-              <select className="select" name="productType" defaultValue={AdProductType.PAID_AD}>
+              <select className="select" name="productType" defaultValue={selectedSlot.productType}>
                 {Object.values(AdProductType).map((type) => <option key={type} value={type}>{adProductTypeLabels[type]}</option>)}
               </select>
-              <small>Pomáhá rozlišit placenou reklamu, Jalovec a partnera týdne.</small>
             </label>
             <label className="field-group">
               <span>Název kampaně</span>
               <input className="field" name="name" placeholder="Partner týdne: firma XY" required />
-              <small>Zobrazuje se v adminu a může se propsat jako nadpis reklamy.</small>
-            </label>
-            <label className="field-group">
-              <span>Umístění</span>
-              <input className="field" name="location" placeholder="Homepage / horní pás" required defaultValue={selectedSlot.location} />
-              <small>Popis pro obchodní tým, kde přesně kampaň běží.</small>
-            </label>
-            <label className="field-group">
-              <span>Formát</span>
-              <input className="field" name="format" placeholder="Široký banner + text" required defaultValue={selectedSlot.format} />
-              <small>Rozměr, typ kreativy nebo požadavek na podklady.</small>
             </label>
             <label className="field-group">
               <span>Klient</span>
               <input className="field" name="clientName" placeholder="Název firmy" />
-              <small>Kdo kampaň objednal nebo platí.</small>
             </label>
             <AssetUploadField
               accept="image/jpeg,image/png,image/webp,image/gif"
@@ -206,44 +178,39 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
             <label className="field-group">
               <span>Cílový odkaz</span>
               <input className="field" name="targetUrl" placeholder="https://..." type="url" />
-              <small>Kam reklama vede po kliknutí.</small>
             </label>
-            <label className="field-group">
-              <span>Cena</span>
-              <input className="field" min="0" name="priceCzk" placeholder="2900" required type="number" />
-              <small>Cena za uvedené období.</small>
-            </label>
-            <label className="field-group">
-              <span>Délka kampaně</span>
-              <input className="field" min="1" max="365" name="durationDays" required type="number" defaultValue={14} />
-              <small>Kolik dní je kampaň objednaná.</small>
-            </label>
-            <label className="field-group">
-              <span>Sloty</span>
-              <input className="field" min="0" max="20" name="availableSlots" type="number" defaultValue={1} />
-              <small>Kolik souběžných míst je pro tento produkt dostupných.</small>
-            </label>
+            <div className="content-two-col">
+              <label className="field-group">
+                <span>Cena</span>
+                <input className="field" min="0" name="priceCzk" placeholder={String(selectedSlot.defaultPriceCzk)} type="number" />
+              </label>
+              <label className="field-group">
+                <span>Délka kampaně</span>
+                <input className="field" min="1" max="365" name="durationDays" type="number" defaultValue={selectedSlot.defaultDurationDays} />
+              </label>
+            </div>
+            <div className="content-two-col">
+              <label className="field-group">
+                <span>Začátek</span>
+                <input className="field" name="startsAt" type="date" defaultValue={today.toISOString().slice(0, 10)} />
+              </label>
+              <label className="field-group">
+                <span>Konec</span>
+                <input className="field" name="endsAt" type="date" defaultValue={new Date(today.getTime() + selectedSlot.defaultDurationDays * 86_400_000).toISOString().slice(0, 10)} />
+              </label>
+            </div>
             <label className="field-group">
               <span>Stav</span>
               <select className="select" name="status" defaultValue={AdPlacementStatus.RESERVED}>
                 {Object.values(AdPlacementStatus).map((status) => <option key={status} value={status}>{adStatusLabels[status]}</option>)}
               </select>
-              <small>Na web se propisuje jen stav Aktivní.</small>
             </label>
-            <label className="field-group">
-              <span>Začátek</span>
-              <input className="field" name="startsAt" type="date" defaultValue={defaultStart} />
-            </label>
-            <label className="field-group">
-              <span>Konec</span>
-              <input className="field" name="endsAt" type="date" defaultValue={defaultEnd} />
-              <small>Při změně délky bez ručního konce se datum dopočítá při uložení.</small>
-            </label>
+            <input name="availableSlots" type="hidden" value={selectedSlot.availableSlots} />
             <label className="admin-check full">
               <input name="isFeatured" type="checkbox" /> Zvýraznit na dashboardu
             </label>
             <label className="field-group full">
-              <span>Podmínky a poznámka</span>
+              <span>Interní poznámka</span>
               <textarea className="textarea" name="note" placeholder="Platební podmínky, dodání podkladů, omezení kampaně." />
             </label>
             <button className="button full" type="submit">Přidat kampaň</button>
@@ -253,60 +220,158 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
         <article className="admin-card">
           <div className="admin-card-head">
             <div>
-              <h2>Aktivní napojení</h2>
-              <p>Reklamy, které jsou nebo mohou být vidět na webu.</p>
+              <h2>Aktuálně na webu</h2>
+              <p>Kampaně, které jsou aktivní v platném termínu.</p>
             </div>
           </div>
           <div className="admin-list">
-            {ads.slice(0, 8).map((ad) => (
+            {ads.filter(isLive).slice(0, 8).map((ad) => (
               <div className="admin-list-row" key={ad.id}>
                 <div>
                   <strong>{ad.name}</strong>
-                  <span>{placementSlots.find((slot) => slot.key === ad.placementKey)?.name ?? ad.placementKey} · {ad.clientName ?? "bez klienta"} · {money(ad.priceCzk)}</span>
+                  <span>{slotFor(ad.placementKey).name} · do {dateCs(ad.endsAt)} · {ad.clientName ?? "bez klienta"}</span>
                 </div>
-                <em>{adStatusLabels[ad.status]}</em>
+                <em>{money(ad.priceCzk)}</em>
               </div>
             ))}
-            {ads.length === 0 && <p className="admin-empty">Zatím tu není žádná reklamní kampaň.</p>}
+            {ads.filter(isLive).length === 0 && <p className="admin-empty">Žádná filtrovaná kampaň teď neběží.</p>}
           </div>
         </article>
       </section>
 
-      <section className="admin-card">
-        <div className="admin-card-head">
+      <section className="jobs-board">
+        <div className="jobs-board-head">
           <div>
-            <h2>Přehled kampaní</h2>
-            <p>Obchodní stav, termín, klient a rychlá změna stavu.</p>
+            <span className="admin-kicker">Přehled kampaní</span>
+            <h2>Termíny, kreativy a akce</h2>
           </div>
+          <span>{ads.length} položek</span>
         </div>
-        <div className="ad-placement-grid">
-          {ads.map((ad) => (
-            <article className="ad-placement-card" key={ad.id}>
-              <div className="ad-placement-top">
-                <span className={`status-pill status-${ad.status.toLowerCase()}`}>{adStatusLabels[ad.status]}</span>
-                <span className="status-pill">{placementSlots.find((slot) => slot.key === ad.placementKey)?.name ?? ad.placementKey}</span>
-                <span className="status-pill">{adProductTypeLabels[ad.productType]}</span>
-                {ad.isFeatured && <span className="status-pill"><Star size={13} /> Dashboard</span>}
-              </div>
-              <h3>{ad.name}</h3>
-              <p>{ad.note ?? "Bez interní poznámky."}</p>
-              <dl>
-                <div><dt>Umístění</dt><dd>{ad.location}</dd></div>
-                <div><dt>Formát</dt><dd>{ad.format}</dd></div>
-                <div><dt>Cena</dt><dd>{money(ad.priceCzk)} / {ad.durationDays} dní</dd></div>
-                <div><dt>Klient</dt><dd>{ad.clientName ?? "-"}</dd></div>
-                <div><dt>Termín</dt><dd><CalendarDays size={14} /> {ad.startsAt ? dateCs(ad.startsAt) : "-"} až {ad.endsAt ? dateCs(ad.endsAt) : "-"}</dd></div>
-                <div><dt>Klik</dt><dd>{ad.targetUrl ? <a href={ad.targetUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} /> Odkaz</a> : "-"}</dd></div>
-              </dl>
-              <form action={updateAdPlacementStatus} className="ad-status-form">
-                <input name="id" type="hidden" value={ad.id} />
-                <select className="select" name="status" defaultValue={ad.status}>
-                  {Object.values(AdPlacementStatus).map((status) => <option key={status} value={status}>{adStatusLabels[status]}</option>)}
-                </select>
-                <button className="button secondary" type="submit">Změnit stav</button>
-              </form>
-            </article>
-          ))}
+        <div className="ad-ops-list">
+          {ads.map((ad) => {
+            const slot = slotFor(ad.placementKey);
+            const remaining = daysUntil(ad.endsAt);
+            return (
+              <article className="ad-ops-card" key={ad.id}>
+                <header className="ad-ops-title">
+                  <div>
+                    <span className={`status-pill status-${ad.status.toLowerCase()}`}>{adStatusLabels[ad.status]}</span>
+                    <span className="status-pill">{slot.name}</span>
+                    <span className="status-pill">{adProductTypeLabels[ad.productType]}</span>
+                    {!ad.creativeUrl && <span className="status-pill status-waiting">Bez kreativy</span>}
+                    <h3>{ad.name}</h3>
+                    <p>{ad.clientName ?? "Bez klienta"} · {slot.location}</p>
+                  </div>
+                  <div className="jobs-action-strip">
+                    {ad.targetUrl && <Link className="job-action-icon" href={ad.targetUrl} target="_blank" title="Otevřít cílový odkaz"><ExternalLink size={18} /></Link>}
+                    <form action={endAdPlacementNow}>
+                      <input name="id" type="hidden" value={ad.id} />
+                      <ConfirmSubmitButton className="job-action-icon danger" message={`Opravdu ukončit reklamu „${ad.name}“ hned dnes?`}>
+                        <ShieldOff size={18} />
+                      </ConfirmSubmitButton>
+                    </form>
+                  </div>
+                </header>
+
+                <div className="jobs-ops-sections">
+                  <section>
+                    <span><CalendarDays size={15} /> Termín</span>
+                    <strong>{dateCs(ad.startsAt)} → {dateCs(ad.endsAt)}</strong>
+                    <small>{remaining == null ? "bez konce" : remaining >= 0 ? `zbývá ${remaining} dní` : "po termínu"}</small>
+                  </section>
+                  <section>
+                    <span><Megaphone size={15} /> Pozice</span>
+                    <strong>{slot.format}</strong>
+                    <small>{slot.recommendedSize} · {ad.availableSlots} slotů</small>
+                  </section>
+                  <section>
+                    <span><Star size={15} /> Obchod</span>
+                    <strong>{money(ad.priceCzk)} / {ad.durationDays} dní</strong>
+                    <small>{ad.isFeatured ? "zvýrazněno na dashboardu" : "standardní evidence"}</small>
+                  </section>
+                  <section>
+                    <span><Eye size={15} /> Kreativa</span>
+                    <strong>{ad.creativeUrl ? "Nahraná" : "Chybí"}</strong>
+                    <small>{ad.targetUrl ? "má cílový odkaz" : "bez cílového odkazu"}</small>
+                  </section>
+                </div>
+
+                <details className="ad-edit-panel">
+                  <summary><SquarePen size={16} /> Upravit kampaň</summary>
+                  <form action={updateAdPlacement} className="admin-form wide">
+                    <input name="id" type="hidden" value={ad.id} />
+                    <AdSlotSelect defaultValue={ad.placementKey} slots={adSlotDefinitions} />
+                    <label className="field-group">
+                      <span>Název</span>
+                      <input className="field" name="name" required defaultValue={ad.name} />
+                    </label>
+                    <label className="field-group">
+                      <span>Klient</span>
+                      <input className="field" name="clientName" defaultValue={ad.clientName ?? ""} />
+                    </label>
+                    <label className="field-group">
+                      <span>Typ kampaně</span>
+                      <select className="select" name="productType" defaultValue={ad.productType}>
+                        {Object.values(AdProductType).map((type) => <option key={type} value={type}>{adProductTypeLabels[type]}</option>)}
+                      </select>
+                    </label>
+                    <label className="field-group">
+                      <span>Stav</span>
+                      <select className="select" name="status" defaultValue={ad.status}>
+                        {Object.values(AdPlacementStatus).map((status) => <option key={status} value={status}>{adStatusLabels[status]}</option>)}
+                      </select>
+                    </label>
+                    <AssetUploadField
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      defaultValue={ad.creativeUrl}
+                      help="Nahrajte obrázek nebo ponechte externí URL."
+                      label="Kreativa"
+                      name="creativeUrl"
+                      placeholder="/uploads/admin/banner.jpg nebo URL"
+                    />
+                    <label className="field-group">
+                      <span>Cílový odkaz</span>
+                      <input className="field" name="targetUrl" type="url" defaultValue={ad.targetUrl ?? ""} />
+                    </label>
+                    <label className="field-group">
+                      <span>Cena</span>
+                      <input className="field" min="0" name="priceCzk" type="number" defaultValue={ad.priceCzk} />
+                    </label>
+                    <label className="field-group">
+                      <span>Délka</span>
+                      <input className="field" min="1" max="365" name="durationDays" type="number" defaultValue={ad.durationDays} />
+                    </label>
+                    <label className="field-group">
+                      <span>Začátek</span>
+                      <input className="field" name="startsAt" type="date" defaultValue={dateInput(ad.startsAt)} />
+                    </label>
+                    <label className="field-group">
+                      <span>Konec</span>
+                      <input className="field" name="endsAt" type="date" defaultValue={dateInput(ad.endsAt)} />
+                    </label>
+                    <input name="availableSlots" type="hidden" value={slot.availableSlots} />
+                    <label className="admin-check">
+                      <input name="isFeatured" type="checkbox" defaultChecked={ad.isFeatured} /> Dashboard
+                    </label>
+                    <label className="field-group full">
+                      <span>Poznámka</span>
+                      <textarea className="textarea" name="note" defaultValue={ad.note ?? ""} />
+                    </label>
+                    <button className="button full" type="submit"><Edit3 size={16} /> Uložit změny</button>
+                  </form>
+                </details>
+
+                <form action={updateAdPlacementStatus} className="ad-status-form">
+                  <input name="id" type="hidden" value={ad.id} />
+                  <select className="select" name="status" defaultValue={ad.status}>
+                    {Object.values(AdPlacementStatus).map((status) => <option key={status} value={status}>{adStatusLabels[status]}</option>)}
+                  </select>
+                  <button className="button secondary" type="submit">Rychle změnit stav</button>
+                </form>
+              </article>
+            );
+          })}
+          {ads.length === 0 && <p className="admin-empty">Pro vybrané filtry tu není žádná reklamní kampaň.</p>}
         </div>
       </section>
     </AdminShell>
