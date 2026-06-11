@@ -296,8 +296,11 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
 
                 <form action={renewJob} className="jobs-renew-bar">
                   <input name="id" type="hidden" value={job.id} />
+                  <div className="jobs-renew-icon">
+                    <RotateCw size={18} />
+                  </div>
                   <label>
-                    <span>Obnovit/topovat podle balíčku</span>
+                    <span>Prodloužení podle balíčku</span>
                     <select name="packageId" defaultValue={job.packageId ?? packages[0]?.id ?? ""}>
                       {packages.map((item) => (
                         <option key={item.id} value={item.id}>
@@ -305,9 +308,10 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
                         </option>
                       ))}
                     </select>
+                    <small>Délka, cena a případné TOP zvýraznění se převezmou z vybraného balíčku.</small>
                   </label>
-                  <button className="button secondary" type="submit">
-                    <RotateCw size={16} /> Obnovit
+                  <button className="renew-package-button" type="submit">
+                    Použít balíček
                   </button>
                 </form>
               </article>
