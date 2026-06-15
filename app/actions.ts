@@ -1,18 +1,22 @@
 "use server";
 
 import { addDays } from "date-fns";
-import { mkdir, writeFile } from "node:fs/promises";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AdPlacementStatus, AdminRole, AdminUserStatus, ApplicationStatus, ApplicationTag, JobStatus, PaymentStatus } from "@prisma/client";
 import { login, logout, requireAdmin, requirePermission } from "@/lib/auth";
 import { getAdSlotDefinition } from "@/lib/ad-slots";
-import { activeAdWhere, activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
+import { checkAdSlotCapacity } from "@/lib/services/ad-capacity";
+import { storeAdminAsset } from "@/lib/services/admin-assets";
+import { logAdminActivity, logSystemActivity } from "@/lib/services/activity-log";
+import { escapeHtml, sendTransactionalEmail } from "@/lib/services/email";
+import { markPublicationIssueCurrent } from "@/lib/services/publication-issue";
 import { slugify } from "@/lib/slug";
 
 const required = z.string().trim().min(1, "Povinné pole");
@@ -25,77 +29,6 @@ const optionalAssetUrl = z
   .optional()
   .or(z.literal(""));
 
-async function logAdminActivity(action: string, entityType: string, entityId: string | null, summary: string) {
-  const admin = await requireAdmin();
-  await prisma.activityLog.create({
-    data: {
-      actorId: admin.id,
-      actorEmail: admin.email,
-      action,
-      entityType,
-      entityId,
-      summary
-    }
-  });
-}
-
-async function logSystemActivity(action: string, entityType: string, entityId: string | null, summary: string) {
-  await prisma.activityLog.create({
-    data: {
-      actorId: null,
-      actorEmail: "system",
-      action,
-      entityType,
-      entityId,
-      summary
-    }
-  });
-}
-
-async function sendTransactionalEmail(input: { to: string; subject: string; html: string; replyTo?: string }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.MAIL_FROM ?? "Chci práci <noreply@chcupracu.cz>";
-  if (!apiKey) return { ok: false, skipped: true };
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from,
-      to: input.to,
-      subject: input.subject,
-      html: input.html,
-      reply_to: input.replyTo
-    })
-  });
-
-  if (!response.ok) {
-    console.error("Unable to send transactional email.", await response.text());
-    return { ok: false, skipped: false };
-  }
-
-  return { ok: true, skipped: false };
-}
-
-async function checkAdSlotCapacity(placementKey: string, startsAt: Date, endsAt: Date, availableSlots: number, ignoredId?: string) {
-  const overlapping = await prisma.adPlacement.count({
-    where: {
-      placementKey,
-      id: ignoredId ? { not: ignoredId } : undefined,
-      status: { in: [AdPlacementStatus.RESERVED, AdPlacementStatus.ACTIVE] },
-      AND: [
-        { OR: [{ startsAt: null }, { startsAt: { lte: endsAt } }] },
-        { OR: [{ endsAt: null }, { endsAt: { gte: startsAt } }] }
-      ]
-    }
-  });
-
-  return overlapping < Math.max(availableSlots, 1);
-}
-
 function withActionResult(path: string, key: "notice" | "error", value: string) {
   const url = new URL(path, "https://admin.local");
   url.searchParams.set(key, value);
@@ -103,30 +36,12 @@ function withActionResult(path: string, key: "notice" | "error", value: string) 
 }
 
 const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
+const ipHash = (value: string) => createHash("sha256").update(value).digest("hex");
 
 function parseOptionalDate(value?: string | null) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
-async function markPublicationIssueCurrent(id: string) {
-  try {
-    await prisma.$transaction([
-      prisma.publicationIssue.updateMany({ data: { isCurrent: false } }),
-      prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } })
-    ]);
-    return true;
-  } catch (error) {
-    console.error("Unable to set current publication issue with transaction, retrying single update.", error);
-    try {
-      await prisma.publicationIssue.update({ where: { id }, data: { isCurrent: true } });
-      return true;
-    } catch (retryError) {
-      console.error("Unable to set current publication issue.", retryError);
-      return false;
-    }
-  }
 }
 
 export async function adminLogin(_: unknown, formData: FormData) {
@@ -383,32 +298,7 @@ export async function uploadAdminAsset(formData: FormData) {
   if (!(file instanceof File)) return { ok: false, message: "Soubor se nepodařilo načíst." };
   if (file.size === 0) return { ok: false, message: "Soubor je prázdný." };
   if (file.size > 5 * 1024 * 1024) return { ok: false, message: "Soubor může mít maximálně 5 MB." };
-
-  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]);
-  if (!allowedTypes.has(file.type)) return { ok: false, message: "Povoleny jsou obrázky JPG, PNG, WebP, GIF nebo PDF." };
-
-  const extensionByType: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-    "application/pdf": "pdf"
-  };
-  const originalName = file.name.replace(/\.[^.]+$/, "");
-  const safeName = slugify(originalName || "soubor").slice(0, 70) || "soubor";
-  const extension = extensionByType[file.type] ?? "bin";
-  const directory = path.join(process.cwd(), "public", "uploads", "admin");
-  try {
-    await mkdir(directory, { recursive: true });
-    const filename = `${safeName}-${Date.now().toString(36)}.${extension}`;
-    const bytes = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(directory, filename), bytes);
-
-    return { ok: true, message: "Soubor byl nahrán.", url: `/uploads/admin/${filename}` };
-  } catch (error) {
-    console.error("Unable to upload admin asset.", error);
-    return { ok: false, message: "Nahrávání souborů není v tomto prostředí dostupné. Vložte prosím URL ručně." };
-  }
+  return storeAdminAsset(file);
 }
 
 export async function createPublicationIssue(formData: FormData) {
@@ -675,6 +565,8 @@ export async function createApplication(_: unknown, formData: FormData) {
     include: { company: true }
   });
   if (!job) return { ok: false, message: "Tato nabídka už není aktivní." };
+  const headerStore = await headers();
+  const forwardedFor = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || headerStore.get("x-real-ip") || "";
 
   const application = await prisma.application.create({
     data: {
@@ -684,6 +576,7 @@ export async function createApplication(_: unknown, formData: FormData) {
       phone: parsed.data.phone,
       message: parsed.data.message,
       consentGdpr: true,
+      ipHash: forwardedFor ? ipHash(forwardedFor) : null,
       communications: {
         create: {
           channel: "form",
@@ -703,7 +596,7 @@ export async function createApplication(_: unknown, formData: FormData) {
       to: adminEmail,
       replyTo: parsed.data.email,
       subject: `Nová reakce: ${job.title}`,
-      html: `<p><strong>${parsed.data.name}</strong> odpověděl/a na inzerát <strong>${job.title}</strong>.</p><p>${parsed.data.message}</p><p>E-mail: ${parsed.data.email}<br>Telefon: ${parsed.data.phone ?? "-"}</p>`
+      html: `<p><strong>${escapeHtml(parsed.data.name)}</strong> odpověděl/a na inzerát <strong>${escapeHtml(job.title)}</strong>.</p><p>${escapeHtml(parsed.data.message)}</p><p>E-mail: ${escapeHtml(parsed.data.email)}<br>Telefon: ${escapeHtml(parsed.data.phone ?? "-")}</p>`
     });
   }
 
@@ -713,7 +606,7 @@ export async function createApplication(_: unknown, formData: FormData) {
       to: companyEmail,
       replyTo: parsed.data.email,
       subject: `Nová reakce z chcupracu.cz: ${job.title}`,
-      html: `<p>Dobrý den, přišla nová reakce na pozici <strong>${job.title}</strong>.</p><p><strong>${parsed.data.name}</strong><br>${parsed.data.email}<br>${parsed.data.phone ?? ""}</p><p>${parsed.data.message}</p>`
+      html: `<p>Dobrý den, přišla nová reakce na pozici <strong>${escapeHtml(job.title)}</strong>.</p><p><strong>${escapeHtml(parsed.data.name)}</strong><br>${escapeHtml(parsed.data.email)}<br>${escapeHtml(parsed.data.phone ?? "")}</p><p>${escapeHtml(parsed.data.message)}</p>`
     });
   }
 
@@ -741,8 +634,7 @@ export async function updateApplication(formData: FormData) {
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
-  let application: { id: string; name: string; status: ApplicationStatus; job: { title: string } };
-  application = await prisma.application.update({
+  const application: { id: string; name: string; status: ApplicationStatus; job: { title: string } } = await prisma.application.update({
     where: { id: parsed.data.id },
     include: { job: true },
     data: {
@@ -788,7 +680,7 @@ export async function forwardApplicationToCompany(formData: FormData) {
     to,
     replyTo: application.email,
     subject: `Reakce na pozici ${application.job.title}`,
-    html: `<p>Dobrý den, předáváme reakci na pozici <strong>${application.job.title}</strong>.</p><p><strong>${application.name}</strong><br>${application.email}<br>${application.phone ?? ""}</p><p>${application.message}</p>`
+    html: `<p>Dobrý den, předáváme reakci na pozici <strong>${escapeHtml(application.job.title)}</strong>.</p><p><strong>${escapeHtml(application.name)}</strong><br>${escapeHtml(application.email)}<br>${escapeHtml(application.phone ?? "")}</p><p>${escapeHtml(application.message)}</p>`
   });
 
   await prisma.application.update({

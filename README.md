@@ -22,7 +22,17 @@ npm run db:seed
 npm run dev
 ```
 
-> V tomto prostředí není dostupný `npm`, takže zdrojové soubory jsou připravené, ale závislosti je potřeba doinstalovat v běžném Node prostředí.
+Bez `DATABASE_URL` aplikace nenaběhne, protože veřejný web i administrace načítají číselníky a inzeráty přes Prisma už při renderu stránky.
+
+## Kontroly před deployem
+
+```bash
+npm run typecheck
+npm run lint
+npm run check
+```
+
+`npm run check` spouští TypeScript kontrolu a ESLint v neinteraktivním režimu vhodném pro CI.
 
 ## Deploy na Vercel + Neon
 
@@ -52,7 +62,7 @@ npm run db:deploy
 
 - Nastavit silné `SESSION_SECRET` a heslo redakce.
 - Použít PostgreSQL s pravidelnými zálohami.
-- Přidat perzistentní úložiště příloh CV, pokud se povolí nahrávání souborů.
+- Přidat perzistentní úložiště příloh a admin assetů, např. S3, R2 nebo Vercel Blob, pokud se má spoléhat na uploady v produkci.
 - Připojit e-mailovou službu pro upozornění redakci a uchazečům.
 - Před ostrým spuštěním udělat penetrační kontrolu formulářů a adminu.
 

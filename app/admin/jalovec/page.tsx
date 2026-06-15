@@ -2,6 +2,7 @@ import { BookOpen, CheckCircle2, ExternalLink, Newspaper } from "lucide-react";
 import { createPublicationIssue, setCurrentPublicationIssue } from "@/app/actions";
 import { AdminShell } from "@/components/AdminShell";
 import { AssetUploadField } from "@/components/AssetUploadField";
+import { SmartImage } from "@/components/SmartImage";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, money } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
@@ -83,7 +84,7 @@ export default async function AdminJalovecPage({ searchParams }: { searchParams:
           </div>
           {currentIssue ? (
             <div className="jalovec-preview">
-              <img alt={currentIssue.title} src={currentIssue.coverImageUrl || "/ads/jalovec-aktualni-vydani.jpg"} />
+              <SmartImage alt={currentIssue.title} className="jalovec-preview-image" sizes="(max-width: 860px) 100vw, 320px" src={currentIssue.coverImageUrl || "/ads/jalovec-aktualni-vydani.jpg"} />
               <div>
                 <span className="status-pill status-active"><CheckCircle2 size={14} /> Aktivní</span>
                 <h3>{currentIssue.title}</h3>

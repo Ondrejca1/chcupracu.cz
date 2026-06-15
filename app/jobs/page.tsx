@@ -3,6 +3,7 @@ import { Newspaper, Search } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SmartImage } from "@/components/SmartImage";
 import { getAdForSlot, getCurrentIssue, getFilters, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<JobSearchParams> }) {
@@ -40,7 +41,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
       <section className="commercial-band search-ad-band">
         <div className="container">
           <a className="commercial-slot issue-slot issue-slot-wide" href={topAd?.targetUrl ?? issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-            <img alt={topAd?.name ?? "Aktuální vydání týdeníku Jalovec"} src={topAd?.creativeUrl ?? issue.coverImageUrl} />
+            <SmartImage alt={topAd?.name ?? "Aktuální vydání týdeníku Jalovec"} className="issue-image issue-image-wide" sizes="120px" src={topAd?.creativeUrl ?? issue.coverImageUrl} />
             <div>
               <small>{topAd ? "Reklamní partner" : "Aktuální vydání Jalovce"}</small>
               <strong>{topAd?.name ?? issue.title}</strong>
@@ -55,7 +56,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
             <a className="side-ad jalovec-issue" href={sidebarAd?.targetUrl ?? issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-              <img alt={sidebarAd?.name ?? "Aktuální vydání týdeníku Jalovec"} src={sidebarAd?.creativeUrl ?? issue.coverImageUrl} />
+              <SmartImage alt={sidebarAd?.name ?? "Aktuální vydání týdeníku Jalovec"} className="side-ad-image" sizes="300px" src={sidebarAd?.creativeUrl ?? issue.coverImageUrl} />
               <Newspaper size={24} />
               <strong>{sidebarAd?.name ?? issue.title}</strong>
               <p>{sidebarAd?.note ?? issue.note ?? "Boční pozice pro týdeník, lokální firmu nebo sezónní náborovou kampaň."}</p>

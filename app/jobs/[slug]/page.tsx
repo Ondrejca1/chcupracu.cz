@@ -6,6 +6,7 @@ import { ApplicationForm } from "@/components/ApplicationForm";
 import { JobCard } from "@/components/JobCard";
 import { JobViewTracker } from "@/components/JobViewTracker";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SmartImage } from "@/components/SmartImage";
 import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAdForSlot, getSimilarJobs } from "@/lib/queries";
@@ -142,7 +143,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
             </div>
             {detailAd && (
               <a className="detail-ad-card" href={detailAd.targetUrl ?? "#"} target={detailAd.targetUrl ? "_blank" : undefined} rel={detailAd.targetUrl ? "noreferrer" : undefined}>
-                {detailAd.creativeUrl && <img alt={detailAd.name} src={detailAd.creativeUrl} />}
+                {detailAd.creativeUrl && <SmartImage alt={detailAd.name} className="detail-ad-image" sizes="360px" src={detailAd.creativeUrl} />}
                 <small>Reklamní partner</small>
                 <strong>{detailAd.name}</strong>
                 <span>{detailAd.note ?? detailAd.location}</span>

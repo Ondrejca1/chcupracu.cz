@@ -4,6 +4,7 @@ import { ArrowRight, Building2, Newspaper, Sparkles } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SearchForm } from "@/components/SearchForm";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SmartImage } from "@/components/SmartImage";
 import { money } from "@/lib/format";
 import { getAdForSlot, getCurrentIssue, getFeaturedCompanies, getFilters, getJobVisibilityCounts, getSearchSuggestions, searchJobs, type JobSearchParams } from "@/lib/queries";
 
@@ -61,14 +62,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             <p>Moderní regionální pracovní portál propojený s redakcí. Vsetín, Rožnov, Velké Karlovice, Brumov-Bylnice a další okolní města na jednom místě.</p>
             <SearchForm filters={filters} suggestions={suggestions} values={params} />
           </div>
-          <aside className="hero-promo" aria-label="Ukázková reklamní pozice">
-            <span>Inzerce</span>
-            <h2>Hledáte lidi na Valašsku?</h2>
-            <p>Prémiový banner pro lokální firmu, náborovou kampaň nebo aktuální vydání týdeníku Jalovec.</p>
-            <div className="promo-badges">
-              <strong>Web + tisk</strong>
-              <strong>Top pozice</strong>
-              <strong>Grafika</strong>
+          <aside className="hero-promo" aria-label="Regionální pracovní portál">
+            <SmartImage alt="Práce a zaměstnavatelé na Vsetínsku" className="hero-promo-image" priority sizes="(max-width: 1180px) 100vw, 430px" src="/preview-assets/hero-workers.png" />
+            <div>
+              <span>Pro firmy</span>
+              <h2>Nábor v regionu bez složité administrativy</h2>
+              <p>Redakce pomůže se zadáním, topováním, inzercí i propojením webu s lokálním tiskem.</p>
+              <div className="promo-badges">
+                <strong>Web + tisk</strong>
+                <strong>Top pozice</strong>
+                <strong>Lokální zásah</strong>
+              </div>
             </div>
           </aside>
         </div>
@@ -102,7 +106,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
       <section className="commercial-band">
         <div className="container commercial-grid">
           <a className="commercial-slot issue-slot" href={issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-            <img alt="Aktuální vydání týdeníku Jalovec" src={issue.coverImageUrl} />
+            <SmartImage alt="Aktuální vydání týdeníku Jalovec" className="issue-image" sizes="92px" src={issue.coverImageUrl} />
             <div>
               <small>Aktuální vydání Jalovce</small>
               <strong>{issue.title}</strong>
@@ -162,7 +166,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
           <aside className="filter-column">
             <SearchForm compact filters={filters} suggestions={suggestions} values={params} />
             <a className="side-ad jalovec-issue" href={sidebarAd?.targetUrl ?? issue.targetUrl ?? "https://www.jalovec.cz"} target="_blank" rel="noreferrer">
-              <img alt={sidebarAd?.name ?? "Aktuální vydání týdeníku Jalovec"} src={sidebarAd?.creativeUrl ?? issue.coverImageUrl} />
+              <SmartImage alt={sidebarAd?.name ?? "Aktuální vydání týdeníku Jalovec"} className="side-ad-image" sizes="300px" src={sidebarAd?.creativeUrl ?? issue.coverImageUrl} />
               <Newspaper size={24} />
               <strong>{sidebarAd?.name ?? issue.title}</strong>
               <p>{sidebarAd?.note ?? issue.note ?? "Konkrétní reklamní blok pro týdeník, který může redakce pravidelně měnit."}</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import type { getFilters, JobSearchParams } from "@/lib/queries";
@@ -171,11 +172,11 @@ export function SearchForm({
           {activeChips.length > 0 && (
             <div className="active-filter-chips">
               {activeChips.map((chip) => (
-                <a className="filter-chip" href={chipHref(chip.key)} key={chip.key}>
+                <Link className="filter-chip" href={chipHref(chip.key)} key={chip.key}>
                   {chip.label} <span>×</span>
-                </a>
+                </Link>
               ))}
-              <a className="filter-chip clear" href="/jobs">Vyčistit</a>
+              <Link className="filter-chip clear" href="/jobs">Vyčistit</Link>
             </div>
           )}
           <button className="button" type="submit">
