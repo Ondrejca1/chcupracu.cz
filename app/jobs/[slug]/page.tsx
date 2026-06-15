@@ -72,7 +72,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
             <a className="flyer-card" href={job.flyerUrl || "#kontakt"}>
               <small>Náborový letáček</small>
               <strong>{job.flyerUrl ? "Otevřít firemní leták / PDF" : "Prostor pro firemní leták, PDF nebo grafiku kampaně"}</strong>
-              <span>V administraci lze přidat URL letáku nebo kampaně.</span>
+              <span>Další podklady k nabídce, benefity nebo náborová grafika od firmy.</span>
             </a>
           </div>
         </section>
@@ -104,7 +104,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
             </div>
             <section className="detail-panel-card detail-brand-card">
               <h2>Firemní brand a média</h2>
-              <p>Nabídka je připravená pro logo, firemní barvy, hlavní fotku, náborový leták i prémiové zvýraznění ve výpisu. Základní balíček může mít fotku až po rozkliknutí, topované nabídky i rovnou v přehledu.</p>
+              <p>Firma může doplnit fotku pracoviště, náborový leták, kontaktní osobu i vlastní zvýraznění. Uchazeč tak rychleji pozná, jestli mu nabídka sedí.</p>
               <div className="meta">
                 <span className="job-chip">Firemní barva</span>
                 <span className="job-chip">Foto detailu</span>
@@ -139,7 +139,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
             <ApplicationForm jobId={job.id} slug={job.slug} />
             <div className="apply-note">
               <Sparkles size={18} />
-              <span>V ostré verzi půjde nastavit formulář, telefon, e-mail nebo externí odkaz na kariérní stránku firmy.</span>
+              <span>Odpověď uložíme a redakce ji předá zaměstnavateli podle nastavení konkrétní nabídky.</span>
             </div>
             {detailAd && (
               <a className="detail-ad-card" href={detailAd.targetUrl ?? "#"} target={detailAd.targetUrl ? "_blank" : undefined} rel={detailAd.targetUrl ? "noreferrer" : undefined}>

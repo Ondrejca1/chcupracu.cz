@@ -1,6 +1,6 @@
 import { CalendarClock, Eye, FileText, ImageIcon, Settings2, Sparkles } from "lucide-react";
 import { JobStatus } from "@prisma/client";
-import { upsertJob } from "@/app/actions";
+import { upsertJob } from "@/lib/actions/jobs";
 import { AssetUploadField } from "@/components/AssetUploadField";
 import type { getFilters } from "@/lib/queries";
 
@@ -8,7 +8,7 @@ type Filters = Awaited<ReturnType<typeof getFilters>>;
 type EditableJob = {
   id: string;
   title: string;
-  company: { name: string };
+  company: { name: string; logoUrl?: string | null; brandColor?: string | null };
   cityId: string;
   categoryId: string;
   educationId: string | null;
@@ -106,6 +106,19 @@ export function JobEditor({
             <span>Firma</span>
             <input className="field" name="companyName" placeholder="Název zaměstnavatele" required defaultValue={job?.company.name ?? ""} />
             <small>Firma se použije i pro filtrování a veřejné zobrazení.</small>
+          </label>
+          <AssetUploadField
+            accept="image/jpeg,image/png,image/webp"
+            defaultValue={job?.company.logoUrl}
+            help="Logo se zobrazí v kartě inzerátu a na profilu firmy. Ideálně PNG nebo WebP s průhledným pozadím."
+            label="Logo firmy"
+            name="companyLogoUrl"
+            placeholder="/uploads/admin/logo.png nebo URL"
+          />
+          <label className="field-group">
+            <span>Brand barva firmy</span>
+            <input className="field" name="companyBrandColor" placeholder="#14532d" defaultValue={job?.company.brandColor ?? ""} />
+            <small>Použije se pro barevný pás v náhledu nabídky a firemní branding.</small>
           </label>
           <label className="field-group">
             <span>Město</span>
@@ -211,8 +224,8 @@ export function JobEditor({
           <AssetUploadField
             accept="image/jpeg,image/png,image/webp,image/gif"
             defaultValue={job?.previewImageUrl}
-            help="Zobrazí se ve výpisu, pokud je zapnutá volba Fotka ve výpisu."
-            label="Fotka do výpisu"
+            help="Široký vizuál do horního pásu karty. Doporučený poměr je přibližně 16:6, například 1200 × 450 px."
+            label="Brand / fotka do výpisu"
             name="previewImageUrl"
             placeholder="/uploads/admin/fotka.jpg nebo URL"
           />

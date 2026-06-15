@@ -1,6 +1,6 @@
 import { PaymentStatus, type Prisma } from "@prisma/client";
 import { BarChart3, CircleDollarSign, ReceiptText } from "lucide-react";
-import { createMissingInvoicesFromJobs, updateInvoiceStatus } from "@/app/actions";
+import { createMissingInvoicesFromJobs, updateInvoiceStatus } from "@/lib/actions/finance";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, money } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";

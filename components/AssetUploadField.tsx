@@ -2,7 +2,7 @@
 
 import { CheckCircle2, UploadCloud } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import { uploadAdminAsset } from "@/app/actions";
+import { uploadAdminAsset } from "@/lib/actions/assets";
 
 export function AssetUploadField({
   accept,

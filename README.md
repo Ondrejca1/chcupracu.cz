@@ -15,14 +15,28 @@ MVP pracovní platformy pro Vsetín a okolí. Veřejná část umožňuje hledá
 ```bash
 npm install
 cp .env.example .env
-# Pro lokální PostgreSQL upravte DATABASE_URL např. na:
-# postgresql://postgres:postgres@localhost:5432/chcupracu
+npm run dev:setup
+npm run dev
+```
+
+Pokud nepoužíváte Docker, nastavte v `.env` vlastní PostgreSQL:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/chcupracu"
 npm run db:migrate
 npm run db:seed
 npm run dev
 ```
 
 Bez `DATABASE_URL` aplikace nenaběhne, protože veřejný web i administrace načítají číselníky a inzeráty přes Prisma už při renderu stránky.
+
+Pro vizuální QA po větších změnách projděte minimálně:
+
+- `/` homepage na desktopu a mobilu,
+- `/jobs` s filtrem a bez výsledků,
+- jeden detail nabídky `/jobs/[slug]`,
+- jednu firemní stránku `/firmy/[slug]`,
+- admin dashboard, inzeráty, detail reakce a editor inzerátu.
 
 ## Kontroly před deployem
 

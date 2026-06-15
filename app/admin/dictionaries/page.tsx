@@ -1,4 +1,4 @@
-import { createDictionaryItem, updateDictionaryItem } from "@/app/actions";
+import { createDictionaryItem, updateDictionaryItem } from "@/lib/actions/dictionaries";
 import { AdminShell } from "@/components/AdminShell";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";

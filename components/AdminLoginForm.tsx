@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useActionState, useState } from "react";
-import { adminLogin } from "@/app/actions";
+import { adminLogin } from "@/lib/actions/auth";
 
 export function AdminLoginForm() {
   const [state, action, pending] = useActionState(adminLogin, null);

@@ -385,6 +385,15 @@ button:disabled {
   resize: vertical;
 }
 
+.honeypot-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .textarea-short {
   min-height: 96px;
 }
@@ -516,8 +525,12 @@ button:disabled {
 
 .job-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   min-height: 220px;
+  padding: 0;
+  background: var(--job-highlight, var(--surface));
   transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -530,8 +543,9 @@ button:disabled {
 .job-card::before {
   position: absolute;
   inset: 0 auto 0 0;
+  z-index: 3;
   width: 4px;
-  background: var(--brand);
+  background: var(--company-brand, var(--brand));
   content: "";
 }
 
@@ -541,26 +555,131 @@ button:disabled {
 }
 
 .job-card-with-image {
-  display: grid;
-  grid-template-columns: 176px minmax(0, 1fr);
-  padding: 0;
+  background: var(--job-highlight, var(--surface));
 }
 
 .job-card-with-image::before {
-  display: none;
+  background: var(--company-brand, var(--brand));
 }
 
-.job-card-image {
-  min-height: 100%;
-  background-position: center;
-  background-size: cover;
-  padding: 14px;
+.job-card-brand-bar {
+  position: relative;
+  min-height: 84px;
+  border-bottom: 1px solid color-mix(in srgb, var(--company-brand, var(--brand)) 24%, var(--line));
+  background:
+    radial-gradient(circle at 18% 20%, color-mix(in srgb, var(--company-brand, var(--brand)) 30%, #fff) 0 22%, transparent 23%),
+    linear-gradient(135deg, color-mix(in srgb, var(--company-brand, var(--brand)) 82%, #111827), color-mix(in srgb, var(--company-brand, var(--brand)) 36%, #f8fafc));
+}
+
+.job-card-with-image .job-card-brand-bar {
+  aspect-ratio: 16 / 6;
+  min-height: 132px;
+  max-height: 178px;
+}
+
+.job-card-wide.job-card-with-image .job-card-brand-bar {
+  aspect-ratio: 21 / 6;
+  max-height: 190px;
+}
+
+.job-card-brand-image,
+.job-card-brand-fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.job-card-brand-image img {
+  object-fit: cover;
+}
+
+.job-card-brand-fill::after,
+.job-card-brand-image::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--company-brand, var(--brand)) 72%, #111827) 0%, rgba(17, 24, 39, 0.34) 54%, rgba(17, 24, 39, 0.08) 100%),
+    linear-gradient(0deg, rgba(17, 24, 39, 0.22), rgba(17, 24, 39, 0));
+  content: "";
+}
+
+.job-card-brand-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 14px 16px 14px 18px;
+  color: #fff;
+}
+
+.job-card-company-mark {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--company-brand, var(--brand));
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.18);
+}
+
+.job-card-logo {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+}
+
+.job-card-logo img {
+  object-fit: contain;
+  padding: 6px;
+}
+
+.job-card-company-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  text-shadow: 0 1px 10px rgba(17, 24, 39, 0.42);
+}
+
+.job-card-company-text small,
+.job-card-company-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-card-company-text small {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.job-card-company-text strong {
+  font-size: 12px;
+  opacity: 0.86;
+}
+
+.job-card-brand-overlay .top-tag {
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--company-brand, var(--brand));
 }
 
 .job-card-body {
   display: grid;
+  flex: 1;
   gap: 12px;
-  padding: 20px;
+  padding: 18px 20px 20px;
 }
 
 .job-card h2 {
@@ -1093,6 +1212,18 @@ button:disabled {
   width: 82px;
   height: 82px;
   font-size: 28px;
+}
+
+.company-logo-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+}
+
+.company-logo-image img {
+  object-fit: contain;
+  padding: 8px;
 }
 
 .company-hero h1 {
@@ -1991,12 +2122,10 @@ button:disabled {
     grid-column: auto;
   }
 
-  .job-card-with-image {
-    grid-template-columns: 1fr;
-  }
-
-  .job-card-image {
-    min-height: 210px;
+  .job-card-with-image .job-card-brand-bar {
+    aspect-ratio: 16 / 7;
+    min-height: 148px;
+    max-height: 220px;
   }
 
   .detail-highlight {

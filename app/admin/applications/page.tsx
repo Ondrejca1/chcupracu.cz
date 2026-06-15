@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ApplicationStatus, ApplicationTag, type Prisma } from "@prisma/client";
 import { Mail, MessageSquareText, Phone, Search, UserCheck, UsersRound } from "lucide-react";
-import { updateApplication } from "@/app/actions";
+import { updateApplication } from "@/lib/actions/applications";
 import { AdminShell } from "@/components/AdminShell";
 import { dateTimeCs } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";

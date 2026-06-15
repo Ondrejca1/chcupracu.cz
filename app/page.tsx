@@ -48,7 +48,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
     title: "Týdeník Jalovec plus Sport Jalovec",
     coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
     targetUrl: "https://www.jalovec.cz",
-    note: "Ukázka velkého reklamního prostoru pro redakci nebo partnera týdne."
+    note: "Aktuální vydání a lokální tipy pro čtenáře z Valašska."
   };
 
   return (
@@ -59,7 +59,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
           <div className="hero-copy">
             <span className="eyebrow">Lokální práce pro Vsetínsko</span>
             <h1>Práce na Vsetíně a okolí bez zbytečného hledání</h1>
-            <p>Moderní regionální pracovní portál propojený s redakcí. Vsetín, Rožnov, Velké Karlovice, Brumov-Bylnice a další okolní města na jednom místě.</p>
+            <p>Aktuální nabídky z Valašska na jednom místě. Rychle najděte práci ve Vsetíně, Rožnově, Valmezu, Velkých Karlovicích i okolních obcích.</p>
             <SearchForm filters={filters} suggestions={suggestions} values={params} />
           </div>
           <aside className="hero-promo" aria-label="Regionální pracovní portál">
@@ -67,7 +67,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             <div>
               <span>Pro firmy</span>
               <h2>Nábor v regionu bez složité administrativy</h2>
-              <p>Redakce pomůže se zadáním, topováním, inzercí i propojením webu s lokálním tiskem.</p>
+              <p>Firmám pomůžeme s textem nabídky, zvýrazněním i propagací v lokálním médiu.</p>
               <div className="promo-badges">
                 <strong>Web + tisk</strong>
                 <strong>Top pozice</strong>
@@ -110,23 +110,23 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
             <div>
               <small>Aktuální vydání Jalovce</small>
               <strong>{issue.title}</strong>
-              <span>{issue.note ?? "Redakční prostor pro aktuální vydání nebo partnera týdne."}</span>
+              <span>{issue.note ?? "Aktuální vydání, partner týdne a lokální náborové tipy."}</span>
             </div>
           </a>
           <a className="commercial-slot" href={homepageAd?.targetUrl ?? "/jobs"} target={homepageAd?.targetUrl ? "_blank" : undefined} rel={homepageAd?.targetUrl ? "noreferrer" : undefined}>
             <small>{homepageAd?.location ?? "Hlavní reklamní pozice"}</small>
             <strong>{homepageAd?.name ?? "Partner týdne: volná pozice"}</strong>
-            <span>{homepageAd ? `${money(homepageAd.priceCzk)} / ${homepageAd.durationDays} dní` : "Volná pozice pro lokální náborovou kampaň"}</span>
+            <span>{homepageAd ? `${money(homepageAd.priceCzk)} / ${homepageAd.durationDays} dní` : "Viditelný prostor pro lokální nábor"}</span>
           </a>
           <div className="commercial-slot">
             <small>Top lokalita</small>
             <strong>Práce na Vsetíně</strong>
-            <span>Prodejní pozice pro místní zaměstnavatele</span>
+            <span>Nabídky blízko domova a bez dojíždění navíc</span>
           </div>
           <div className="commercial-slot">
             <small>Top obor</small>
             <strong>Výroba a řemesla</strong>
-            <span>Tematický blok pro sezónní kampaně</span>
+            <span>Řemesla, výroba, logistika a technické pozice</span>
           </div>
         </div>
       </section>
@@ -187,8 +187,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
               {homepageJobs.length === 0 && (
                 <div className="empty-marketing">
                   <span>0 vybraných nabídek na homepage</span>
-                  <h2>Zatím čekáme na první ostré inzeráty.</h2>
-                  <p>Struktura webu, filtry a redakční administrace jsou připravené. Jakmile se na Vercelu spustí seed nebo redakce vloží první nabídky, zobrazí se tady v profesionálním výpisu.</p>
+                  <h2>První nabídky se tu brzy objeví.</h2>
+                  <p>Mezitím můžete projít vyhledávání nebo se redakci ozvat s pracovním inzerátem pro Vsetínsko.</p>
                   <Link className="button secondary" href="/admin">
                     Přejít do redakce
                   </Link>

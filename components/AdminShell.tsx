@@ -17,7 +17,7 @@ import {
   UserCircle,
   Users
 } from "lucide-react";
-import { adminLogout } from "@/app/actions";
+import { adminLogout } from "@/lib/actions/auth";
 import { AdminNavLink } from "@/components/AdminNavLink";
 import { AdminToastHost } from "@/components/AdminToastHost";
 import { adminRoleLabels, hasPermission, requireAdmin, type AdminPermission } from "@/lib/auth";

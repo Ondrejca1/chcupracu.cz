@@ -1,6 +1,6 @@
 import { AdminRole, AdminUserStatus } from "@prisma/client";
 import { KeyRound, Shield, UserPlus, Users } from "lucide-react";
-import { archiveAdminUser, createAdminUser, setAdminUserPassword, updateAdminUser } from "@/app/actions";
+import { archiveAdminUser, createAdminUser, setAdminUserPassword, updateAdminUser } from "@/lib/actions/users";
 import { AdminShell } from "@/components/AdminShell";
 import { adminRoleLabels, adminUserStatusLabels, requirePermission } from "@/lib/auth";
 import { dateTimeCs } from "@/lib/format";

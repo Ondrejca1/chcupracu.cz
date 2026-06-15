@@ -1,4 +1,4 @@
-import { createPackage, togglePackage, updatePackage } from "@/app/actions";
+import { createPackage, togglePackage, updatePackage } from "@/lib/actions/packages";
 import { AdminShell } from "@/components/AdminShell";
 import { money } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";

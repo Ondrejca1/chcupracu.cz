@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplicationStatus, ApplicationTag } from "@prisma/client";
 import { ArrowLeft, Mail, Phone, Send } from "lucide-react";
-import { forwardApplicationToCompany, updateApplication } from "@/app/actions";
+import { forwardApplicationToCompany, updateApplication } from "@/lib/actions/applications";
 import { AdminShell } from "@/components/AdminShell";
 import { dateTimeCs } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";

@@ -16,7 +16,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:setup": "prisma migrate deploy && prisma db seed",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "dev:db": "docker compose up -d postgres",
+    "dev:setup": "npm run dev:db && npm run db:migrate && npm run db:seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -20,7 +20,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     title: "Aktuální vydání Jalovce",
     coverImageUrl: "/ads/jalovec-aktualni-vydani.jpg",
     targetUrl: "https://www.jalovec.cz",
-    note: "Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň."
+    note: "Aktuální vydání, partner týdne nebo větší lokální nábor."
   };
 
   return (
@@ -32,7 +32,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           <div>
             <span className="eyebrow">Vyhledávání práce</span>
             <h1>Najděte nabídku podle pozice, města nebo oboru</h1>
-            <p>Samostatná stránka pro hledání drží filtry, URL a výsledky pohromadě, takže se s ní dá dobře pracovat i v reklamách a Google indexaci.</p>
+            <p>Filtrovat můžete podle lokality, oboru, úvazku, vzdělání i mzdy. Výsledek si můžete uložit nebo poslat dál.</p>
           </div>
           <SearchForm filters={filters} suggestions={suggestions} values={params} />
         </div>
@@ -45,7 +45,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             <div>
               <small>{topAd ? "Reklamní partner" : "Aktuální vydání Jalovce"}</small>
               <strong>{topAd?.name ?? issue.title}</strong>
-              <span>{topAd?.note ?? issue.note ?? "Tady může být Jalovec, generální partner náboru nebo větší firemní kampaň."}</span>
+              <span>{topAd?.note ?? issue.note ?? "Aktuální vydání, partner týdne nebo větší lokální nábor."}</span>
             </div>
           </a>
         </div>
@@ -69,7 +69,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                 <h2>{jobs.length > 0 ? `${jobs.length} aktivních nabídek` : "Nic jsme nenašli"}</h2>
               </div>
               <p>
-                <Search size={16} /> Filtry se zapisují do URL, aby šel výsledek sdílet a měřit.
+                <Search size={16} /> Upravte filtry a najděte nabídky, které dávají smysl pro vaše dojíždění i obor.
               </p>
             </div>
             <div className="cards job-grid">
@@ -80,7 +80,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                 <div className="empty-marketing">
                   <span>0 výsledků</span>
                   <h2>Zkuste rozšířit lokalitu nebo ubrat filtr.</h2>
-                  <p>Vyhledávání je teď oddělené od hlavní stránky, takže už neskáče dolů na homepage a drží čistou adresu pro kampaně.</p>
+                  <p>Zkuste odebrat některé filtry, rozšířit lokalitu nebo hledat obecnější název pozice.</p>
                   <Link className="button secondary" href="/jobs">
                     Zobrazit všechny nabídky
                   </Link>

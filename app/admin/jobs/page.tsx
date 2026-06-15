@@ -17,7 +17,7 @@ import {
   ShieldOff,
   Sparkles
 } from "lucide-react";
-import { expireJob, renewJob } from "@/app/actions";
+import { expireJob, renewJob } from "@/lib/actions/jobs";
 import { AdminShell } from "@/components/AdminShell";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, money, salaryRange } from "@/lib/format";

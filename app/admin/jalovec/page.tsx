@@ -1,5 +1,5 @@
 import { BookOpen, CheckCircle2, ExternalLink, Newspaper } from "lucide-react";
-import { createPublicationIssue, setCurrentPublicationIssue } from "@/app/actions";
+import { createPublicationIssue, setCurrentPublicationIssue } from "@/lib/actions/publication";
 import { AdminShell } from "@/components/AdminShell";
 import { AssetUploadField } from "@/components/AssetUploadField";
 import { SmartImage } from "@/components/SmartImage";

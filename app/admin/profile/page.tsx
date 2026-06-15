@@ -1,5 +1,5 @@
 import { KeyRound, ShieldCheck, UserCircle } from "lucide-react";
-import { changeOwnPassword } from "@/app/actions";
+import { changeOwnPassword } from "@/lib/actions/auth";
 import { AdminShell } from "@/components/AdminShell";
 import { adminRoleLabels, adminUserStatusLabels, requireAdmin } from "@/lib/auth";
 import { dateTimeCs } from "@/lib/format";

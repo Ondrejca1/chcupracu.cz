@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { renewJob } from "@/app/actions";
+import { renewJob } from "@/lib/actions/jobs";
 import { AdminShell } from "@/components/AdminShell";
 import { JobEditor } from "@/components/JobEditor";
 import { requirePermission } from "@/lib/auth";

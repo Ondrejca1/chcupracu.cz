@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdPlacementStatus, AdProductType, type Prisma } from "@prisma/client";
 import { CalendarDays, Edit3, ExternalLink, Eye, LayoutDashboard, Megaphone, Monitor, PanelRight, Search, ShieldOff, SquarePen, Star } from "lucide-react";
-import { createAdPlacement, endAdPlacementNow, updateAdPlacement, updateAdPlacementStatus } from "@/app/actions";
+import { createAdPlacement, endAdPlacementNow, updateAdPlacement, updateAdPlacementStatus } from "@/lib/actions/ads";
 import { AdminShell } from "@/components/AdminShell";
 import { AdSlotSelect } from "@/components/AdSlotSelect";
 import { AssetUploadField } from "@/components/AssetUploadField";

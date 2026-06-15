@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useActionState, useState } from "react";
-import { resetPassword } from "@/app/actions";
+import { resetPassword } from "@/lib/actions/auth";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState(resetPassword, null);
