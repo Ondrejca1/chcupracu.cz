@@ -534,6 +534,12 @@ button:disabled {
   transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
 }
 
+.job-card:has(.job-card-main-link:hover) {
+  border-color: rgba(200, 30, 30, 0.36);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
 .job-card:hover {
   border-color: rgba(200, 30, 30, 0.36);
   box-shadow: var(--shadow);
@@ -682,10 +688,27 @@ button:disabled {
   padding: 18px 20px 20px;
 }
 
+.job-card a {
+  position: relative;
+  z-index: 4;
+}
+
 .job-card h2 {
   margin: 0;
   font-size: 22px;
   line-height: 1.18;
+}
+
+.job-card-main-link::after {
+  position: absolute;
+  z-index: 2;
+  inset: -240px -20px -120px;
+  content: "";
+}
+
+.job-card-main-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--company-brand, var(--brand)) 44%, #fff);
+  outline-offset: 4px;
 }
 
 .job-card p,
@@ -915,6 +938,9 @@ button:disabled {
 .filters {
   display: grid;
   gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
   padding: 16px;
 }
 
@@ -927,6 +953,32 @@ button:disabled {
   gap: 6px;
 }
 
+.filter-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+
+.filter-panel-head div {
+  display: grid;
+  gap: 2px;
+}
+
+.filter-panel-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.filter-panel-head strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
 .filter-field span,
 .field-group > span {
   color: var(--ink-soft);
@@ -935,6 +987,9 @@ button:disabled {
 }
 
 .active-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   padding-top: 4px;
 }
 
@@ -1008,6 +1063,10 @@ button:disabled {
 
 .search-hero h1 {
   font-size: 46px;
+}
+
+.jobs-results {
+  scroll-margin-top: 22px;
 }
 
 .detail-page-shell {
@@ -2029,6 +2088,24 @@ button:disabled {
     position: static;
   }
 
+  .jobs-results {
+    order: 1;
+  }
+
+  .filter-column {
+    order: 2;
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-panel-head,
+  .active-filter-chips,
+  .filters .button {
+    grid-column: 1 / -1;
+  }
+
   .admin-stat-grid,
   .admin-stat-grid.compact,
   .admin-tile-grid,
@@ -2265,6 +2342,16 @@ button:disabled {
   .section,
   .search-hero {
     padding: 28px 0;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .filter-panel-head {
+    padding-bottom: 10px;
   }
 
   .card,

@@ -62,7 +62,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
               <p>{sidebarAd?.note ?? issue.note ?? "Boční pozice pro týdeník, lokální firmu nebo sezónní náborovou kampaň."}</p>
             </a>
           </aside>
-          <section>
+          <section className="jobs-results" id="vysledky">
             <div className="section-head jobs-head">
               <div>
                 <span className="eyebrow">Výsledky hledání</span>

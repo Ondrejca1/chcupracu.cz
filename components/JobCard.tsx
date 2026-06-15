@@ -68,7 +68,9 @@ export function JobCard({ job, wide = false }: JobCardProps) {
           <span className="job-chip">{job.category.name}</span>
         </div>
         <h2>
-          <Link href={`/jobs/${job.slug}`}>{job.title}</Link>
+          <Link className="job-card-main-link" href={`/jobs/${job.slug}`} aria-label={`Zobrazit nabídku ${job.title}`}>
+            {job.title}
+          </Link>
         </h2>
         <p>{job.shortIntro}</p>
         <div className="meta job-card-foot">

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import type { getFilters, JobSearchParams } from "@/lib/queries";
 
 type Filters = Awaited<ReturnType<typeof getFilters>>;
 const fieldValue = (value?: string | string[]) => (Array.isArray(value) ? value[0] ?? "" : value ?? "");
 
 export function SearchForm({
-  action = "/jobs",
+  action = "/jobs#vysledky",
   filters,
   compact = false,
   suggestions = [],
@@ -43,7 +43,7 @@ export function SearchForm({
       const first = fieldValue(value);
       if (first && name !== key) params.set(name, first);
     }
-    return `/jobs${params.size ? `?${params}` : ""}`;
+    return `/jobs${params.size ? `?${params}` : ""}#vysledky`;
   };
   const matches = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -56,6 +56,15 @@ export function SearchForm({
       setIsSuggestOpen(false);
       setTimeout(() => setQuery(""), 0);
     }}>
+      {compact && (
+        <div className="filter-panel-head">
+          <div>
+            <span>Filtry</span>
+            <strong>{activeChips.length > 0 ? `${activeChips.length} aktivní` : "Zpřesnit výsledky"}</strong>
+          </div>
+          <SlidersHorizontal size={20} />
+        </div>
+      )}
       <label className={compact ? "filter-field suggest-wrap" : "search-field suggest-wrap"}>
         {compact && <span>Pozice nebo firma</span>}
         <input
@@ -176,7 +185,7 @@ export function SearchForm({
                   {chip.label} <span>×</span>
                 </Link>
               ))}
-              <Link className="filter-chip clear" href="/jobs">Vyčistit</Link>
+              <Link className="filter-chip clear" href="/jobs#vysledky">Vyčistit</Link>
             </div>
           )}
           <button className="button" type="submit">
