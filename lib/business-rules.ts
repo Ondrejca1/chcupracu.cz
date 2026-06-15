@@ -70,25 +70,48 @@ export function activeAdWhere(now = new Date(), placementKey?: string): Prisma.A
   };
 }
 
-export async function syncExpiredBusinessState(now = new Date()) {
-  const [expiredJobs, expiredAds, expiredTopJobs] = await prisma.$transaction([
-    prisma.jobPost.updateMany({
-      where: { status: JobStatus.ACTIVE, activeUntil: { lt: now } },
-      data: { status: JobStatus.EXPIRED }
-    }),
-    prisma.adPlacement.updateMany({
-      where: { status: AdPlacementStatus.ACTIVE, endsAt: { lt: now } },
-      data: { status: AdPlacementStatus.EXPIRED }
-    }),
-    prisma.jobPost.updateMany({
-      where: { isTop: true, topUntil: { lt: now } },
-      data: { isTop: false, topUntil: null }
-    })
-  ]);
+type SyncResult = {
+  expiredJobs: number;
+  expiredAds: number;
+  expiredTopJobs: number;
+  skipped?: boolean;
+};
 
-  return {
-    expiredJobs: expiredJobs.count,
-    expiredAds: expiredAds.count,
-    expiredTopJobs: expiredTopJobs.count
-  };
+const SYNC_THROTTLE_MS = 60_000;
+let lastBusinessStateSync = 0;
+let businessStateSyncInFlight: Promise<SyncResult> | null = null;
+
+export async function syncExpiredBusinessState(now = new Date(), options: { force?: boolean } = {}) {
+  const currentTime = now.getTime();
+  if (!options.force && currentTime - lastBusinessStateSync < SYNC_THROTTLE_MS) {
+    return { expiredJobs: 0, expiredAds: 0, expiredTopJobs: 0, skipped: true };
+  }
+  if (businessStateSyncInFlight) return businessStateSyncInFlight;
+
+  lastBusinessStateSync = currentTime;
+  businessStateSyncInFlight = prisma
+    .$transaction([
+      prisma.jobPost.updateMany({
+        where: { status: JobStatus.ACTIVE, activeUntil: { lt: now } },
+        data: { status: JobStatus.EXPIRED }
+      }),
+      prisma.adPlacement.updateMany({
+        where: { status: AdPlacementStatus.ACTIVE, endsAt: { lt: now } },
+        data: { status: AdPlacementStatus.EXPIRED }
+      }),
+      prisma.jobPost.updateMany({
+        where: { isTop: true, topUntil: { lt: now } },
+        data: { isTop: false, topUntil: null }
+      })
+    ])
+    .then(([expiredJobs, expiredAds, expiredTopJobs]) => ({
+      expiredJobs: expiredJobs.count,
+      expiredAds: expiredAds.count,
+      expiredTopJobs: expiredTopJobs.count
+    }))
+    .finally(() => {
+      businessStateSyncInFlight = null;
+    });
+
+  return businessStateSyncInFlight;
 }

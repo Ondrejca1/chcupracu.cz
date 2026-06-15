@@ -10,10 +10,9 @@ import { SmartImage } from "@/components/SmartImage";
 import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAdForSlot, getSimilarJobs } from "@/lib/queries";
-import { activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeJobWhere } from "@/lib/business-rules";
 
 export default async function JobDetail({ params }: { params: Promise<{ slug: string }> }) {
-  await syncExpiredBusinessState();
   const { slug } = await params;
   const job = await prisma.jobPost.findFirst({
     where: { slug, ...activeJobWhere() },
@@ -22,8 +21,7 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
       city: true,
       category: true,
       education: true,
-      employmentType: true,
-      suitabilities: { include: { suitability: true } }
+      employmentType: true
     }
   });
 

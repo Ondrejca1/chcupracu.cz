@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { activeAdWhere, activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeAdWhere, activeJobWhere } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 
 export type JobSearchParams = {
@@ -28,7 +28,6 @@ export async function getFilters() {
 }
 
 export async function getSearchSuggestions() {
-  await syncExpiredBusinessState();
   const [jobs, companies, categories] = await Promise.all([
     prisma.jobPost.findMany({
       where: activeJobWhere(),
@@ -77,7 +76,6 @@ export async function getCurrentIssue() {
 }
 
 export async function getFeaturedAds(limit = 4) {
-  await syncExpiredBusinessState();
   try {
     const now = new Date();
     return await prisma.adPlacement.findMany({
@@ -92,7 +90,6 @@ export async function getFeaturedAds(limit = 4) {
 }
 
 export async function getAdForSlot(placementKey: string) {
-  await syncExpiredBusinessState();
   try {
     const now = new Date();
     return await prisma.adPlacement.findFirst({
@@ -106,7 +103,6 @@ export async function getAdForSlot(placementKey: string) {
 }
 
 export async function getFeaturedCompanies(limit = 4) {
-  await syncExpiredBusinessState();
   return prisma.company.findMany({
     where: { jobs: { some: activeJobWhere() } },
     select: {
@@ -122,7 +118,6 @@ export async function getFeaturedCompanies(limit = 4) {
 }
 
 export async function getJobVisibilityCounts() {
-  await syncExpiredBusinessState();
   const now = new Date();
   const [active, homepage] = await Promise.all([
     prisma.jobPost.count({ where: activeJobWhere(now) }),
@@ -133,7 +128,6 @@ export async function getJobVisibilityCounts() {
 }
 
 export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {
-  await syncExpiredBusinessState();
   const q = firstParam(params.q)?.trim();
   const city = firstParam(params.city);
   const category = firstParam(params.category);
@@ -190,7 +184,6 @@ export async function searchJobs(params: JobSearchParams, limit = 40, options: {
 }
 
 export async function getSimilarJobs(job: { id: string; cityId: string; categoryId: string }) {
-  await syncExpiredBusinessState();
   return prisma.jobPost.findMany({
     where: {
       id: { not: job.id },

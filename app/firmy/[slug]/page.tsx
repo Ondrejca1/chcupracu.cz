@@ -5,11 +5,10 @@ import { Building2, Mail, Phone } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SmartImage } from "@/components/SmartImage";
-import { activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeJobWhere } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
-  await syncExpiredBusinessState();
   const { slug } = await params;
   const now = new Date();
   const company = await prisma.company.findUnique({

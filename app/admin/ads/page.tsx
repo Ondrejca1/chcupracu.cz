@@ -61,23 +61,34 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
   };
 
   let ads: Awaited<ReturnType<typeof prisma.adPlacement.findMany>> = [];
-  let allAds: { status: AdPlacementStatus; placementKey: string; startsAt: Date | null; endsAt: Date | null; availableSlots: number; creativeUrl: string | null }[] = [];
+  let statusCounts: Array<{ status: AdPlacementStatus; _count: { _all: number } }> = [];
+  let slotMetrics: { status: AdPlacementStatus; placementKey: string; startsAt: Date | null; endsAt: Date | null }[] = [];
+  let missingCreative = 0;
 
   try {
-    [ads, allAds] = await Promise.all([
-      prisma.adPlacement.findMany({ where, orderBy: [{ status: "asc" }, { startsAt: "desc" }, { createdAt: "desc" }] }),
-      prisma.adPlacement.findMany({ select: { status: true, placementKey: true, startsAt: true, endsAt: true, availableSlots: true, creativeUrl: true }, take: 2000 })
+    [ads, statusCounts, slotMetrics, missingCreative] = await Promise.all([
+      prisma.adPlacement.findMany({ where, orderBy: [{ status: "asc" }, { startsAt: "desc" }, { createdAt: "desc" }], take: 120 }),
+      prisma.adPlacement.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.adPlacement.findMany({
+        where: { status: { in: [AdPlacementStatus.ACTIVE, AdPlacementStatus.RESERVED] } },
+        select: { status: true, placementKey: true, startsAt: true, endsAt: true },
+        take: 500
+      }),
+      prisma.adPlacement.count({
+        where: {
+          status: { in: [AdPlacementStatus.ACTIVE, AdPlacementStatus.RESERVED] },
+          creativeUrl: null
+        }
+      })
     ]);
   } catch (error) {
     console.error("Unable to load ad administration data.", error);
   }
 
-  const countFor = (status: AdPlacementStatus) => allAds.filter((item) => item.status === status).length;
+  const countFor = (status: AdPlacementStatus) => statusCounts.find((item) => item.status === status)?._count._all ?? 0;
   const isLive = (ad: { status: AdPlacementStatus; startsAt: Date | null; endsAt: Date | null }) =>
     ad.status === AdPlacementStatus.ACTIVE && (!ad.startsAt || ad.startsAt <= today) && (!ad.endsAt || ad.endsAt >= today);
-  const missingCreative = allAds.filter(
-    (item) => (item.status === AdPlacementStatus.ACTIVE || item.status === AdPlacementStatus.RESERVED) && !item.creativeUrl
-  ).length;
+  const liveAds = ads.filter(isLive);
 
   return (
     <AdminShell>
@@ -107,7 +118,7 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
         <div className="placement-slot-grid">
           {adSlotDefinitions.map((slot) => {
             const Icon = slotIcons[slot.key] ?? Megaphone;
-            const slotAds = allAds.filter((ad) => ad.placementKey === slot.key);
+            const slotAds = slotMetrics.filter((ad) => ad.placementKey === slot.key);
             const activeCount = slotAds.filter(isLive).length;
             const reservedCount = slotAds.filter((ad) => ad.status === AdPlacementStatus.RESERVED).length;
             const isSelected = selectedSlot.key === slot.key;
@@ -225,7 +236,7 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
             </div>
           </div>
           <div className="admin-list">
-            {ads.filter(isLive).slice(0, 8).map((ad) => (
+            {liveAds.slice(0, 8).map((ad) => (
               <div className="admin-list-row" key={ad.id}>
                 <div>
                   <strong>{ad.name}</strong>
@@ -234,7 +245,7 @@ export default async function AdminAdsPage({ searchParams }: { searchParams: Pro
                 <em>{money(ad.priceCzk)}</em>
               </div>
             ))}
-            {ads.filter(isLive).length === 0 && <p className="admin-empty">Žádná filtrovaná kampaň teď neběží.</p>}
+            {liveAds.length === 0 && <p className="admin-empty">Žádná filtrovaná kampaň teď neběží.</p>}
           </div>
         </article>
       </section>

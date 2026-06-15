@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ApplicationStatus, ApplicationTag } from "@prisma/client";
 import { requirePermission } from "@/lib/auth";
-import { activeJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeJobWhere } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 import { logAdminActivity, logSystemActivity } from "@/lib/services/activity-log";
 import { escapeHtml, sendTransactionalEmail } from "@/lib/services/email";
@@ -14,7 +14,6 @@ import { checkRateLimit } from "@/lib/services/rate-limit";
 import { email, ipHash, required, withActionResult } from "@/lib/actions/shared";
 
 export async function createApplication(_: unknown, formData: FormData) {
-  await syncExpiredBusinessState();
   const parsed = z
     .object({
       jobId: required,

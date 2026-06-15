@@ -329,6 +329,51 @@ button:disabled {
   box-shadow: var(--shadow-soft);
 }
 
+a.nav-click-pending,
+.job-card:has(.nav-click-pending),
+.quick-card.nav-click-pending,
+.company-tile.nav-click-pending,
+.commercial-slot.nav-click-pending,
+.placement-slot-card.nav-click-pending,
+.admin-action-tile.nav-click-pending,
+.admin-nav a.nav-click-pending {
+  transform: translateY(1px) scale(0.992);
+  opacity: 0.78;
+}
+
+.job-card:has(.nav-click-pending),
+.quick-card.nav-click-pending,
+.company-tile.nav-click-pending,
+.commercial-slot.nav-click-pending,
+.placement-slot-card.nav-click-pending,
+.admin-action-tile.nav-click-pending {
+  border-color: color-mix(in srgb, var(--company-brand, var(--brand)) 48%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--company-brand, var(--brand)) 14%, transparent), var(--shadow-soft);
+}
+
+.job-card:has(.nav-click-pending)::after,
+.quick-card.nav-click-pending::after,
+.company-tile.nav-click-pending::after,
+.commercial-slot.nav-click-pending::after,
+.placement-slot-card.nav-click-pending::after,
+.admin-action-tile.nav-click-pending::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+  content: "";
+  pointer-events: none;
+  animation: tile-pending-sheen 0.72s ease;
+}
+
+@keyframes tile-pending-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 .search-box {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr) auto;
@@ -784,10 +829,12 @@ button:disabled {
 
 .quick-card,
 .company-tile {
+  position: relative;
   display: grid;
   min-height: 150px;
   align-content: space-between;
   gap: 14px;
+  overflow: hidden;
   padding: 18px;
   color: var(--ink);
   transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
@@ -798,6 +845,15 @@ button:disabled {
   border-color: rgba(15, 118, 110, 0.32);
   box-shadow: var(--shadow);
   transform: translateY(-2px);
+}
+
+.quick-card:active,
+.company-tile:active,
+.job-card:active,
+.commercial-slot:active,
+.placement-slot-card:active,
+.admin-action-tile:active {
+  transform: translateY(1px) scale(0.992);
 }
 
 .quick-card svg,
@@ -830,8 +886,10 @@ button:disabled {
 }
 
 .commercial-slot {
+  position: relative;
   display: block;
   min-height: 118px;
+  overflow: hidden;
   border-color: rgba(255, 255, 255, 0.14);
   background: #202b38;
   color: #fff;
@@ -1449,8 +1507,10 @@ button:disabled {
 }
 
 .admin-action-tile {
+  position: relative;
   display: grid;
   gap: 10px;
+  overflow: hidden;
   color: var(--ink);
 }
 
@@ -1867,6 +1927,8 @@ button:disabled {
 .placement-slot-card,
 .package-preview,
 .finance-status {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: 8px;
   padding: 14px;
