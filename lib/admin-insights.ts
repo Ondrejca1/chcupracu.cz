@@ -1,4 +1,4 @@
-import { AdPlacementStatus, JobStatus, PaymentStatus } from "@prisma/client";
+import { AdPlacementStatus, JobReviewStatus, JobSource, JobStatus, PaymentStatus } from "@prisma/client";
 import { addDays } from "date-fns";
 import { activeAdWhere, activeJobWhere, expiringJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +8,7 @@ export async function getOperationalWarnings() {
   const now = new Date();
   const soon = addDays(now, 7);
 
-  const [expiringJobs, activeWithoutInvoice, paidButInactive, adsWithoutCreative, activeAds, activeJobs] = await Promise.all([
+  const [expiringJobs, activeWithoutInvoice, paidButInactive, adsWithoutCreative, clientReviewJobs, activeAds, activeJobs] = await Promise.all([
     prisma.jobPost.findMany({
       where: expiringJobWhere(now, soon),
       select: { id: true, title: true, slug: true, activeUntil: true, company: { select: { name: true } } },
@@ -48,6 +48,19 @@ export async function getOperationalWarnings() {
       orderBy: [{ startsAt: "asc" }, { createdAt: "desc" }],
       take: 12
     }),
+    prisma.jobPost.findMany({
+      where: { source: JobSource.CLIENT, reviewStatus: { in: [JobReviewStatus.SUBMITTED, JobReviewStatus.IN_REVIEW] } },
+      select: {
+        id: true,
+        title: true,
+        submittedAt: true,
+        reviewStatus: true,
+        company: { select: { name: true } },
+        submittedByClient: { select: { email: true, name: true } }
+      },
+      orderBy: [{ submittedAt: "asc" }, { updatedAt: "asc" }],
+      take: 12
+    }),
     prisma.adPlacement.count({ where: activeAdWhere(now) }),
     prisma.jobPost.count({ where: activeJobWhere(now) })
   ]);
@@ -57,11 +70,13 @@ export async function getOperationalWarnings() {
     activeWithoutInvoice,
     paidButInactive,
     adsWithoutCreative,
+    clientReviewJobs,
     counts: {
       expiringJobs: expiringJobs.length,
       activeWithoutInvoice: activeWithoutInvoice.length,
       paidButInactive: paidButInactive.length,
       adsWithoutCreative: adsWithoutCreative.length,
+      clientReviewJobs: clientReviewJobs.length,
       activeAds,
       activeJobs
     }

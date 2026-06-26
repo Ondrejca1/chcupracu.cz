@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { AlertTriangle, BriefcaseBusiness, CheckCircle2, Megaphone, ReceiptText } from "lucide-react";
+import { AlertTriangle, BriefcaseBusiness, CheckCircle2, Megaphone, ReceiptText, Send } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, money } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
 import { getOperationalWarnings } from "@/lib/admin-insights";
-import { adStatusLabels, jobStatusLabels } from "@/lib/business-rules";
+import { adStatusLabels, jobReviewStatusLabels, jobStatusLabels } from "@/lib/business-rules";
 
 export default async function AdminTasksPage() {
   await requirePermission("tasks:view");
@@ -13,7 +13,8 @@ export default async function AdminTasksPage() {
     warnings.counts.expiringJobs +
     warnings.counts.activeWithoutInvoice +
     warnings.counts.paidButInactive +
-    warnings.counts.adsWithoutCreative;
+    warnings.counts.adsWithoutCreative +
+    warnings.counts.clientReviewJobs;
 
   return (
     <AdminShell>
@@ -31,6 +32,7 @@ export default async function AdminTasksPage() {
       <section className="admin-stat-grid compact">
         <article className="admin-stat"><AlertTriangle size={22} /><span>Otevřené úkoly</span><strong>{total}</strong><small>součet kontrol níže</small></article>
         <article className="admin-stat"><BriefcaseBusiness size={22} /><span>Končící nabídky</span><strong>{warnings.counts.expiringJobs}</strong><small>do 7 dní</small></article>
+        <article className="admin-stat"><Send size={22} /><span>Ke schválení</span><strong>{warnings.counts.clientReviewJobs}</strong><small>klientská podání</small></article>
         <article className="admin-stat"><ReceiptText size={22} /><span>Finance</span><strong>{warnings.counts.activeWithoutInvoice + warnings.counts.paidButInactive}</strong><small>faktury vs. publikace</small></article>
         <article className="admin-stat"><Megaphone size={22} /><span>Reklamy</span><strong>{warnings.counts.adsWithoutCreative}</strong><small>chybějící kreativa</small></article>
       </section>
@@ -46,6 +48,27 @@ export default async function AdminTasksPage() {
       )}
 
       <section className="admin-dashboard-grid">
+        <article className="admin-card">
+          <div className="admin-card-head">
+            <div>
+              <h2>Klientská podání</h2>
+              <p>Inzeráty, které firma odeslala a čekají na rozhodnutí redakce.</p>
+            </div>
+          </div>
+          <div className="admin-list">
+            {warnings.clientReviewJobs.map((job) => (
+              <Link className="admin-list-row" href={`/admin/jobs/${job.id}/edit`} key={job.id}>
+                <div>
+                  <strong>{job.title}</strong>
+                  <span>{job.company.name} · {job.submittedByClient?.email ?? "klient"} · {dateCs(job.submittedAt)}</span>
+                </div>
+                <em>{jobReviewStatusLabels[job.reviewStatus]}</em>
+              </Link>
+            ))}
+            {warnings.clientReviewJobs.length === 0 && <p className="admin-empty">Žádná klientská podání nečekají na kontrolu.</p>}
+          </div>
+        </article>
+
         <article className="admin-card">
           <div className="admin-card-head">
             <div>

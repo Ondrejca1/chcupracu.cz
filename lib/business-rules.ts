@@ -1,4 +1,4 @@
-import { AdPlacementStatus, ApplicationStatus, ApplicationTag, JobStatus, Prisma } from "@prisma/client";
+import { AdPlacementStatus, ApplicationStatus, ApplicationTag, JobReviewStatus, JobSource, JobStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const jobStatusLabels: Record<JobStatus, string> = {
@@ -7,6 +7,20 @@ export const jobStatusLabels: Record<JobStatus, string> = {
   ACTIVE: "Aktivní",
   EXPIRED: "Expirovaný",
   ARCHIVED: "Archiv"
+};
+
+export const jobSourceLabels: Record<JobSource, string> = {
+  ADMIN: "Redakce",
+  CLIENT: "Klient"
+};
+
+export const jobReviewStatusLabels: Record<JobReviewStatus, string> = {
+  DRAFT: "Klientský koncept",
+  SUBMITTED: "Odesláno ke schválení",
+  IN_REVIEW: "V redakční kontrole",
+  CHANGES_REQUESTED: "Vráceno k úpravě",
+  APPROVED: "Schváleno",
+  REJECTED: "Zamítnuto"
 };
 
 export const applicationStatusLabels: Record<ApplicationStatus, string> = {

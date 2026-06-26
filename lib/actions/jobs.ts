@@ -4,7 +4,7 @@ import { addDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { JobStatus, PaymentStatus } from "@prisma/client";
+import { JobReviewStatus, JobSource, JobStatus, PaymentStatus } from "@prisma/client";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAdminActivity } from "@/lib/services/activity-log";
@@ -12,7 +12,7 @@ import { optionalAssetUrl, parseOptionalDate, required } from "@/lib/actions/sha
 import { slugify } from "@/lib/slug";
 
 export async function upsertJob(formData: FormData) {
-  await requirePermission("jobs:write");
+  const admin = await requirePermission("jobs:write");
   const raw = Object.fromEntries(formData);
   const suitabilityIds = formData.getAll("suitabilityIds").map(String);
   const parsed = z
@@ -107,6 +107,12 @@ export async function upsertJob(formData: FormData) {
   const selectedPackage = parsed.data.packageId ? await prisma.pricingPackage.findUnique({ where: { id: parsed.data.packageId } }) : null;
   const topDays = parsed.data.topDays || (!existingJob ? selectedPackage?.topDays : 0) || 0;
   const topUntil = topUntilInput ?? (topDays ? addDays(renewedAt ?? now, topDays) : null);
+  const reviewData =
+    existingJob && existingJob.source === JobSource.CLIENT && (parsed.data.status === JobStatus.ACTIVE || parsed.data.status === JobStatus.PENDING_PAYMENT)
+      ? { reviewStatus: JobReviewStatus.APPROVED, reviewedAt: now, reviewedByAdminId: admin.id }
+      : existingJob
+        ? {}
+        : { source: JobSource.ADMIN, reviewStatus: JobReviewStatus.APPROVED, reviewedAt: now, reviewedByAdminId: admin.id };
   const data = {
     title: parsed.data.title,
     shortIntro: parsed.data.shortIntro,
@@ -136,7 +142,8 @@ export async function upsertJob(formData: FormData) {
     categoryId: parsed.data.categoryId,
     educationId: parsed.data.educationId || null,
     employmentTypeId: parsed.data.employmentTypeId,
-    packageId: parsed.data.packageId || null
+    packageId: parsed.data.packageId || null,
+    ...reviewData
   };
 
   let jobId = parsed.data.id;
@@ -178,7 +185,7 @@ export async function upsertJob(formData: FormData) {
 }
 
 export async function renewJob(formData: FormData) {
-  await requirePermission("jobs:write");
+  const admin = await requirePermission("jobs:write");
   const id = String(formData.get("id"));
   const packageId = String(formData.get("packageId") ?? "");
   const selectedPackage = packageId ? await prisma.pricingPackage.findUnique({ where: { id: packageId } }) : null;
@@ -196,7 +203,10 @@ export async function renewJob(formData: FormData) {
       isTop: topDays > 0,
       topUntil: topDays > 0 ? addDays(new Date(), Math.min(Math.max(topDays, 1), 365)) : null,
       highlightColor: highlightColor || null,
-      packageId: selectedPackage?.id ?? undefined
+      packageId: selectedPackage?.id ?? undefined,
+      reviewStatus: JobReviewStatus.APPROVED,
+      reviewedAt: new Date(),
+      reviewedByAdminId: admin.id
     }
   });
   if (selectedPackage) {

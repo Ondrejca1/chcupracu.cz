@@ -65,6 +65,32 @@ enum AdminUserStatus {
   ARCHIVED
 }
 
+enum ClientUserRole {
+  OWNER
+  HR
+  BILLING
+}
+
+enum ClientUserStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum JobSource {
+  ADMIN
+  CLIENT
+}
+
+enum JobReviewStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  REJECTED
+}
+
 model City {
   id        String    @id @default(cuid())
   name      String    @unique
@@ -128,6 +154,8 @@ model Company {
   note        String?
   jobs        JobPost[]
   invoices    Invoice[]
+  clientUsers ClientUser[]
+  activityLogs ActivityLog[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -174,6 +202,13 @@ model JobPost {
   activeUntil    DateTime?
   renewedAt      DateTime?
   views          Int              @default(0)
+  source         JobSource        @default(ADMIN)
+  reviewStatus   JobReviewStatus  @default(APPROVED)
+  submittedAt    DateTime?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  submittedByClientId String?
+  reviewedByAdminId   String?
   companyId      String
   cityId         String
   categoryId     String
@@ -186,17 +221,22 @@ model JobPost {
   education      Education?       @relation(fields: [educationId], references: [id])
   employmentType EmploymentType   @relation(fields: [employmentTypeId], references: [id])
   package        PricingPackage?  @relation(fields: [packageId], references: [id])
+  submittedByClient ClientUser?    @relation(fields: [submittedByClientId], references: [id])
+  reviewedByAdmin   AdminUser?     @relation(fields: [reviewedByAdminId], references: [id])
   suitabilities  JobSuitability[]
   applications   Application[]
   invoices       Invoice[]
+  reviewComments JobReviewComment[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   @@index([status, activeUntil])
+  @@index([source, reviewStatus, submittedAt])
   @@index([status, isTop, renewedAt])
   @@index([status, showOnHomepage, isTop, renewedAt])
   @@index([status, createdAt])
   @@index([companyId, status])
+  @@index([submittedByClientId, reviewStatus])
   @@index([cityId, categoryId])
   @@index([salaryMinCzk, salaryMaxCzk])
 }
@@ -279,8 +319,30 @@ model AdminUser {
   failedLoginCount    Int                @default(0)
   lockedUntil         DateTime?
   resetTokens         PasswordResetToken[]
+  reviewedJobs        JobPost[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+}
+
+model ClientUser {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  passwordHash     String
+  name             String
+  phone            String?
+  role             ClientUserRole   @default(OWNER)
+  status           ClientUserStatus @default(ACTIVE)
+  lastLoginAt      DateTime?
+  failedLoginCount Int              @default(0)
+  lockedUntil      DateTime?
+  companyId        String
+  company          Company          @relation(fields: [companyId], references: [id])
+  submittedJobs    JobPost[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([companyId])
+  @@index([status])
 }
 
 model PasswordResetToken {
@@ -298,15 +360,32 @@ model PasswordResetToken {
 model ActivityLog {
   id          String   @id @default(cuid())
   actorId     String?
+  actorType   String   @default("admin")
   actorEmail  String?
+  companyId   String?
   action      String
   entityType  String
   entityId    String?
   summary     String
+  metadata    Json?
   createdAt   DateTime @default(now())
+  company     Company? @relation(fields: [companyId], references: [id])
 
   @@index([createdAt])
   @@index([entityType, entityId])
+  @@index([companyId, createdAt])
+}
+
+model JobReviewComment {
+  id          String   @id @default(cuid())
+  jobId       String
+  authorType  String
+  authorEmail String?
+  message     String
+  createdAt   DateTime @default(now())
+  job         JobPost  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, createdAt])
 }
 
 model PublicationIssue {

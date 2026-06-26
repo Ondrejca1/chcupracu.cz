@@ -16,7 +16,8 @@ export function SiteHeader() {
         <nav className="nav">
           <Link href="/">Domů</Link>
           <Link href="/jobs">Hledat práci</Link>
-          <Link href="/admin/jobs/new">Zadat inzerát</Link>
+          <Link href="/klient/prihlaseni">Zadat inzerát</Link>
+          <Link href="/klient">Klientská sekce</Link>
           <Link href="/admin">Redakce</Link>
         </nav>
       </div>

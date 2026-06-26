@@ -14,6 +14,7 @@ import {
   Menu,
   Package,
   Plus,
+  Send,
   UserCircle,
   Users
 } from "lucide-react";
@@ -26,6 +27,7 @@ const navItems: Array<{ href: string; label: string; icon: typeof BarChart3; exa
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3, permission: "dashboard:view" },
   { href: "/admin/tasks", label: "Úkoly redakce", icon: CheckSquare, permission: "tasks:view" },
   { href: "/admin/jobs", label: "Inzeráty", icon: BriefcaseBusiness, permission: "jobs:write" },
+  { href: "/admin/jobs?view=client-review", label: "Ke schválení", icon: Send, exact: true, permission: "jobs:write" },
   { href: "/admin/jobs/new", label: "Přidat inzerát", icon: Plus, exact: true, permission: "jobs:write" },
   { href: "/admin/applications", label: "Reakce", icon: Inbox, permission: "applications:write" },
   { href: "/admin/ads", label: "Reklamy", icon: Megaphone, permission: "ads:write" },

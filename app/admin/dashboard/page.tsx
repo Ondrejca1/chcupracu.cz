@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
-import { AlertTriangle, ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, UsersRound } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, Send, UsersRound } from "lucide-react";
 import { AdminShell } from "@/components/AdminShell";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
 import { hasPermission, requirePermission, type AdminPermission } from "@/lib/auth";
@@ -103,6 +103,7 @@ export default async function AdminDashboardPage() {
 
   const stats = [
     { label: "Aktivní inzeráty", value: activeJobs, hint: `${draftJobs} konceptů`, icon: BriefcaseBusiness },
+    { label: "Ke schválení", value: warnings.counts.clientReviewJobs, hint: "klientská podání", icon: Send },
     { label: "Končí do 7 dní", value: expiringJobs, hint: "vhodné obnovit nebo topovat", icon: CalendarClock },
     { label: "Nové reakce", value: newApplications, hint: "čekají na zpracování", icon: UsersRound },
     { label: "Nezaplacené faktury", value: money(unpaidInvoices._sum.amountCzk), hint: `${unpaidInvoices._count} položek`, icon: BarChart3 },
@@ -238,6 +239,11 @@ export default async function AdminDashboardPage() {
             <AlertTriangle size={18} />
             <strong>{warnings.counts.expiringJobs}</strong>
             <span>Končí do 7 dní</span>
+          </Link>
+          <Link className="warning-item" href="/admin/jobs?view=client-review">
+            <AlertTriangle size={18} />
+            <strong>{warnings.counts.clientReviewJobs}</strong>
+            <span>Klientská podání</span>
           </Link>
           <Link className="warning-item" href="/admin/finance">
             <AlertTriangle size={18} />

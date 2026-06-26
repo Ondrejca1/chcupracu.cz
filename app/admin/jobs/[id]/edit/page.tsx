@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
+import { JobReviewStatus, JobSource } from "@prisma/client";
 import { renewJob } from "@/lib/actions/jobs";
+import { approveClientJob, markJobInReview, rejectClientJob, requestJobChanges } from "@/lib/actions/job-review";
 import { AdminShell } from "@/components/AdminShell";
 import { JobEditor } from "@/components/JobEditor";
 import { requirePermission } from "@/lib/auth";
 import { getFilters } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
-import { jobStatusLabels } from "@/lib/business-rules";
+import { jobReviewStatusLabels, jobStatusLabels } from "@/lib/business-rules";
 
 export default async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePermission("jobs:write");
@@ -18,12 +20,15 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
       where: { id },
       include: {
         company: true,
+        submittedByClient: true,
+        reviewedByAdmin: true,
         city: true,
         category: true,
         package: true,
         suitabilities: true,
         invoices: { orderBy: { issuedAt: "desc" }, take: 6 },
-        applications: { orderBy: { createdAt: "desc" }, take: 6 }
+        applications: { orderBy: { createdAt: "desc" }, take: 6 },
+        reviewComments: { orderBy: { createdAt: "desc" }, take: 8 }
       }
     }),
     prisma.activityLog.findMany({ where: { entityType: "jobPost", entityId: id }, orderBy: { createdAt: "desc" }, take: 8 })
@@ -101,6 +106,63 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
           </div>
         </article>
       </section>
+      {job.source === JobSource.CLIENT && (
+        <section className="admin-card review-panel">
+          <div className="admin-card-head">
+            <div>
+              <span className="admin-kicker">Klientské podání</span>
+              <h2>Redakční schválení</h2>
+              <p>
+                {job.submittedByClient ? `${job.submittedByClient.name} · ${job.submittedByClient.email}` : job.company.name}
+                {job.submittedAt ? ` · odesláno ${dateTimeCs(job.submittedAt)}` : ""}
+              </p>
+            </div>
+            <span className={`status-pill status-${job.reviewStatus.toLowerCase()}`}>{jobReviewStatusLabels[job.reviewStatus]}</span>
+          </div>
+          {job.reviewNote && <p className="client-alert"><strong>Poslední poznámka:</strong> {job.reviewNote}</p>}
+          <div className="review-actions-grid">
+            {(job.reviewStatus === JobReviewStatus.SUBMITTED || job.reviewStatus === JobReviewStatus.CHANGES_REQUESTED) && (
+              <form action={markJobInReview}>
+                <input name="id" type="hidden" value={job.id} />
+                <button className="button secondary" type="submit">Převzít do kontroly</button>
+              </form>
+            )}
+            <form action={approveClientJob} className="review-action-card">
+              <input name="id" type="hidden" value={job.id} />
+              <input name="mode" type="hidden" value="payment" />
+              <textarea className="textarea textarea-short" name="note" placeholder="Interní/klientská poznámka ke schválení" />
+              <button className="button" type="submit">Schválit a čekat na platbu</button>
+            </form>
+            <form action={approveClientJob} className="review-action-card">
+              <input name="id" type="hidden" value={job.id} />
+              <input name="mode" type="hidden" value="publish" />
+              <textarea className="textarea textarea-short" name="note" placeholder="Poznámka k okamžité publikaci" />
+              <button className="button secondary" type="submit">Schválit a publikovat</button>
+            </form>
+            <form action={requestJobChanges} className="review-action-card">
+              <input name="id" type="hidden" value={job.id} />
+              <textarea className="textarea textarea-short" name="note" placeholder="Co má klient upravit" required />
+              <button className="button secondary" type="submit">Vrátit k úpravě</button>
+            </form>
+            <form action={rejectClientJob} className="review-action-card">
+              <input name="id" type="hidden" value={job.id} />
+              <textarea className="textarea textarea-short" name="note" placeholder="Důvod zamítnutí" />
+              <button className="button danger" type="submit">Zamítnout</button>
+            </form>
+          </div>
+          <div className="admin-list compact">
+            {job.reviewComments.map((comment) => (
+              <div className="admin-list-row" key={comment.id}>
+                <div>
+                  <strong>{comment.message}</strong>
+                  <span>{comment.authorEmail ?? comment.authorType} · {dateTimeCs(comment.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+            {job.reviewComments.length === 0 && <p className="admin-empty">Zatím bez komentářů ke schválení.</p>}
+          </div>
+        </section>
+      )}
       <section className="admin-card job-renew-panel">
         <div>
           <span className="admin-kicker">Obnovení inzerátu</span>

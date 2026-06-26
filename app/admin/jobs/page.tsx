@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { JobStatus, PaymentStatus, type Prisma } from "@prisma/client";
+import { JobReviewStatus, JobSource, JobStatus, PaymentStatus, type Prisma } from "@prisma/client";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -14,6 +14,7 @@ import {
   Plus,
   RotateCw,
   Search,
+  Send,
   ShieldOff,
   Sparkles
 } from "lucide-react";
@@ -23,7 +24,7 @@ import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, money, salaryRange } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { activeTopJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
+import { activeTopJobWhere, expiringJobWhere, jobReviewStatusLabels, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
 import { getJobVisibilityCounts } from "@/lib/queries";
 
 type JobsSearchParams = {
@@ -38,6 +39,7 @@ type JobsSearchParams = {
 
 const viewTabs = [
   { key: "", label: "Vše", icon: BriefcaseBusiness },
+  { key: "client-review", label: "Ke schválení", icon: Send },
   { key: "ACTIVE", label: "Aktivní", icon: Sparkles },
   { key: "expiring", label: "Končí", icon: CalendarDays },
   { key: "PENDING_PAYMENT", label: "Čeká platba", icon: CreditCard },
@@ -95,6 +97,10 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
   }
   if (params.view === "expiring") Object.assign(where, expiringJobWhere(now));
   if (params.view === "top") Object.assign(where, activeTopJobWhere(now));
+  if (params.view === "client-review") {
+    where.source = JobSource.CLIENT;
+    where.reviewStatus = { in: [JobReviewStatus.SUBMITTED, JobReviewStatus.IN_REVIEW] };
+  }
   if (params.view && Object.values(JobStatus).includes(params.view as JobStatus)) where.status = params.view as JobStatus;
   if (params.status && Object.values(JobStatus).includes(params.status as JobStatus)) where.status = params.status as JobStatus;
   if (params.city) where.cityId = params.city;
@@ -112,11 +118,12 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
           ? [{ isTop: "desc" }, { topUntil: "desc" }, { createdAt: "desc" }]
           : [{ createdAt: "desc" }];
 
-  const [jobs, applications, jobCounts, draftJobs, pendingJobs, expiredJobs, expiringJobs, topJobs, cities, packages, totalMatches] = await Promise.all([
+  const [jobs, applications, jobCounts, draftJobs, pendingJobs, expiredJobs, expiringJobs, topJobs, clientReviewJobs, cities, packages, totalMatches] = await Promise.all([
     prisma.jobPost.findMany({
       where,
       include: {
         company: true,
+        submittedByClient: true,
         city: true,
         package: true,
         invoices: { orderBy: { issuedAt: "desc" }, take: 3, select: { id: true, status: true, amountCzk: true } },
@@ -143,12 +150,14 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
     prisma.jobPost.count({ where: { status: JobStatus.EXPIRED } }),
     prisma.jobPost.count({ where: expiringJobWhere(now) }),
     prisma.jobPost.count({ where: activeTopJobWhere(now) }),
+    prisma.jobPost.count({ where: { source: JobSource.CLIENT, reviewStatus: { in: [JobReviewStatus.SUBMITTED, JobReviewStatus.IN_REVIEW] } } }),
     prisma.city.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
     prisma.pricingPackage.findMany({ where: { isActive: true }, orderBy: { priceCzk: "asc" } }),
     prisma.jobPost.count({ where })
   ]);
 
   const tabCounts: Record<string, number> = {
+    "client-review": clientReviewJobs,
     ACTIVE: jobCounts.active,
     expiring: expiringJobs,
     PENDING_PAYMENT: pendingJobs,
@@ -174,6 +183,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
         <article className="admin-stat"><span>Aktivní</span><strong>{jobCounts.active}</strong><small>veřejně dostupné nabídky</small></article>
         <article className="admin-stat"><span>Na homepage</span><strong>{jobCounts.homepage}</strong><small>vybrané pro titulní stranu</small></article>
         <article className="admin-stat"><span>Čeká platba</span><strong>{pendingJobs}</strong><small>potřebuje obchodní kontrolu</small></article>
+        <article className="admin-stat"><span>Ke schválení</span><strong>{clientReviewJobs}</strong><small>klientská podání</small></article>
         <article className="admin-stat"><span>Končí brzy</span><strong>{expiringJobs}</strong><small>do 7 dní</small></article>
         <article className="admin-stat"><span>Topované</span><strong>{topJobs}</strong><small>aktivní zvýraznění</small></article>
       </section>
@@ -248,10 +258,11 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
                 <header className="jobs-ops-title">
                   <div>
                     <span className={`status-pill status-${job.status.toLowerCase()}`}>{jobStatusLabels[job.status]}</span>
+                    {job.source === JobSource.CLIENT && <span className={`status-pill status-${job.reviewStatus.toLowerCase()}`}>{jobReviewStatusLabels[job.reviewStatus]}</span>}
                     {job.isTop && <span className="status-pill status-active"><Flame size={13} /> TOP do {dateCs(job.topUntil)}</span>}
                     {warnings.length > 0 && <span className="status-pill status-waiting"><AlertTriangle size={13} /> {warnings[0]}</span>}
                     <h3>{job.title}</h3>
-                    <p>{job.company.name} · {job.city.name} · {salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}</p>
+                    <p>{job.company.name} · {job.city.name} · {salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}{job.submittedByClient ? ` · zadal ${job.submittedByClient.email}` : ""}</p>
                   </div>
                   <div className="jobs-action-strip" aria-label={`Akce pro ${job.title}`}>
                     <Link className="job-action-icon" href={`/admin/jobs/${job.id}/edit`} title="Editovat inzerát"><FilePenLine size={18} /></Link>

@@ -1,4 +1,4 @@
-import { AdminRole, AdminUserStatus } from "@prisma/client";
+import { AdminRole, AdminUserStatus, ClientUserStatus } from "@prisma/client";
 import { KeyRound, Shield, UserPlus, Users } from "lucide-react";
 import { archiveAdminUser, createAdminUser, setAdminUserPassword, updateAdminUser } from "@/lib/actions/users";
 import { AdminShell } from "@/components/AdminShell";
@@ -8,11 +8,19 @@ import { prisma } from "@/lib/prisma";
 
 export default async function AdminUsersPage() {
   const currentAdmin = await requirePermission("users:manage");
-  const users = await prisma.adminUser.findMany({ orderBy: [{ status: "asc" }, { createdAt: "desc" }] });
+  const [users, clientUsers] = await Promise.all([
+    prisma.adminUser.findMany({ orderBy: [{ status: "asc" }, { createdAt: "desc" }] }),
+    prisma.clientUser.findMany({
+      include: { company: true },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 100
+    })
+  ]);
   const roleOptions = Object.values(AdminRole);
   const statusOptions = Object.values(AdminUserStatus);
   const activeCount = users.filter((user) => user.status === AdminUserStatus.ACTIVE).length;
   const lockedCount = users.filter((user) => user.lockedUntil && user.lockedUntil > new Date()).length;
+  const activeClientCount = clientUsers.filter((user) => user.status === ClientUserStatus.ACTIVE).length;
 
   return (
     <AdminShell>
@@ -28,6 +36,7 @@ export default async function AdminUsersPage() {
         <article className="admin-stat"><Users size={22} /><span>Účty celkem</span><strong>{users.length}</strong><small>včetně pozastavených</small></article>
         <article className="admin-stat"><Shield size={22} /><span>Aktivní</span><strong>{activeCount}</strong><small>mohou se přihlásit</small></article>
         <article className="admin-stat"><KeyRound size={22} /><span>Uzamčené</span><strong>{lockedCount}</strong><small>po chybných pokusech</small></article>
+        <article className="admin-stat"><Users size={22} /><span>Klienti</span><strong>{activeClientCount}</strong><small>aktivní firemní účty</small></article>
         <article className="admin-stat"><UserPlus size={22} /><span>Role</span><strong>{roleOptions.length}</strong><small>ADMIN, editor, obchod, náhled</small></article>
       </section>
 
@@ -116,6 +125,31 @@ export default async function AdminUsersPage() {
             </form>
           </article>
         ))}
+      </section>
+
+      <section className="admin-card">
+        <div className="admin-card-head">
+          <div>
+            <h2>Klientské účty firem</h2>
+            <p>Přehled firem, které se registrovaly do samoobslužné klientské sekce.</p>
+          </div>
+        </div>
+        <table className="table admin-table">
+          <thead>
+            <tr><th>Firma</th><th>Kontakt</th><th>Stav</th><th>Poslední přihlášení</th></tr>
+          </thead>
+          <tbody>
+            {clientUsers.map((client) => (
+              <tr key={client.id}>
+                <td><strong>{client.company.name}</strong><div className="meta">{client.company.ico ?? "IČO neuvedeno"}</div></td>
+                <td>{client.name}<div className="meta">{client.email} · {client.phone ?? "bez telefonu"}</div></td>
+                <td><span className={`status-pill status-${client.status.toLowerCase()}`}>{client.status === ClientUserStatus.ACTIVE ? "Aktivní" : client.status === ClientUserStatus.SUSPENDED ? "Pozastavený" : "Archiv"}</span></td>
+                <td>{client.lastLoginAt ? dateTimeCs(client.lastLoginAt) : "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {clientUsers.length === 0 && <p className="admin-empty">Zatím není registrovaný žádný klientský účet.</p>}
       </section>
     </AdminShell>
   );

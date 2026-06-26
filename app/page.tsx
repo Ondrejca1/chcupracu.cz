@@ -189,8 +189,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
                   <span>0 vybraných nabídek na homepage</span>
                   <h2>První nabídky se tu brzy objeví.</h2>
                   <p>Mezitím můžete projít vyhledávání nebo se redakci ozvat s pracovním inzerátem pro Vsetínsko.</p>
-                  <Link className="button secondary" href="/admin">
-                    Přejít do redakce
+                  <Link className="button secondary" href="/klient/prihlaseni">
+                    Zadat inzerát
                   </Link>
                 </div>
               )}
