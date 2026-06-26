@@ -4,6 +4,8 @@ import { JobReviewStatus, JobSource, JobStatus } from "@prisma/client";
 import { ArrowLeft, Eye } from "lucide-react";
 import { renewJob } from "@/lib/actions/jobs";
 import { approveClientJob, markJobInReview, rejectClientJob, requestJobChanges } from "@/lib/actions/job-review";
+import { AdminDataTable } from "@/components/AdminDataTable";
+import { AdminEmptyState } from "@/components/AdminEmptyState";
 import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { AdminShell } from "@/components/AdminShell";
 import { AdminStatusPill } from "@/components/AdminStatusPill";
@@ -12,7 +14,13 @@ import { requirePermission } from "@/lib/auth";
 import { getFilters } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
-import { jobReviewStatusLabels, jobStatusLabels } from "@/lib/business-rules";
+import { applicationStatusLabels, jobReviewStatusLabels, jobStatusLabels } from "@/lib/business-rules";
+
+const invoiceStatusLabels = {
+  UNPAID: "Nezaplaceno",
+  PAID: "Zaplaceno",
+  CANCELLED: "Storno"
+} as const;
 
 function jobStatusTone(status: JobStatus) {
   if (status === JobStatus.ACTIVE) return "success";
@@ -69,7 +77,6 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
       />
 
       <nav className="admin-record-tabs" aria-label="Sekce detailu inzerátu">
-        <a href="#job-overview">Přehled</a>
         <a href="#job-basic">Obsah</a>
         <a href="#job-publishing">Publikace</a>
         <a href="#job-finance">Finance</a>
@@ -78,13 +85,13 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
         <a href="#job-history">Historie</a>
       </nav>
 
-      <section className="job-detail-admin-grid job-admin-overview-grid" id="job-overview">
-        <article className="admin-card">
+      <section className="job-command-center">
+        <article className="admin-card job-command-primary">
           <div className="admin-status-stack">
             <AdminStatusPill tone={jobStatusTone(job.status)}>{jobStatusLabels[job.status]}</AdminStatusPill>
             {job.source === JobSource.CLIENT && <AdminStatusPill tone={reviewStatusTone(job.reviewStatus)}>{jobReviewStatusLabels[job.reviewStatus]}</AdminStatusPill>}
           </div>
-          <h2>Obsah</h2>
+          <h2>{job.title}</h2>
           <p>{job.shortIntro}</p>
           <div className="meta">
             <span>{job.company.name}</span>
@@ -92,57 +99,127 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
             <span>{job.category.name}</span>
           </div>
         </article>
-        <article className="admin-card">
+        <article className="admin-card job-command-tile">
           <h2>Výkon</h2>
           <strong className="admin-big-number">{job.views}</strong>
-          <p>Zobrazení detailu. Aktivní do {dateCs(job.activeUntil)}.</p>
+          <p>Zobrazení detailu</p>
         </article>
-        <article className="admin-card" id="job-reactions">
+        <article className="admin-card job-command-tile">
+          <h2>Aktivní do</h2>
+          <strong>{dateCs(job.activeUntil)}</strong>
+          <p>{job.isTop && job.topUntil ? `TOP do ${dateCs(job.topUntil)}` : "Bez aktivního topování"}</p>
+        </article>
+        <article className="admin-card job-command-tile">
           <h2>Reakce</h2>
           <strong className="admin-big-number">{job.applications.length}</strong>
-          <p>Posledních {job.applications.length} reakcí v náhledu.</p>
-          <div className="admin-list compact">
-            {job.applications.slice(0, 3).map((application) => (
-              <a className="admin-list-row" href={`/admin/applications/${application.id}`} key={application.id}>
-                <div>
-                  <strong>{application.name}</strong>
-                  <span>{dateTimeCs(application.createdAt)}</span>
-                </div>
-              </a>
-            ))}
-          </div>
+          <p>Posledních odpovědí v náhledu</p>
         </article>
-        <article className="admin-card" id="job-finance">
+        <article className="admin-card job-command-tile">
           <h2>Finance</h2>
-          <p>{job.package ? `${job.package.name} · ${money(job.package.priceCzk)}` : "Bez balíčku"}</p>
-          <div className="admin-list compact">
-            {job.invoices.map((invoice) => (
-              <div className="admin-list-row" key={invoice.id}>
-                <div>
-                  <strong>{invoice.number ?? "Faktura bez čísla"}</strong>
-                  <span>{invoice.status}</span>
-                </div>
-                <em>{money(invoice.amountCzk)}</em>
-              </div>
-            ))}
-            {job.invoices.length === 0 && <p className="admin-empty">Bez fakturace.</p>}
-          </div>
-        </article>
-        <article className="admin-card" id="job-history">
-          <h2>Historie</h2>
-          <div className="admin-list compact">
-            {activities.map((activity) => (
-              <div className="admin-list-row" key={activity.id}>
-                <div>
-                  <strong>{activity.summary}</strong>
-                  <span>{activity.actorEmail ?? "admin"} · {dateTimeCs(activity.createdAt)}</span>
-                </div>
-              </div>
-            ))}
-            {activities.length === 0 && <p className="admin-empty">Zatím bez auditní historie.</p>}
-          </div>
+          <strong>{job.package ? money(job.package.priceCzk) : "-"}</strong>
+          <p>{job.package?.name ?? "Bez balíčku"}</p>
         </article>
       </section>
+
+      <JobEditor filters={filters} packages={packages} job={job} />
+
+      <section className="admin-card job-renew-panel" id="job-renew">
+        <div>
+          <span className="admin-kicker">Obnovení inzerátu</span>
+          <h2>Rychlé prodloužení</h2>
+          <p>Jedním klikem nastavíte stav aktivní, nové datum „Aktivní od“, „Aktivní do“ a případné topování.</p>
+        </div>
+        <div className="job-renew-actions">
+          {[
+            { label: "14 dní", days: 14, topDays: 0 },
+            { label: "30 dní", days: 30, topDays: 0 },
+            { label: "45 dní + TOP", days: 45, topDays: 14 }
+          ].map((item) => (
+            <form action={renewJob} key={item.label}>
+              <input name="id" type="hidden" value={job.id} />
+              <input name="days" type="hidden" value={item.days} />
+              <input name="topDays" type="hidden" value={item.topDays} />
+              <input name="highlightColor" type="hidden" value={job.highlightColor ?? ""} />
+              <button className="renew-choice-button" type="submit">
+                <strong>{item.label}</strong>
+                <span>{item.topDays ? `Topovat ${item.topDays} dní` : "Bez topování"}</span>
+              </button>
+            </form>
+          ))}
+        </div>
+      </section>
+
+      <section className="admin-card job-ops-panel" id="job-finance">
+        <div className="admin-card-head">
+          <div>
+            <span className="admin-kicker">Finance</span>
+            <h2>Fakturace a balíček</h2>
+            <p>{job.package ? `${job.package.name} · ${money(job.package.priceCzk)}` : "Inzerát zatím nemá přiřazený placený balíček."}</p>
+          </div>
+          <Link className="button secondary compact" href={`/admin/finance?company=${encodeURIComponent(job.company.name)}`}>Otevřít finance</Link>
+        </div>
+        <AdminDataTable>
+          <table className="table admin-table job-admin-table">
+            <thead>
+              <tr><th>Faktura</th><th>Stav</th><th>Částka</th><th>Vystaveno</th></tr>
+            </thead>
+            <tbody>
+              {job.invoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td><strong>{invoice.number ?? "Faktura bez čísla"}</strong></td>
+                  <td><AdminStatusPill tone={invoice.status === "PAID" ? "success" : invoice.status === "UNPAID" ? "warning" : "danger"}>{invoiceStatusLabels[invoice.status]}</AdminStatusPill></td>
+                  <td><strong>{money(invoice.amountCzk)}</strong></td>
+                  <td>{dateCs(invoice.issuedAt)}</td>
+                </tr>
+              ))}
+              {job.invoices.length === 0 && (
+                <tr>
+                  <td colSpan={4}>
+                    <AdminEmptyState text="Faktura se doplní podle balíčku, případně ji najdete v samostatné sekci finance." title="K tomuto inzerátu zatím není žádná faktura." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </AdminDataTable>
+      </section>
+
+      <section className="admin-card job-ops-panel" id="job-reactions">
+        <div className="admin-card-head">
+          <div>
+            <span className="admin-kicker">Reakce</span>
+            <h2>Odpovědi uchazečů</h2>
+            <p>Posledních {job.applications.length} odpovědí navázaných na tento inzerát.</p>
+          </div>
+          <Link className="button secondary compact" href={`/admin/applications?job=${job.id}`}>Všechny reakce</Link>
+        </div>
+        <AdminDataTable>
+          <table className="table admin-table job-admin-table">
+            <thead>
+              <tr><th>Uchazeč</th><th>Kontakt</th><th>Stav</th><th>Přijato</th><th>Akce</th></tr>
+            </thead>
+            <tbody>
+              {job.applications.map((application) => (
+                <tr key={application.id}>
+                  <td><strong>{application.name}</strong></td>
+                  <td>{application.email}</td>
+                  <td>{applicationStatusLabels[application.status]}</td>
+                  <td>{dateTimeCs(application.createdAt)}</td>
+                  <td><Link className="button ghost compact" href={`/admin/applications/${application.id}`}>Detail</Link></td>
+                </tr>
+              ))}
+              {job.applications.length === 0 && (
+                <tr>
+                  <td colSpan={5}>
+                    <AdminEmptyState text="Jakmile uchazeč odešle formulář z veřejného webu, zobrazí se tady i v sekci Reakce." title="Zatím bez reakcí." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </AdminDataTable>
+      </section>
+
       {job.source === JobSource.CLIENT && (
         <section className="admin-card review-panel" id="job-review">
           <div className="admin-card-head">
@@ -200,32 +277,27 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
           </div>
         </section>
       )}
-      <section className="admin-card job-renew-panel" id="job-renew">
-        <div>
-          <span className="admin-kicker">Obnovení inzerátu</span>
-          <h2>Rychlé prodloužení</h2>
-          <p>Jedním klikem nastavíte stav aktivní, nové datum „Aktivní od“, „Aktivní do“ a případné topování.</p>
+
+      <section className="admin-card job-ops-panel" id="job-history">
+        <div className="admin-card-head">
+          <div>
+            <span className="admin-kicker">Historie</span>
+            <h2>Auditní stopa</h2>
+            <p>Poslední systémové události k tomuto inzerátu.</p>
+          </div>
         </div>
-        <div className="job-renew-actions">
-          {[
-            { label: "14 dní", days: 14, topDays: 0 },
-            { label: "30 dní", days: 30, topDays: 0 },
-            { label: "45 dní + TOP", days: 45, topDays: 14 }
-          ].map((item) => (
-            <form action={renewJob} key={item.label}>
-              <input name="id" type="hidden" value={job.id} />
-              <input name="days" type="hidden" value={item.days} />
-              <input name="topDays" type="hidden" value={item.topDays} />
-              <input name="highlightColor" type="hidden" value={job.highlightColor ?? ""} />
-              <button className="renew-choice-button" type="submit">
-                <strong>{item.label}</strong>
-                <span>{item.topDays ? `Topovat ${item.topDays} dní` : "Bez topování"}</span>
-              </button>
-            </form>
+        <div className="admin-list compact job-history-list">
+          {activities.map((activity) => (
+            <div className="admin-list-row" key={activity.id}>
+              <div>
+                <strong>{activity.summary}</strong>
+                <span>{activity.actorEmail ?? "admin"} · {dateTimeCs(activity.createdAt)}</span>
+              </div>
+            </div>
           ))}
+          {activities.length === 0 && <AdminEmptyState text="Až se inzerát schválí, upraví nebo obnoví, události se propíšou sem." title="Zatím bez auditní historie." />}
         </div>
       </section>
-      <JobEditor filters={filters} packages={packages} job={job} />
     </AdminShell>
   );
 }

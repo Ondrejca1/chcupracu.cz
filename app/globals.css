@@ -2580,6 +2580,54 @@ a.nav-click-pending,
   align-items: stretch;
 }
 
+.job-command-center {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(4, minmax(150px, 0.55fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.job-command-primary,
+.job-command-tile {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.job-command-primary {
+  min-height: 176px;
+}
+
+.job-command-primary h2,
+.job-command-tile h2 {
+  margin: 0;
+}
+
+.job-command-primary p,
+.job-command-tile p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.job-command-tile strong {
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.job-ops-panel {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.job-admin-table {
+  min-width: 760px;
+}
+
+.job-history-list {
+  padding-top: 4px;
+}
+
 .job-admin-overview-grid .admin-card {
   display: grid;
   align-content: start;
@@ -3174,6 +3222,14 @@ a.nav-click-pending,
     grid-column: auto;
   }
 
+  .job-command-center {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .job-command-primary {
+    grid-column: 1 / -1;
+  }
+
   .job-card-with-image .job-card-brand-bar {
     aspect-ratio: 16 / 7;
     min-height: 148px;
@@ -3340,6 +3396,7 @@ a.nav-click-pending,
   .quick-grid,
   .company-grid,
   .commercial-grid,
+  .job-command-center,
   .admin-stat-grid,
   .admin-stat-grid.compact,
   .jobs-kpi-grid.admin-stat-grid.compact,
