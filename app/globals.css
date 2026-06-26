@@ -2447,6 +2447,103 @@ a.nav-click-pending,
   flex-wrap: nowrap;
 }
 
+.finance-toolbar,
+.applications-toolbar {
+  margin-bottom: 18px;
+}
+
+.finance-admin-table,
+.applications-admin-table {
+  min-width: 980px;
+}
+
+.finance-company-cell strong,
+.finance-company-cell span,
+.application-person-cell strong,
+.application-person-cell span,
+.application-job-cell strong,
+.application-job-cell span {
+  display: block;
+}
+
+.finance-company-cell span,
+.application-person-cell span,
+.application-job-cell span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.finance-status-form {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) auto;
+  gap: 7px;
+  min-width: 220px;
+}
+
+.finance-status-form .select,
+.application-inline-workflow .select {
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.applications-board {
+  padding: 0;
+}
+
+.applications-board > .admin-card-head {
+  border-bottom: 1px solid var(--line);
+  padding: 16px 18px;
+}
+
+.applications-admin-table th,
+.applications-admin-table td {
+  padding: 13px 14px;
+}
+
+.application-person-cell {
+  min-width: 180px;
+}
+
+.application-job-cell {
+  min-width: 220px;
+}
+
+.application-message-cell {
+  max-width: 360px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.application-tags.compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.application-inline-workflow {
+  display: grid;
+  grid-template-columns: minmax(135px, 0.8fr) minmax(170px, 1fr) auto;
+  gap: 7px;
+  align-items: start;
+  min-width: 380px;
+}
+
+.application-inline-workflow .textarea {
+  min-height: 34px;
+  max-height: 82px;
+  padding-block: 8px;
+  font-size: 12px;
+}
+
 .admin-record-tabs {
   position: sticky;
   top: 18px;
@@ -3172,6 +3269,16 @@ a.nav-click-pending,
   .row-renew-form {
     grid-template-columns: 1fr;
     min-width: 190px;
+  }
+
+  .finance-status-form,
+  .application-inline-workflow {
+    grid-template-columns: 1fr;
+    min-width: 190px;
+  }
+
+  .admin-row-actions {
+    min-width: 0;
   }
 
   .client-savebar {

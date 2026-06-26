@@ -1,12 +1,24 @@
 import Link from "next/link";
-import { ApplicationStatus, ApplicationTag, type Prisma } from "@prisma/client";
+import { ApplicationStatus, type Prisma } from "@prisma/client";
 import { Mail, MessageSquareText, Phone, Search, UserCheck, UsersRound } from "lucide-react";
 import { updateApplication } from "@/lib/actions/applications";
+import { AdminDataTable } from "@/components/AdminDataTable";
+import { AdminEmptyState } from "@/components/AdminEmptyState";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { AdminShell } from "@/components/AdminShell";
+import { AdminStatusPill } from "@/components/AdminStatusPill";
+import { AdminToolbar } from "@/components/AdminToolbar";
 import { dateTimeCs } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
+
+function applicationStatusTone(status: ApplicationStatus) {
+  if (status === ApplicationStatus.HIRED || status === ApplicationStatus.FORWARDED) return "success";
+  if (status === ApplicationStatus.CONTACTED || status === ApplicationStatus.WAITING) return "info";
+  if (status === ApplicationStatus.REJECTED) return "danger";
+  return "warning";
+}
 
 export default async function AdminApplicationsPage({
   searchParams
@@ -70,16 +82,12 @@ export default async function AdminApplicationsPage({
 
   return (
     <AdminShell>
-      <div className="admin-page-head">
-        <div>
-          <span className="admin-kicker">Uchazeči</span>
-          <h1>Reakce</h1>
-          <p>Kontakty, zprávy a stav předání firmám na jednom místě.</p>
-        </div>
-        <Link className="button secondary" href={exportHref}>
-          Export CSV
-        </Link>
-      </div>
+      <AdminPageHeader
+        actions={<Link className="button secondary" href={exportHref}>Export CSV</Link>}
+        description="Kontakty, zprávy, štítky a stav předání firmám v jedné pracovní frontě."
+        eyebrow="Uchazeči"
+        title="Reakce"
+      />
 
       <section className="admin-stat-grid compact">
         <article className="admin-stat"><UsersRound size={22} /><span>Nové</span><strong>{countFor(ApplicationStatus.NEW)}</strong><small>čekají na první zpracování</small></article>
@@ -88,7 +96,7 @@ export default async function AdminApplicationsPage({
         <article className="admin-stat"><Search size={22} /><span>Výsledek filtru</span><strong>{applications.length}</strong><small>zobrazeno max. 100 reakcí</small></article>
       </section>
 
-      <section className="admin-card">
+      <AdminToolbar className="admin-card applications-toolbar">
         <div className="admin-card-head">
           <div>
             <h2>Filtry reakcí</h2>
@@ -108,84 +116,77 @@ export default async function AdminApplicationsPage({
           <button className="button" type="submit">Filtrovat</button>
           <Link className="button secondary" href="/admin/applications">Vyčistit</Link>
         </form>
-      </section>
+      </AdminToolbar>
 
-      <section className="application-list">
-        {applications.map((application) => (
-          <article className="application-card" key={application.id}>
-            <div className="application-main">
-              <div className="application-head">
-                <span className={`status-pill status-${application.status.toLowerCase()}`}>{applicationStatusLabels[application.status]}</span>
-                <strong>{application.name}</strong>
-                <small>{dateTimeCs(application.createdAt)}</small>
-              </div>
-              <h2>{application.job.title}</h2>
-              <p>{application.message}</p>
-              <div className="meta">
-                <span>{application.job.company.name}</span>
-                <span>{application.job.city.name}</span>
-                <span>{application.email}</span>
-                <span>{application.phone ?? "bez telefonu"}</span>
-              </div>
-              <div className="admin-button-row">
-                <a className="admin-icon-link" href={`mailto:${application.email}?subject=Reakce na inzerát ${encodeURIComponent(application.job.title)}`}>
-                  <Mail size={16} /> Napsat e-mail
-                </a>
-                {application.phone && (
-                  <a className="admin-icon-link" href={`tel:${application.phone}`}>
-                    <Phone size={16} /> Zavolat
-                  </a>
-                )}
-                <Link className="admin-icon-link" href={`/admin/applications/${application.id}`}>
-                  <MessageSquareText size={16} /> Detail ({application._count.communications})
-                </Link>
-                <Link className="admin-icon-link" href={`/admin/jobs/${application.jobId}/edit`}>
-                  Inzerát
-                </Link>
-              </div>
-              {application.tags.length > 0 && (
-                <div className="meta application-tags">
-                  {application.tags.map((tag) => <span className="job-chip" key={tag}>{applicationTagLabels[tag]}</span>)}
-                </div>
+      <section className="admin-card applications-board">
+        <div className="admin-card-head">
+          <div>
+            <h2>Pracovní fronta reakcí</h2>
+            <p>Rychlý kontakt, stav, štítky a interní zpracování bez otevírání detailu.</p>
+          </div>
+          <span className="meta">{applications.length} položek</span>
+        </div>
+        <AdminDataTable>
+          <table className="table admin-table applications-admin-table">
+            <thead>
+              <tr>
+                <th>Uchazeč</th>
+                <th>Inzerát</th>
+                <th>Zpráva</th>
+                <th>Stav</th>
+                <th>Kontakt</th>
+                <th>Zpracování</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((application) => (
+                <tr key={application.id}>
+                  <td className="application-person-cell">
+                    <strong>{application.name}</strong>
+                    <span>{dateTimeCs(application.createdAt)}</span>
+                    {application.tags.length > 0 && (
+                      <div className="application-tags compact">
+                        {application.tags.map((tag) => <span className="job-chip" key={tag}>{applicationTagLabels[tag]}</span>)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="application-job-cell">
+                    <Link href={`/admin/jobs/${application.jobId}/edit`}><strong>{application.job.title}</strong></Link>
+                    <span>{application.job.company.name} · {application.job.city.name}</span>
+                  </td>
+                  <td className="application-message-cell">{application.message}</td>
+                  <td><AdminStatusPill tone={applicationStatusTone(application.status)}>{applicationStatusLabels[application.status]}</AdminStatusPill></td>
+                  <td>
+                    <div className="admin-row-actions">
+                      <a className="button ghost compact" href={`mailto:${application.email}?subject=Reakce na inzerát ${encodeURIComponent(application.job.title)}`}><Mail size={15} /> E-mail</a>
+                      {application.phone && <a className="button ghost compact" href={`tel:${application.phone}`}><Phone size={15} /> Telefon</a>}
+                      <Link className="button secondary compact" href={`/admin/applications/${application.id}`}><MessageSquareText size={15} /> Detail ({application._count.communications})</Link>
+                    </div>
+                  </td>
+                  <td>
+                    <form action={updateApplication} className="application-inline-workflow">
+                      <input name="id" type="hidden" value={application.id} />
+                      <input name="returnTo" type="hidden" value="/admin/applications" />
+                      <select className="select" name="status" defaultValue={application.status}>
+                        {Object.values(ApplicationStatus).map((status) => <option key={status} value={status}>{applicationStatusLabels[status]}</option>)}
+                      </select>
+                      <textarea className="textarea textarea-short" name="internalNote" placeholder="Interní poznámka" defaultValue={application.internalNote ?? ""} />
+                      <input name="communicationChannel" type="hidden" value="note" />
+                      <button className="button secondary compact" type="submit">Uložit</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {applications.length === 0 && (
+                <tr>
+                  <td colSpan={6}>
+                    <AdminEmptyState text="Zkuste změnit filtr, případně počkejte na nové odpovědi z veřejného webu." title="Podle aktuálních filtrů tu není žádná reakce." />
+                  </td>
+                </tr>
               )}
-            </div>
-            <form action={updateApplication} className="application-workflow">
-              <input name="id" type="hidden" value={application.id} />
-              <input name="returnTo" type="hidden" value="/admin/applications" />
-              <label className="field-group">
-                <span>Stav</span>
-                <select className="select" name="status" defaultValue={application.status}>
-                  {Object.values(ApplicationStatus).map((status) => <option key={status} value={status}>{applicationStatusLabels[status]}</option>)}
-                </select>
-              </label>
-              <label className="field-group">
-                <span>Štítky</span>
-                <div className="tag-check-grid">
-                  {Object.values(ApplicationTag).map((tag) => (
-                    <label className="tag" key={tag}>
-                      <input name="tags" type="checkbox" value={tag} defaultChecked={application.tags.includes(tag)} /> {applicationTagLabels[tag]}
-                    </label>
-                  ))}
-                </div>
-              </label>
-              <label className="field-group">
-                <span>Interní poznámka</span>
-                <textarea className="textarea textarea-short" name="internalNote" placeholder="Co už redakce vyřešila, komu se reakce předala..." defaultValue={application.internalNote ?? ""} />
-              </label>
-              <label className="field-group">
-                <span>Nový záznam komunikace</span>
-                <textarea className="textarea textarea-short" name="communicationBody" placeholder="Např. voláno uchazeči, předáno firmě, čekáme na odpověď..." />
-                <input name="communicationChannel" type="hidden" value="note" />
-              </label>
-              <button className="button secondary" type="submit">Uložit zpracování</button>
-            </form>
-          </article>
-        ))}
-        {applications.length === 0 && (
-          <section className="admin-card">
-            <p className="admin-empty">Podle aktuálních filtrů tu není žádná reakce.</p>
-          </section>
-        )}
+            </tbody>
+          </table>
+        </AdminDataTable>
       </section>
     </AdminShell>
   );

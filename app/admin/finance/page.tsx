@@ -1,7 +1,12 @@
 import { PaymentStatus, type Prisma } from "@prisma/client";
 import { BarChart3, CircleDollarSign, ReceiptText } from "lucide-react";
 import { createMissingInvoicesFromJobs, updateInvoiceStatus } from "@/lib/actions/finance";
+import { AdminDataTable } from "@/components/AdminDataTable";
+import { AdminEmptyState } from "@/components/AdminEmptyState";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { AdminShell } from "@/components/AdminShell";
+import { AdminStatusPill } from "@/components/AdminStatusPill";
+import { AdminToolbar } from "@/components/AdminToolbar";
 import { dateCs, money } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +16,12 @@ const statusLabels: Record<PaymentStatus, string> = {
   PAID: "Zaplaceno",
   CANCELLED: "Storno"
 };
+
+function paymentStatusTone(status: PaymentStatus) {
+  if (status === PaymentStatus.PAID) return "success";
+  if (status === PaymentStatus.UNPAID) return "warning";
+  return "danger";
+}
 
 export default async function AdminFinancePage({ searchParams }: { searchParams: Promise<{ company?: string; status?: string; min?: string; max?: string }> }) {
   await requirePermission("finance:write");
@@ -60,14 +71,12 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
 
   return (
     <AdminShell>
-      <div className="admin-page-head">
-        <div>
-          <span className="admin-kicker">Finance</span>
-          <h1>Platby a faktury</h1>
-          <p>Přehled kdo kolik zaplatil, co je otevřené a jaký je výkon balíčků.</p>
-        </div>
-        <a className="button secondary" href={exportHref}>Export CSV</a>
-      </div>
+      <AdminPageHeader
+        actions={<a className="button secondary" href={exportHref}>Export CSV</a>}
+        description="Přehled plateb, otevřených faktur, návaznosti na inzeráty a rychlé změny stavu."
+        eyebrow="Finance"
+        title="Platby a faktury"
+      />
 
       <section className="admin-stat-grid compact">
         <article className="admin-stat"><CircleDollarSign size={22} /><span>Zaplaceno celkem</span><strong>{money(paidTotal._sum.amountCzk)}</strong><small>{paidTotal._count} faktur</small></article>
@@ -88,7 +97,7 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
         </section>
       )}
 
-      <section className="admin-card">
+      <AdminToolbar className="admin-card finance-toolbar">
         <div className="admin-card-head">
           <div>
             <h2>Filtry financí</h2>
@@ -104,8 +113,9 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
           <input className="field" name="min" placeholder="Částka od" defaultValue={params.min ?? ""} />
           <input className="field" name="max" placeholder="Částka do" defaultValue={params.max ?? ""} />
           <button className="button" type="submit">Filtrovat</button>
+          <a className="button secondary" href="/admin/finance">Vyčistit</a>
         </form>
-      </section>
+      </AdminToolbar>
 
       <section className="admin-dashboard-grid">
         <article className="admin-card">
@@ -138,31 +148,40 @@ export default async function AdminFinancePage({ searchParams }: { searchParams:
 
       <section className="admin-card">
         <div className="admin-card-head"><div><h2>Faktury</h2><p>Rychlá změna stavu a kontrola vazby na inzerát nebo balíček.</p></div></div>
-        <table className="table admin-table">
-          <thead>
-            <tr><th>Firma</th><th>Inzerát / balíček</th><th>Částka</th><th>Vystaveno</th><th>Stav</th><th>Akce</th></tr>
-          </thead>
-          <tbody>
-            {invoices.map((invoice) => (
-              <tr key={invoice.id}>
-                <td><strong>{invoice.company.name}</strong><div className="meta">{invoice.number ?? "bez čísla"}</div></td>
-                <td>{invoice.job?.title ?? invoice.package?.name ?? "-"}</td>
-                <td>{money(invoice.amountCzk)}</td>
-                <td>{dateCs(invoice.issuedAt)}</td>
-                <td><span className={`status-pill status-${invoice.status.toLowerCase()}`}>{statusLabels[invoice.status]}</span></td>
-                <td>
-                  <form action={updateInvoiceStatus} className="inline-form">
-                    <input name="id" type="hidden" value={invoice.id} />
-                    <select className="select" name="status" defaultValue={invoice.status}>
-                      {Object.values(PaymentStatus).map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
-                    </select>
-                    <button className="button secondary" type="submit">Uložit</button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <AdminDataTable>
+          <table className="table admin-table finance-admin-table">
+            <thead>
+              <tr><th>Firma</th><th>Inzerát / balíček</th><th>Částka</th><th>Vystaveno</th><th>Stav</th><th>Akce</th></tr>
+            </thead>
+            <tbody>
+              {invoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td className="finance-company-cell"><strong>{invoice.company.name}</strong><span>{invoice.number ?? "bez čísla"}</span></td>
+                  <td>{invoice.job?.title ?? invoice.package?.name ?? "-"}</td>
+                  <td><strong>{money(invoice.amountCzk)}</strong></td>
+                  <td>{dateCs(invoice.issuedAt)}</td>
+                  <td><AdminStatusPill tone={paymentStatusTone(invoice.status)}>{statusLabels[invoice.status]}</AdminStatusPill></td>
+                  <td>
+                    <form action={updateInvoiceStatus} className="inline-form finance-status-form">
+                      <input name="id" type="hidden" value={invoice.id} />
+                      <select className="select" name="status" defaultValue={invoice.status}>
+                        {Object.values(PaymentStatus).map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
+                      </select>
+                      <button className="button secondary compact" type="submit">Uložit</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {invoices.length === 0 && (
+                <tr>
+                  <td colSpan={6}>
+                    <AdminEmptyState text="Zkuste změnit filtr nebo doplnit chybějící faktury podle inzerátů." title="Pro vybrané filtry tu nejsou žádné faktury." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </AdminDataTable>
       </section>
     </AdminShell>
   );

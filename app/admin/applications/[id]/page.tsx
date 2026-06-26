@@ -3,11 +3,20 @@ import { notFound } from "next/navigation";
 import { ApplicationStatus, ApplicationTag } from "@prisma/client";
 import { ArrowLeft, Mail, Phone, Send } from "lucide-react";
 import { forwardApplicationToCompany, updateApplication } from "@/lib/actions/applications";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { AdminShell } from "@/components/AdminShell";
+import { AdminStatusPill } from "@/components/AdminStatusPill";
 import { dateTimeCs } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { applicationStatusLabels, applicationTagLabels } from "@/lib/business-rules";
+
+function applicationStatusTone(status: ApplicationStatus) {
+  if (status === ApplicationStatus.HIRED || status === ApplicationStatus.FORWARDED) return "success";
+  if (status === ApplicationStatus.CONTACTED || status === ApplicationStatus.WAITING) return "info";
+  if (status === ApplicationStatus.REJECTED) return "danger";
+  return "warning";
+}
 
 export default async function AdminApplicationDetailPage({
   params,
@@ -37,23 +46,19 @@ export default async function AdminApplicationDetailPage({
 
   return (
     <AdminShell>
-      <div className="admin-page-head">
-        <div>
-          <span className="admin-kicker">Detail reakce</span>
-          <h1>{application.name}</h1>
-          <p>{application.job.title} · {application.job.company.name} · {application.job.city.name}</p>
-          {query.notice === "forwarded" && <p className="admin-success">Reakce byla předána firmě.</p>}
-          {query.error === "no-company-email" && <p className="admin-error">U inzerátu nebo firmy chybí e-mail pro předání.</p>}
-        </div>
-        <Link className="button secondary" href="/admin/applications">
-          <ArrowLeft size={16} /> Zpět na reakce
-        </Link>
-      </div>
+      <AdminPageHeader
+        actions={<Link className="button secondary" href="/admin/applications"><ArrowLeft size={16} /> Zpět na reakce</Link>}
+        description={`${application.job.title} · ${application.job.company.name} · ${application.job.city.name}`}
+        eyebrow="Detail reakce"
+        title={application.name}
+      />
+      {query.notice === "forwarded" && <p className="admin-success">Reakce byla předána firmě.</p>}
+      {query.error === "no-company-email" && <p className="admin-error">U inzerátu nebo firmy chybí e-mail pro předání.</p>}
 
       <section className="admin-dashboard-grid">
         <article className="admin-card application-detail-card">
           <div className="application-head">
-            <span className={`status-pill status-${application.status.toLowerCase()}`}>{applicationStatusLabels[application.status]}</span>
+            <AdminStatusPill tone={applicationStatusTone(application.status)}>{applicationStatusLabels[application.status]}</AdminStatusPill>
             <strong>{dateTimeCs(application.createdAt)}</strong>
           </div>
           <h2>Zpráva uchazeče</h2>
