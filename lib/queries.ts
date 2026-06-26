@@ -15,6 +15,7 @@ export type JobSearchParams = {
 };
 
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
+const paramValues = (value?: string | string[]) => (Array.isArray(value) ? value : value ? [value] : []).filter(Boolean);
 
 export async function getFilters() {
   const [cities, categories, educations, employmentTypes, suitabilities] = await Promise.all([
@@ -129,7 +130,7 @@ export async function getJobVisibilityCounts() {
 
 export async function searchJobs(params: JobSearchParams, limit = 40, options: { homepageOnly?: boolean } = {}) {
   const q = firstParam(params.q)?.trim();
-  const city = firstParam(params.city);
+  const cities = paramValues(params.city);
   const category = firstParam(params.category);
   const education = firstParam(params.education);
   const employment = firstParam(params.employment);
@@ -153,7 +154,7 @@ export async function searchJobs(params: JobSearchParams, limit = 40, options: {
       }
     ];
   }
-  if (city) where.city = { is: { slug: city } };
+  if (cities.length > 0) where.city = { is: { slug: { in: cities } } };
   if (category) where.category = { is: { slug: category } };
   if (education) where.education = { is: { slug: education } };
   if (employment) where.employmentType = { is: { slug: employment } };

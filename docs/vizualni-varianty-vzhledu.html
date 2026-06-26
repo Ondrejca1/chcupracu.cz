@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>chcupracu.cz - 16 rozdilnych layoutovych variant</title>
+  <style>
+    :root {
+      --bg: #f2f0eb;
+      --paper: #fffdfa;
+      --ink: #17191f;
+      --muted: #626a77;
+      --line: #d9d3c8;
+      --soft: #f8f5ef;
+      --red: #b42318;
+      --blue: #2557d6;
+      --teal: #087b76;
+      --green: #1f7a4a;
+      --gold: #d6a43a;
+      --purple: #6236b4;
+      --orange: #ef7d00;
+      --radius: 8px;
+      --shadow: 0 18px 48px rgba(18, 22, 28, 0.10);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.48;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      width: min(1380px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 30px 0 72px;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      align-items: end;
+      padding: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .intro h1 {
+      max-width: 920px;
+      margin: 10px 0 14px;
+      font-size: clamp(38px, 6vw, 76px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .intro p {
+      max-width: 850px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .label {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent, var(--red));
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .side-note,
+    .research-card,
+    .recommend-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--soft);
+    }
+
+    .side-note {
+      display: grid;
+      gap: 10px;
+    }
+
+    .side-note b,
+    .research-card h3,
+    .recommend-card h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .side-note span,
+    .research-card p,
+    .recommend-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .toc a {
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 42px 0 16px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .section-title p {
+      max-width: 660px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .research-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .source-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .source-tags a,
+    .tag {
+      display: inline-flex;
+      min-height: 23px;
+      align-items: center;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #353b46;
+      font-size: 11px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .blueprint {
+      --accent: var(--blue);
+      margin-top: 26px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .bp-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 22px;
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, #fff), #fff);
+    }
+
+    .bp-num {
+      display: inline-flex;
+      width: 36px;
+      height: 36px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font-weight: 950;
+    }
+
+    .bp-head h2 {
+      margin: 12px 0 8px;
+      font-size: clamp(28px, 4vw, 45px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .bp-head p {
+      max-width: 850px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .decision {
+      display: grid;
+      gap: 10px;
+      align-self: stretch;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .decision b {
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .decision span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .bp-body {
+      display: grid;
+      gap: 18px;
+      padding: 24px;
+    }
+
+    .wire-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .wire-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .wire-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      align-items: center;
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .dots i {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #c9c2b7;
+    }
+
+    .wf {
+      display: grid;
+      gap: 10px;
+      min-height: 445px;
+      padding: 12px;
+      background: #fbfaf7;
+    }
+
+    .block {
+      display: grid;
+      align-content: start;
+      gap: 7px;
+      min-height: 54px;
+      padding: 10px;
+      border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .block.dark {
+      background: #17202a;
+      color: #fff;
+      border-color: #17202a;
+    }
+
+    .block.tint {
+      background: color-mix(in srgb, var(--accent) 9%, #fff);
+    }
+
+    .block.media {
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent) 72%, #111), #192333),
+        var(--accent);
+      color: #fff;
+      border-color: color-mix(in srgb, var(--accent) 70%, #111);
+    }
+
+    .block h4 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.15;
+    }
+
+    .block p {
+      margin: 0;
+      color: inherit;
+      opacity: 0.72;
+      font-size: 11px;
+    }
+
+    .mini-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      display: inline-flex;
+      min-height: 22px;
+      align-items: center;
+      padding: 3px 7px;
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+      border-radius: 999px;
+      background: #fff;
+      color: color-mix(in srgb, var(--accent) 78%, #111);
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .line {
+      height: 9px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 16%, #ddd);
+    }
+
+    .line.short {
+      width: 58%;
+    }
+
+    .btnset {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .button,
+    .button2,
+    .button3,
+    .button4,
+    .icon-button {
+      display: inline-flex;
+      min-height: 34px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .button {
+      padding: 0 12px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button2 {
+      padding: 0 12px;
+      border: 1px solid #17202a;
+      background: #17202a;
+      color: #fff;
+    }
+
+    .button3 {
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .button4 {
+      padding: 0 12px;
+      border: 1px solid #b42318;
+      background: #b42318;
+      color: #fff;
+    }
+
+    .icon-button {
+      width: 34px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .component {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .component h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .component p,
+    .component li {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .component ul {
+      margin: 0;
+      padding-left: 17px;
+    }
+
+    .palette {
+      display: grid;
+      gap: 7px;
+    }
+
+    .swatch {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .swatch i {
+      height: 26px;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      border-radius: var(--radius);
+      background: var(--c);
+    }
+
+    .swatch b {
+      display: block;
+      font-size: 11px;
+    }
+
+    .swatch span {
+      display: block;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+    }
+
+    /* Distinct frontend wireframes */
+    .l-search {
+      grid-template-columns: 1fr;
+      grid-template-rows: 46px 190px repeat(3, 70px);
+    }
+
+    .l-results {
+      grid-template-columns: 210px 1fr 250px;
+      grid-template-rows: 46px 58px repeat(4, 68px);
+    }
+
+    .l-results .wide { grid-column: 1 / -1; }
+    .l-results .filters { grid-row: 2 / span 5; }
+    .l-results .preview { grid-column: 3; grid-row: 2 / span 5; }
+
+    .l-map {
+      grid-template-columns: 1.05fr 0.95fr;
+      grid-template-rows: 46px 170px repeat(3, 70px);
+    }
+
+    .l-map .top { grid-column: 1 / -1; }
+    .l-map .map { grid-row: 2 / span 4; }
+
+    .l-company {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: 46px 180px repeat(3, 86px);
+    }
+
+    .l-company .top { grid-column: 1 / -1; }
+    .l-company .hero-block { grid-column: 1 / span 2; }
+    .l-company .featured { grid-column: 3 / span 2; }
+
+    .l-editorial {
+      grid-template-columns: 1.2fr 0.8fr;
+      grid-template-rows: 46px 210px 100px 100px;
+    }
+
+    .l-editorial .top { grid-column: 1 / -1; }
+    .l-editorial .issue { grid-row: 2 / span 3; }
+
+    .l-wizard {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: 46px 90px 150px repeat(2, 80px);
+    }
+
+    .l-wizard .top,
+    .l-wizard .steps { grid-column: 1 / -1; }
+
+    .l-mobile {
+      width: min(380px, 100%);
+      margin: 0 auto;
+      grid-template-columns: 1fr;
+      grid-template-rows: 50px 110px repeat(4, 86px) 56px;
+      border-inline: 10px solid #17191f;
+      border-radius: 24px;
+      background: #111;
+    }
+
+    .l-board {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: 46px 68px repeat(4, 70px);
+    }
+
+    .l-board .top,
+    .l-board .search { grid-column: 1 / -1; }
+
+    .l-directory {
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: 46px 90px repeat(3, 82px) 70px;
+    }
+
+    .l-directory .top,
+    .l-directory .search { grid-column: 1 / -1; }
+    .l-directory .span2 { grid-column: span 2; }
+
+    .l-campaign {
+      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-rows: 46px 240px 90px 90px;
+    }
+
+    .l-campaign .top { grid-column: 1 / -1; }
+    .l-campaign .sponsor { grid-row: 2 / span 3; }
+
+    .l-detailfirst {
+      grid-template-columns: 0.95fr 1.05fr;
+      grid-template-rows: 46px 250px 82px 82px;
+    }
+
+    .l-detailfirst .top { grid-column: 1 / -1; }
+    .l-detailfirst .detail { grid-row: 2 / span 3; }
+
+    .l-salary {
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: 46px 130px repeat(3, 74px);
+    }
+
+    .l-salary .top,
+    .l-salary .calc { grid-column: 1 / -1; }
+
+    /* Distinct admin wireframes */
+    .a-table {
+      grid-template-columns: 1fr;
+      grid-template-rows: 50px 60px repeat(5, 54px);
+    }
+
+    .a-kanban {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: 50px repeat(5, 70px);
+    }
+
+    .a-kanban .top { grid-column: 1 / -1; }
+
+    .a-editor {
+      grid-template-columns: 210px 1fr 220px;
+      grid-template-rows: 50px repeat(5, 72px);
+    }
+
+    .a-editor .top { grid-column: 1 / -1; }
+    .a-editor .nav { grid-row: 2 / span 5; }
+    .a-editor .side { grid-column: 3; grid-row: 2 / span 5; }
+
+    .a-calendar {
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: 50px repeat(4, 70px);
+    }
+
+    .a-calendar .top { grid-column: 1 / -1; }
+
+    .a-crm {
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 50px 90px repeat(4, 62px);
+    }
+
+    .a-crm .top { grid-column: 1 / -1; }
+    .a-crm .profile { grid-row: 2 / span 5; }
+
+    .a-mobile {
+      width: min(380px, 100%);
+      margin: 0 auto;
+      grid-template-columns: 1fr;
+      grid-template-rows: 50px repeat(5, 74px) 56px;
+      border-inline: 10px solid #17191f;
+      border-radius: 24px;
+      background: #111;
+    }
+
+    .v1 { --accent: var(--teal); }
+    .v2 { --accent: var(--blue); }
+    .v3 { --accent: var(--green); }
+    .v4 { --accent: #3151f4; }
+    .v5 { --accent: var(--red); }
+    .v6 { --accent: var(--orange); }
+    .v7 { --accent: var(--purple); }
+    .v8 { --accent: #1f6f55; }
+    .v9 { --accent: var(--gold); }
+    .v10 { --accent: #0f766e; }
+    .v11 { --accent: #d61f55; }
+    .v12 { --accent: #455a64; }
+    .v13 { --accent: #00695c; }
+    .v14 { --accent: #7b341e; }
+    .v15 { --accent: #3949ab; }
+    .v16 { --accent: #b42318; }
+
+    .recommend-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 1120px) {
+      .intro,
+      .bp-head,
+      .wire-grid,
+      .research-grid,
+      .recommend-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .component-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 24px, 1380px);
+        padding-top: 16px;
+      }
+
+      .intro,
+      .bp-head,
+      .bp-body {
+        padding: 18px;
+      }
+
+      .component-grid,
+      .research-grid,
+      .recommend-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wf {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .block {
+        min-height: 68px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div>
+        <span class="label">Layouty, ne jen barvy</span>
+        <h1>16 opravdu odlisnych variant usporadani webu a adminu</h1>
+        <p>Predchozi verze porad opakovala podobny sled bloku. Tahle verze resi informacni architekturu: co je prvni, co je hlavni akce, jak se radi obsah, jak vypada detail, jak se pracuje v adminu a jake komponenty k tomu patri.</p>
+        <nav class="toc">
+          <a href="#research">Reference</a>
+          <a href="#v1">Search-first</a>
+          <a href="#v2">Results-first</a>
+          <a href="#v3">Map-first</a>
+          <a href="#v4">Employer-first</a>
+          <a href="#v5">Editorial</a>
+          <a href="#v6">Wizard</a>
+          <a href="#v7">Mobile feed</a>
+          <a href="#v8">Board</a>
+          <a href="#v9">Directory</a>
+          <a href="#v10">Campaign</a>
+          <a href="#v11">Detail-first</a>
+          <a href="#v12">Salary-first</a>
+          <a href="#v13">Community</a>
+          <a href="#v14">Trade</a>
+          <a href="#v15">B2B CRM</a>
+          <a href="#v16">Print + web</a>
+        </nav>
+      </div>
+      <aside class="side-note">
+        <b>Jak to pouzit</b>
+        <span>Neber to jako hotovy design, ale jako vyber moznych produktovych usporadani. Az vybereme 2-3 smery, z nich se da udelat finalni UI.</span>
+        <b>Dulezite</b>
+        <span>Kazda varianta ma jiny frontend i jiny admin pattern, aby se nerozhodovalo jen podle barvy.</span>
+      </aside>
+    </header>
+
+    <section id="research">
+      <div class="section-title">
+        <h2>Reference a pouzite patterny</h2>
+        <p>Vybral jsem patterny z velkych pracovnich portalu, ale prelozil je do reality regionalniho webu s Jalovcem, reklamou, firmami a redakcnim adminem.</p>
+      </div>
+      <div class="research-grid">
+        <article class="research-card">
+          <h3>Jobs.cz / Prace.cz</h3>
+          <p>Velke hledani, rozcestniky oboru a firem, poradna, duvera velke znacky. Prace.cz ma velmi primocary hero filtr.</p>
+          <div class="source-tags"><a href="https://www.jobs.cz/">Jobs.cz</a><a href="https://www.prace.cz/">Prace.cz</a></div>
+        </article>
+        <article class="research-card">
+          <h3>JenPrace.cz</h3>
+          <p>Filtry uz v uvodu: mzda, vhodnost, jazyk, ridicak, AI hledani a preference. Dobre pro lidi, kteri neznaji presny nazev pozice.</p>
+          <div class="source-tags"><a href="https://www.jenprace.cz/">JenPrace.cz</a></div>
+        </article>
+        <article class="research-card">
+          <h3>Indeed / Reed / SEEK</h3>
+          <p>Search engine, trending odkazy, faceted search, ulozene hledani a rychle porovnani vysledku.</p>
+          <div class="source-tags"><a href="https://www.indeed.com/">Indeed</a><a href="https://www.reed.co.uk/">Reed</a><a href="https://www.seek.com.au/">SEEK</a></div>
+        </article>
+        <article class="research-card">
+          <h3>LinkedIn / Welcome to the Jungle</h3>
+          <p>Profil uchazece, doporuceni, firemni kultura, media, employer brand a pocit, ze si clovek vybira firmu.</p>
+          <div class="source-tags"><a href="https://www.linkedin.com/jobs/">LinkedIn Jobs</a><a href="https://www.welcometothejungle.com/en">WTTJ</a></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="blueprint v1" id="v1">
+      <header class="bp-head">
+        <div><span class="bp-num">1</span><h2>Search-first homepage</h2><p>Domovska stranka je skoro cela jen vyhledavani. Zadny dlouhy hero pribeh. Prvni obrazovka ma jedno rozhodnuti: co hledam a kde.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Search box -> trendove chips -> par top nabidek -> firmy -> poradna.</span><b>Admin</b><span>Table-first: nejdulezitejsi je rychle spravovat mnoho inzeratu.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend <span class="dots"><i></i><i></i><i></i></span></div><div class="wf l-search"><div class="block dark"><h4>Minimal header</h4><p>Logo, Nabidky, Firmy, Pro firmy</p></div><div class="block tint"><h4>Obri vyhledavani</h4><p>2 pole, velke CTA, naseptavac, ulozit hledani</p><div class="btnset"><a class="button">Hledat</a><a class="button3">Ulozit alert</a></div></div><div class="block"><h4>Trending hledani</h4><div class="mini-row"><span class="pill">Vyroba</span><span class="pill">Brigady</span><span class="pill">50 000 Kč+</span></div></div><div class="block"><h4>Top nabidky</h4><p>Jen 3-4 karty, ne dlouhy katalog.</p></div><div class="block"><h4>Firmy a poradna</h4><p>Druhe patro obsahu.</p></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin <span class="dots"><i></i><i></i><i></i></span></div><div class="wf a-table"><div class="block dark"><h4>Toolbar</h4><p>Search, filtry, pridat, export</p></div><div class="block tint"><h4>Saved views</h4><div class="mini-row"><span class="pill">Aktivni</span><span class="pill">Konci</span><span class="pill">Nezaplacene</span></div></div><div class="block"><h4>Radek tabulky</h4><p>Firma, pozice, status, platba, konec, akce</p></div><div class="block"><h4>Radek tabulky</h4></div><div class="block"><h4>Radek tabulky</h4></div><div class="block"><h4>Bulk actions</h4><p>Topovat, skryt, obnovit, exportovat.</p></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Velky search, naseptavac, trend chipy, alert modal, jednoduche karty.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Hledat</a><a class="button3">Reset</a><a class="icon-button">↵</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme nejrychlejsi UX pro uchazece a nejsnazsi implementaci.</p></div><div class="component"><h3>Nevyhoda</h3><p>Menší prostor pro regionalni pribeh a Jalovec.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v2" id="v2">
+      <header class="bp-head">
+        <div><span class="bp-num">2</span><h2>Results-first katalog</h2><p>Homepage zacina rovnou jako vysledky. Clovek okamzite vidi nabidky, vlevo filtry, vpravo nahled detailu. Vhodne, kdyz mame dost inzeratu.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Search bar -> filtry + seznam + detail preview -> ulozene hledani -> firmy.</span><b>Admin</b><span>Stejna logika: tabulka s pravym detail panelem.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-results"><div class="block dark wide"><h4>Sticky search bar</h4></div><div class="block filters tint"><h4>Facet filtry</h4><p>Obor, mzda, uvazek, vhodnost, smeny.</p></div><div class="block"><h4>Karta nabidky</h4><p>Vybrana karta zvyrazni preview.</p></div><div class="block"><h4>Karta nabidky</h4></div><div class="block"><h4>Karta nabidky</h4></div><div class="block"><h4>Karta nabidky</h4></div><div class="block preview media"><h4>Detail preview</h4><p>CTA bez opusteni seznamu.</p><a class="button">Odpovedet</a></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-editor"><div class="block dark top"><h4>Admin search + global actions</h4></div><div class="block nav tint"><h4>Saved views</h4><p>Aktivni, drafty, konci, faktury.</p></div><div class="block"><h4>Datova tabulka</h4></div><div class="block"><h4>Datova tabulka</h4></div><div class="block"><h4>Datova tabulka</h4></div><div class="block side media"><h4>Detail inzeratu</h4><p>Rychla editace statusu a platby.</p></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Sidebar facety, selected card, split detail, sticky CTA, pagination/load more.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Odpovedet</a><a class="button2">Ulozit</a><a class="button3">Filtry</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Portal ma vyssi pocet nabidek a uzivatel porovnava.</p></div><div class="component"><h3>Nevyhoda</h3><p>Pro malo nabidek pusobi prazdne.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v3" id="v3">
+      <header class="bp-head">
+        <div><span class="bp-num">3</span><h2>Map-first region</h2><p>Web zacina regionem: mapa Vsetinska, mesta, dojezd, smeny. Vyhledavani je stale viditelne, ale hlavni navigace je podle mista.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Mapa -> mesta -> nabidky v okoli -> filtry dojizdeni -> detail s trasou.</span><b>Admin</b><span>Sprava lokalit, GPS, dopravnich poznamek a regionalnich slotu.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-map"><div class="block dark top"><h4>Header + search</h4></div><div class="block media map"><h4>Mapa regionu</h4><p>Vsetin, Roznov, Valmez, Karolinka.</p></div><div class="block tint"><h4>Nabidky v okoli</h4><p>Do 10 km, do 20 km, bez auta.</p></div><div class="block"><h4>Mesta a obce</h4></div><div class="block"><h4>Top nabidka</h4></div><div class="block"><h4>Dojizdeni / smeny</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-table"><div class="block dark"><h4>Lokality toolbar</h4></div><div class="block tint"><h4>Mapa kvality dat</h4><p>Obce bez GPS, firmy bez adresy.</p></div><div class="block"><h4>Firma + adresa</h4></div><div class="block"><h4>Obec + pocet nabidek</h4></div><div class="block"><h4>Doprava / smeny</h4></div><div class="block"><h4>Regionalni reklamy</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Mapa, city chips, radius slider, doprava tag, detail s trasou.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Ukazat v okoli</a><a class="button2">Trasa</a><a class="icon-button">⌖</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Hlavni hodnota je lokalnost a dojizdeni.</p></div><div class="component"><h3>Nevyhoda</h3><p>Vyžaduje presna data adres a lokalit.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v4" id="v4">
+      <header class="bp-head">
+        <div><span class="bp-num">4</span><h2>Employer-first marketplace</h2><p>Homepage neprodava jednotlive inzeraty, ale zamestnavatele. Nejdriv firmy, kultura, benefity, galerie, az potom volne pozice.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Featured firma -> employer grid -> firemni profily -> pozice -> poradna.</span><b>Admin</b><span>Editor firemnich profilu a media knihovna.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-company"><div class="block dark top"><h4>Header s odkazem Firmy</h4></div><div class="block hero-block tint"><h4>Vyberte si firmu, ne jen pozici</h4><p>Search sekundarni.</p></div><div class="block featured media"><h4>Firma tydne</h4><p>Fotky, benefity, otevrene pozice.</p></div><div class="block"><h4>Logo karta firmy</h4></div><div class="block"><h4>Logo karta firmy</h4></div><div class="block"><h4>Logo karta firmy</h4></div><div class="block"><h4>Logo karta firmy</h4></div><div class="block"><h4>Pozice ve firme</h4></div><div class="block"><h4>Firemni pribeh</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-editor"><div class="block dark top"><h4>Firma editor</h4></div><div class="block nav tint"><h4>Sekce profilu</h4><p>Logo, barvy, galerie, benefity.</p></div><div class="block"><h4>Obsah profilu</h4></div><div class="block"><h4>Galerie / video</h4></div><div class="block"><h4>Pozice firmy</h4></div><div class="block side media"><h4>Preview profilu</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Employer card, galerie, benefit badges, firemni landing page, brand color.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Zobrazit firmu</a><a class="button2">Sledovat</a><a class="button3">Pozice</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme prodavat vetsi firemni balicky.</p></div><div class="component"><h3>Nevyhoda</h3><p>Firmy musi dodat obsah, jinak smer ztraci silu.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v5" id="v5">
+      <header class="bp-head">
+        <div><span class="bp-num">5</span><h2>Editorial / Jalovec magazin</h2><p>Web je pracovni rubrika lokalniho media. Prvni je aktualni tema, vydani Jalovce, partner tydne a redakcni vyber. Hledani je stale nahore, ale neni jediny pribeh.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Vydani/tema -> search -> redakcni vyber -> Jalovec -> poradna -> nabidky.</span><b>Admin</b><span>Publikacni kalendar a sprava vydani.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-editorial"><div class="block dark top"><h4>Novinovy header</h4></div><div class="block issue media"><h4>Aktualni vydani Jalovce</h4><p>Obalka, partner, tiskovy inzerat.</p></div><div class="block tint"><h4>Search box</h4></div><div class="block"><h4>Redakcni vyber nabidek</h4></div><div class="block"><h4>Clanek poradny</h4></div><div class="block"><h4>Obory a lokality</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-calendar"><div class="block dark top"><h4>Publikacni kalendar</h4></div><div class="block tint"><h4>Po</h4></div><div class="block"><h4>Ut</h4></div><div class="block media"><h4>St vydani</h4></div><div class="block"><h4>Ct</h4></div><div class="block"><h4>Pa</h4></div><div class="block"><h4>So</h4></div><div class="block"><h4>Ne</h4></div><div class="block"><h4>Partner tydne</h4></div><div class="block"><h4>Reklama</h4></div><div class="block"><h4>Top inzerat</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Issue card, editorial card, partner block, advertorial label, PDF/letak.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Hledat práci</a><a class="button2">Jalovec</a><a class="button3">Cist radu</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme co nejvic vyuzit lokalni media brand.</p></div><div class="component"><h3>Nevyhoda</h3><p>Hledani prace muze byt mene primocare.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v6" id="v6">
+      <header class="bp-head">
+        <div><span class="bp-num">6</span><h2>Preference wizard</h2><p>Uživatel nezačíná katalogem, ale jednoduchým průvodcem: co umím, kde můžu pracovat, kolik chci, kdy můžu nastoupit. Výsledek jsou doporučené nabídky.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>3 kroky -> vysledek shody -> ulozit preference -> nabidky.</span><b>Admin</b><span>Data-quality admin: tagy, vhodnost, mzda, smeny.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-wizard"><div class="block dark top"><h4>Header</h4></div><div class="block steps tint"><h4>Krok 1 / 2 / 3</h4><p>Obor -> misto -> podminky</p></div><div class="block"><h4>Vyber oboru</h4><div class="mini-row"><span class="pill">Vyroba</span><span class="pill">Admin</span></div></div><div class="block"><h4>Vyber podminek</h4></div><div class="block"><h4>Mzda a smeny</h4></div><div class="block media"><h4>Shoda 92 %</h4></div><div class="block"><h4>Doporucena nabidka</h4></div><div class="block"><h4>Doporucena nabidka</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-table"><div class="block dark"><h4>Kvalita dat</h4></div><div class="block tint"><h4>Inzeraty bez tagu</h4></div><div class="block"><h4>Chybi mzda</h4></div><div class="block"><h4>Chybi smeny</h4></div><div class="block"><h4>Chybi vhodnost</h4></div><div class="block"><h4>Synonyma profesi</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Stepper, segmented controls, match score, preference chips, saved profile.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Pokračovat</a><a class="button2">AI navrhnout</a><a class="button3">Preskocit</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme pomoct lidem, kteri nevi presny nazev pozice.</p></div><div class="component"><h3>Nevyhoda</h3><p>Vetsi narok na data a logiku doporuceni.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v7" id="v7">
+      <header class="bp-head">
+        <div><span class="bp-num">7</span><h2>Mobile-first job feed</h2><p>Navrh primarne pro mobil. Homepage je feed karet, bottom navigation, rychle filtry a swipe/ulozeni. Desktop je az rozsireni mobilniho principu.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Feed -> sticky filtry -> detail modal -> odpovedet -> ulozit.</span><b>Admin</b><span>Mobile admin pro rychle schvaleni, opravu a volani firme.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend mobile</div><div class="wf l-mobile"><div class="block dark"><h4>Top app bar</h4></div><div class="block tint"><h4>Search + chips</h4></div><div class="block"><h4>Job card feed</h4><p>Mzda, obec, firma, ulozit.</p></div><div class="block media"><h4>Top job</h4></div><div class="block"><h4>Job card feed</h4></div><div class="block"><h4>Job card feed</h4></div><div class="block dark"><h4>Bottom nav</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin mobile</div><div class="wf a-mobile"><div class="block dark"><h4>Admin app bar</h4></div><div class="block tint"><h4>Ukol dnes</h4></div><div class="block"><h4>Schvalit inzerat</h4></div><div class="block"><h4>Zavolat firmě</h4></div><div class="block"><h4>Reakce uchazece</h4></div><div class="block"><h4>Faktura</h4></div><div class="block dark"><h4>Bottom actions</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Bottom nav, job feed card, filter drawer, save button, sticky apply bar.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Odpovedet</a><a class="icon-button">♡</a><a class="icon-button">☎</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Vetsina navstev je z mobilu a hledani je rychle.</p></div><div class="component"><h3>Nevyhoda</h3><p>Desktop muze pusobit mene bohaty.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v8" id="v8">
+      <header class="bp-head">
+        <div><span class="bp-num">8</span><h2>Oborovy board</h2><p>Homepage je tabule podle oboru: výroba, doprava, administrativa, služby. Uživatel nejdřív vybere „polici“, až potom konkrétní nabídku.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Oborove sloupce -> top pozice v kazdem oboru -> filtr -> detail.</span><b>Admin</b><span>Kanban podle stavu inzeratu nebo podle obchodniho procesu.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-board"><div class="block dark top"><h4>Header</h4></div><div class="block tint search"><h4>Search + oborove taby</h4></div><div class="block"><h4>Výroba</h4></div><div class="block"><h4>Doprava</h4></div><div class="block"><h4>Admin</h4></div><div class="block"><h4>Služby</h4></div><div class="block"><h4>Job</h4></div><div class="block"><h4>Job</h4></div><div class="block"><h4>Job</h4></div><div class="block"><h4>Job</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin kanban</div><div class="wf a-kanban"><div class="block dark top"><h4>Pipeline</h4></div><div class="block tint"><h4>Koncept</h4></div><div class="block tint"><h4>Ke kontrole</h4></div><div class="block tint"><h4>Publikovano</h4></div><div class="block tint"><h4>Konci</h4></div><div class="block"><h4>Karta</h4></div><div class="block"><h4>Karta</h4></div><div class="block"><h4>Karta</h4></div><div class="block"><h4>Karta</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Board columns, obor taby, compact cards, drag/drop admin.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Otevrit obor</a><a class="button3">Vsechny</a><a class="icon-button">↔</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme zduraznit obory a rychly prehled.</p></div><div class="component"><h3>Nevyhoda</h3><p>Hure funguje, kdyz je malo nabidek v nekterych oborech.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v9" id="v9">
+      <header class="bp-head">
+        <div><span class="bp-num">9</span><h2>Katalog oboru a profesi</h2><p>Domaci stranka je SEO rozcestnik: obory, profese, lokality, firmy. Search je sekundarni, hlavni je browsovani.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Kategorie -> profese -> lokality -> popularni hledani -> nabidky.</span><b>Admin</b><span>Ciselnikovy admin a sprava landing pages.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-directory"><div class="block dark top"><h4>Header</h4></div><div class="block tint search"><h4>Menší search + SEO intro</h4></div><div class="block span2"><h4>Výroba</h4></div><div class="block span2"><h4>Administrativa</h4></div><div class="block span2"><h4>Doprava</h4></div><div class="block span2"><h4>Vsetín</h4></div><div class="block span2"><h4>Rožnov</h4></div><div class="block span2"><h4>Valmez</h4></div><div class="block"><h4>Profese</h4></div><div class="block"><h4>Profese</h4></div><div class="block"><h4>Profese</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-table"><div class="block dark"><h4>Číselníky</h4></div><div class="block tint"><h4>Landing pages</h4></div><div class="block"><h4>Obor + slug + SEO text</h4></div><div class="block"><h4>Profese + synonyma</h4></div><div class="block"><h4>Lokalita + okres</h4></div><div class="block"><h4>Interní linkování</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Category tile, profession list, city landing, popular search chips.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Zobrazit obor</a><a class="button3">Vsechny profese</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme silny organicky obsah a long-tail vyhledavani.</p></div><div class="component"><h3>Nevyhoda</h3><p>Mene dynamicky prvni dojem.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v10" id="v10">
+      <header class="bp-head">
+        <div><span class="bp-num">10</span><h2>Kampanovy landing page</h2><p>Prvni obrazovka je velky partner tydne nebo naborova kampan. Search je pod tim. Web se chova vice jako reklamni produkt.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Partner/kampan -> top pozice kampane -> search -> dalsi nabidky.</span><b>Admin</b><span>Kalendar slotu, kampane, fakturace, reporty.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-campaign"><div class="block dark top"><h4>Header</h4></div><div class="block media sponsor"><h4>Partner tydne</h4><p>Velky vizual, logo, CTA, web + tisk.</p></div><div class="block tint"><h4>Search pod kampani</h4></div><div class="block"><h4>Top pozice partnera</h4></div><div class="block"><h4>Jine nabidky</h4></div><div class="block"><h4>Balicek pro firmy</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin calendar</div><div class="wf a-calendar"><div class="block dark top"><h4>Kalendar kampani</h4></div><div class="block"><h4>Po</h4></div><div class="block media"><h4>Partner</h4></div><div class="block"><h4>St</h4></div><div class="block"><h4>Ct</h4></div><div class="block tint"><h4>Banner</h4></div><div class="block"><h4>So</h4></div><div class="block"><h4>Ne</h4></div><div class="block"><h4>Faktura</h4></div><div class="block"><h4>Report</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Campaign hero, sponsor badge, slot calendar, report card, invoice status.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Odpovedet</a><a class="button2">Pro firmy</a><a class="button3">Report</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Priorita je monetizace a prodej topovani.</p></div><div class="component"><h3>Nevyhoda</h3><p>Hledani prace je az druhe v poradi.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v11" id="v11">
+      <header class="bp-head">
+        <div><span class="bp-num">11</span><h2>Detail-first curated job</h2><p>Homepage ukazuje jednu vybranou nabidku skoro jako detail. Uživatel neprochazi katalog, ale dostane silny vyber a vedle nej alternativy.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Featured detail -> podobne nabidky -> search -> dalsi kategorie.</span><b>Admin</b><span>Kuratorsky vyber, rucni topovani, redakcni poznamky.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-detailfirst"><div class="block dark top"><h4>Header</h4></div><div class="block media detail"><h4>Featured job detail</h4><p>Nadpis, mzda, firma, foto, CTA.</p><a class="button">Odpovedet</a></div><div class="block tint"><h4>Podobne nabidky</h4></div><div class="block"><h4>Search</h4></div><div class="block"><h4>Firma</h4></div><div class="block"><h4>Jalovec / reklama</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin</div><div class="wf a-kanban"><div class="block dark top"><h4>Editorial pick board</h4></div><div class="block tint"><h4>Kandidati</h4></div><div class="block tint"><h4>Vybrane</h4></div><div class="block tint"><h4>Homepage</h4></div><div class="block tint"><h4>Archiv</h4></div><div class="block"><h4>Job card</h4></div><div class="block media"><h4>Featured</h4></div><div class="block"><h4>Job card</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Featured job hero, curated label, similar jobs rail, editorial notes.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Odpovedet</a><a class="button2">Ulozit</a><a class="button3">Dalsi podobne</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme homepage jako redakcni vyber, ne katalog.</p></div><div class="component"><h3>Nevyhoda</h3><p>Vyžaduje pravidelnou kuraci.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v12" id="v12">
+      <header class="bp-head">
+        <div><span class="bp-num">12</span><h2>Salary-first portal</h2><p>Hlavni vstup je mzda. Lide si vybírají podle platových pásem, kalkulačky čisté mzdy a porovnání oborů.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Mzdova kalkulacka -> platova pasma -> nabidky -> poradna.</span><b>Admin</b><span>Finance, balicky, mzdove tagy a faktury viditelnejsi nez jinde.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-salary"><div class="block dark top"><h4>Header</h4></div><div class="block tint calc"><h4>Kalkulacka mzdy + search</h4><p>Hruba/cista mzda, pasma, obor.</p></div><div class="block"><h4>30-40k</h4></div><div class="block"><h4>40-50k</h4></div><div class="block"><h4>50k+</h4></div><div class="block"><h4>Bez mzdy</h4></div><div class="block media"><h4>Top plat</h4></div><div class="block"><h4>Job</h4></div><div class="block"><h4>Job</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin finance</div><div class="wf a-table"><div class="block dark"><h4>Finance toolbar</h4></div><div class="block tint"><h4>Revenue / faktury / balicky</h4></div><div class="block"><h4>Inzerat + cena + status platby</h4></div><div class="block"><h4>Balicek</h4></div><div class="block"><h4>Export faktur</h4></div><div class="block"><h4>Mzdova data</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Salary band cards, calculator, gross/net toggle, salary visible badge.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Spočítat</a><a class="button2">Nabídky 50k+</a><a class="button3">Export</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Mzda ma byt hlavni diferenciator.</p></div><div class="component"><h3>Nevyhoda</h3><p>Mnoho inzeratu mzdu neuvadi.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v13" id="v13">
+      <header class="bp-head">
+        <div><span class="bp-num">13</span><h2>Community noticeboard</h2><p>Lokální nástěnka: práce, brigády, krátké výzvy, firmy, akce, vydání. Hustší, méně marketingové, více „co je nového v okolí“.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Dnes nove -> kratke inzeraty -> firmy -> Jalovec -> archiv.</span><b>Admin</b><span>Rychle pridani kratkeho inzeratu a moderace.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-directory"><div class="block dark top"><h4>Lokální nástěnka</h4></div><div class="block tint search"><h4>Dnes nove + search</h4></div><div class="block"><h4>Krátký inzerát</h4></div><div class="block"><h4>Krátký inzerát</h4></div><div class="block media"><h4>Jalovec</h4></div><div class="block"><h4>Brigáda</h4></div><div class="block"><h4>Firma</h4></div><div class="block"><h4>Akce</h4></div><div class="block"><h4>Top</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin moderation</div><div class="wf a-kanban"><div class="block dark top"><h4>Moderace</h4></div><div class="block tint"><h4>Nove</h4></div><div class="block tint"><h4>Overit</h4></div><div class="block tint"><h4>Publikovat</h4></div><div class="block tint"><h4>Archiv</h4></div><div class="block"><h4>Kratky inzerat</h4></div><div class="block"><h4>Telefonat</h4></div><div class="block"><h4>Schvaleno</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Notice card, compact list, date badge, quick submit, moderation status.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Přidat inzerát</a><a class="button3">Filtrovat</a><a class="icon-button">+</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme hodne lokalni a rychly charakter.</p></div><div class="component"><h3>Nevyhoda</h3><p>Muze pusobit mene premium.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v14" id="v14">
+      <header class="bp-head">
+        <div><span class="bp-num">14</span><h2>Trade & manual jobs</h2><p>Specifický layout pro řemesla, výrobu a provoz: velké boxy „mzda, směny, nástup, telefon“, minimum textu, rychlé zavolání.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Prakticke parametry -> zavolat -> fotka provozu -> podobne smeny.</span><b>Admin</b><span>Telefonni workflow a checklist chybejicich udaju.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-detailfirst"><div class="block dark top"><h4>Header + volat CTA</h4></div><div class="block media detail"><h4>Prace ve vyrobe</h4><p>Mzda, smeny, nastup, telefon.</p><div class="btnset"><a class="button">Zavolat</a><a class="button3">Poslat CV</a></div></div><div class="block tint"><h4>Mzda</h4></div><div class="block tint"><h4>Směny</h4></div><div class="block tint"><h4>Nástup</h4></div><div class="block"><h4>Podobné provozy</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin checklist</div><div class="wf a-crm"><div class="block dark top"><h4>Telefonni agenda</h4></div><div class="block profile tint"><h4>Firma / kontakt</h4><p>Telefon, poznamky, posledni hovor.</p></div><div class="block"><h4>Doplnit mzdu</h4></div><div class="block"><h4>Doplnit smeny</h4></div><div class="block"><h4>Overit nastup</h4></div><div class="block"><h4>Publikovat</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Call button, facts grid, shift chips, phone notes, checklist.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Zavolat</a><a class="button2">SMS/e-mail</a><a class="button3">Detail</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Hlavni segment jsou provozni a manualni pozice.</p></div><div class="component"><h3>Nevyhoda</h3><p>Mene univerzalni pro kancelarske role.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v15" id="v15">
+      <header class="bp-head">
+        <div><span class="bp-num">15</span><h2>B2B recruiter CRM</h2><p>Veřejný web může být jednoduchý, ale admin je obchodní CRM: firmy, nabídky, kampaně, faktury, reakce a historie komunikace.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Frontend klidny katalog, admin CRM je hlavni produkt.</span><b>Admin</b><span>Firma-first CRM s timeline a obchodnim pipeline.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-search"><div class="block dark"><h4>Jednoduchy web</h4></div><div class="block tint"><h4>Search + firmy</h4></div><div class="block"><h4>Nabidky</h4></div><div class="block"><h4>Pro firmy CTA</h4></div><div class="block"><h4>Cenik / balicky</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin CRM</div><div class="wf a-crm"><div class="block dark top"><h4>Firma search</h4></div><div class="block profile media"><h4>Profil firmy</h4><p>Kontakty, smlouvy, historie, faktury.</p></div><div class="block tint"><h4>Obchodni pipeline</h4></div><div class="block"><h4>Aktivni inzeraty</h4></div><div class="block"><h4>Reakce uchazecu</h4></div><div class="block"><h4>Faktury a kampane</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Company CRM profile, timeline, contact cards, invoices, campaign history.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Nová nabídka</a><a class="button2">Faktura</a><a class="button3">Poznámka</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Priorita je provoz a obchod, ne jen veřejný katalog.</p></div><div class="component"><h3>Nevyhoda</h3><p>Vetsi rozsah administrace.</p></div></div>
+      </div>
+    </section>
+
+    <section class="blueprint v16" id="v16">
+      <header class="bp-head">
+        <div><span class="bp-num">16</span><h2>Print + web inzertni system</h2><p>Speciálně pro spojení chcupracu.cz a Jalovce. Každý inzerát má webovou a tiskovou stopu, sloty, vydání a export do tisku.</p></div>
+        <aside class="decision"><b>Poradi obsahu</b><span>Aktualni vydani -> prace z tisku -> online nabidky -> reklamy.</span><b>Admin</b><span>Vydani-first admin: cislo Jalovce, export, sloty, webove varianty.</span></aside>
+      </header>
+      <div class="bp-body">
+        <div class="wire-grid">
+          <article class="wire-card"><div class="wire-title">Frontend</div><div class="wf l-editorial"><div class="block dark top"><h4>Jalovec + práce</h4></div><div class="block issue media"><h4>Aktualni vydani</h4><p>Obalka, PDF, partner tydne.</p></div><div class="block tint"><h4>Hledat online</h4></div><div class="block"><h4>Z tisku</h4></div><div class="block"><h4>Online top</h4></div><div class="block"><h4>Reklamni slot</h4></div></div></article>
+          <article class="wire-card"><div class="wire-title">Admin vydani</div><div class="wf a-editor"><div class="block dark top"><h4>Vydani Jalovce</h4></div><div class="block nav tint"><h4>Web / tisk / sloty</h4></div><div class="block"><h4>Inzerat web</h4></div><div class="block"><h4>Inzerat tisk</h4></div><div class="block"><h4>Export do tisku</h4></div><div class="block side media"><h4>Nahled vydani</h4></div></div></article>
+        </div>
+        <div class="component-grid"><div class="component"><h3>Komponenty</h3><p>Issue manager, print badge, PDF preview, slot select, web/tisk toggle.</p></div><div class="component"><h3>Tlacitka</h3><div class="btnset"><a class="button">Online odpoved</a><a class="button2">Export</a><a class="button3">Nahled tisku</a></div></div><div class="component"><h3>Vhodne kdyz</h3><p>Chceme nejvice vyuzit spojeni web + Jalovec.</p></div><div class="component"><h3>Nevyhoda</h3><p>Je to mene obecny job board a vice inzertni system.</p></div></div>
+      </div>
+    </section>
+
+    <section id="recommendation">
+      <div class="section-title">
+        <h2>Jak bych vybiral dal</h2>
+        <p>Teď už nejde o barvy, ale o rozhodnutí, co má být hlavní produktová myšlenka portálu.</p>
+      </div>
+      <div class="recommend-grid">
+        <article class="recommend-card"><h3>Nejbezpecnejsi pro start</h3><p>1 Search-first + admin 2 Results/table. Rychle, ciste, dobre implementovatelne.</p></article>
+        <article class="recommend-card"><h3>Nejvic regionalni</h3><p>3 Map-first + 16 Print/web. Silne odliseni od generickych job boardu.</p></article>
+        <article class="recommend-card"><h3>Nejlepsi pro obchod</h3><p>4 Employer-first + 10 Campaign + 15 CRM. Dava jasny produkt firmam.</p></article>
+        <article class="recommend-card"><h3>Muj hybrid</h3><p>Homepage: 1 + 3 + 16. Detail: 14 pro manualni pozice a 4 pro firemni profily. Admin: 2 + 15 + 16.</p></article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

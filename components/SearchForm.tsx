@@ -7,6 +7,7 @@ import type { getFilters, JobSearchParams } from "@/lib/queries";
 
 type Filters = Awaited<ReturnType<typeof getFilters>>;
 const fieldValue = (value?: string | string[]) => (Array.isArray(value) ? value[0] ?? "" : value ?? "");
+const fieldValues = (value?: string | string[]) => (Array.isArray(value) ? value : value ? [value] : []).filter(Boolean);
 
 export function SearchForm({
   action = "/jobs#vysledky",
@@ -23,10 +24,11 @@ export function SearchForm({
 }) {
   const [query, setQuery] = useState(fieldValue(values.q));
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const selectedCities = useMemo(() => fieldValues(values.city), [values.city]);
   const activeChips = useMemo(() => {
     const entries = [
       { key: "q", value: fieldValue(values.q), label: fieldValue(values.q) },
-      { key: "city", value: fieldValue(values.city), label: filters.cities.find((item) => item.slug === fieldValue(values.city))?.name },
+      ...fieldValues(values.city).map((city) => ({ key: "city", value: city, label: filters.cities.find((item) => item.slug === city)?.name })),
       { key: "category", value: fieldValue(values.category), label: filters.categories.find((item) => item.slug === fieldValue(values.category))?.name },
       { key: "education", value: fieldValue(values.education), label: filters.educations.find((item) => item.slug === fieldValue(values.education))?.name },
       { key: "employment", value: fieldValue(values.employment), label: filters.employmentTypes.find((item) => item.slug === fieldValue(values.employment))?.name },
@@ -37,11 +39,14 @@ export function SearchForm({
     ];
     return entries.filter((item) => item.value && item.label);
   }, [filters, values]);
-  const chipHref = (key: string) => {
+  const chipHref = (key: string, valueToRemove?: string) => {
     const params = new URLSearchParams();
     for (const [name, value] of Object.entries(values)) {
-      const first = fieldValue(value);
-      if (first && name !== key) params.set(name, first);
+      const allValues = fieldValues(value);
+      for (const item of allValues) {
+        if (name === key && (!valueToRemove || item === valueToRemove)) continue;
+        params.append(name, item);
+      }
     }
     return `/jobs${params.size ? `?${params}` : ""}#vysledky`;
   };
@@ -100,17 +105,18 @@ export function SearchForm({
           </div>
         )}
       </label>
-      <label className={compact ? "filter-field" : "search-field"}>
-        {compact && <span>Lokalita</span>}
-        <select className="select" name="city" defaultValue={fieldValue(values.city)}>
-          <option value="">Vsetín a okolí</option>
-          {filters.cities.map((city) => (
-            <option key={city.id} value={city.slug}>
-              {city.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!compact && (
+        <label className="search-field">
+          <select className="select" name="city" defaultValue={fieldValue(values.city)}>
+            <option value="">Vsetín a okolí</option>
+            {filters.cities.map((city) => (
+              <option key={city.id} value={city.slug}>
+                {city.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {!compact && (
         <button className="button" type="submit">
           <Search size={18} /> Hledat
@@ -118,6 +124,17 @@ export function SearchForm({
       )}
       {compact && (
         <>
+          <fieldset className="filter-field filter-check-group">
+            <legend>Lokalita</legend>
+            <div className="filter-check-list">
+              {filters.cities.map((city) => (
+                <label className="filter-check" key={city.id}>
+                  <input name="city" type="checkbox" value={city.slug} defaultChecked={selectedCities.includes(city.slug)} />
+                  <span>{city.name}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label className="filter-field">
             <span>Obor</span>
             <select className="select" name="category" defaultValue={fieldValue(values.category)}>
@@ -181,7 +198,7 @@ export function SearchForm({
           {activeChips.length > 0 && (
             <div className="active-filter-chips">
               {activeChips.map((chip) => (
-                <Link className="filter-chip" href={chipHref(chip.key)} key={chip.key}>
+                <Link className="filter-chip" href={chipHref(chip.key, chip.value)} key={`${chip.key}-${chip.value}`}>
                   {chip.label} <span>×</span>
                 </Link>
               ))}
