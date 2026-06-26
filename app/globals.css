@@ -2139,6 +2139,378 @@ a.nav-click-pending,
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Admin design pass: shared controls, tables and operational density. */
+.admin-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-toolbar {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-form-section {
+  display: grid;
+  gap: 16px;
+}
+
+.button,
+.renew-package-button,
+.renew-choice-button,
+.admin-mini-button,
+.admin-icon-link,
+.job-action-icon {
+  --button-bg: var(--brand);
+  --button-border: var(--brand);
+  --button-color: #fff;
+  min-height: 40px;
+  border: 1px solid var(--button-border);
+  border-radius: 7px;
+  background: var(--button-bg);
+  color: var(--button-color);
+  font-size: 14px;
+  font-weight: 780;
+  line-height: 1;
+  box-shadow: none;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.button:hover,
+.renew-package-button:hover,
+.renew-choice-button:hover,
+.admin-mini-button:hover,
+.admin-icon-link:hover,
+.job-action-icon:hover {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-border) 13%, transparent);
+  transform: none;
+}
+
+.button:focus-visible,
+.renew-package-button:focus-visible,
+.renew-choice-button:focus-visible,
+.admin-mini-button:focus-visible,
+.admin-icon-link:focus-visible,
+.job-action-icon:focus-visible,
+.admin-nav a:focus-visible,
+.admin-nav button:focus-visible,
+.jobs-status-tabs a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  outline-offset: 2px;
+}
+
+.button.secondary,
+.button.ghost,
+.admin-mini-button,
+.admin-icon-link,
+.job-action-icon {
+  --button-bg: #fff;
+  --button-border: var(--line-strong);
+  --button-color: var(--ink-soft);
+}
+
+.button.secondary:hover,
+.admin-mini-button:hover,
+.admin-icon-link:hover,
+.job-action-icon:hover {
+  --button-border: color-mix(in srgb, var(--accent) 42%, var(--line));
+  --button-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.button.ghost {
+  --button-bg: transparent;
+}
+
+.button.danger,
+.job-action-icon.danger {
+  --button-bg: var(--danger);
+  --button-border: var(--danger);
+  --button-color: #fff;
+}
+
+.button.danger:hover,
+.job-action-icon.danger:hover {
+  background: #991b1b;
+  color: #fff;
+}
+
+.button.toolbar {
+  --button-bg: var(--surface-soft);
+  --button-border: var(--line);
+  --button-color: var(--ink-soft);
+}
+
+.button.compact {
+  min-height: 34px;
+  padding: 8px 11px;
+  font-size: 13px;
+}
+
+.button.icon,
+.job-action-icon,
+.admin-icon-link {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.status-pill {
+  min-height: 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.status-pill.tone-neutral {
+  border-color: var(--line);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.status-pill.tone-info {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.status-pill.tone-success {
+  border-color: color-mix(in srgb, var(--success) 18%, var(--line));
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.status-pill.tone-warning {
+  border-color: color-mix(in srgb, var(--warning) 18%, var(--line));
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.status-pill.tone-danger {
+  border-color: color-mix(in srgb, var(--danger) 18%, var(--line));
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.admin-empty-state {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  padding: 18px;
+}
+
+.admin-empty-state span {
+  color: var(--muted);
+}
+
+.jobs-command-panel {
+  position: sticky;
+  top: 18px;
+  z-index: 12;
+  border-color: color-mix(in srgb, var(--line) 78%, #fff);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.jobs-kpi-grid.admin-stat-grid.compact {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.jobs-table-board {
+  padding: 0;
+}
+
+.jobs-table-board .jobs-board-head {
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 18px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  min-width: 920px;
+}
+
+.admin-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.admin-table tbody tr {
+  transition: background-color 0.14s ease;
+}
+
+.admin-table tbody tr:hover {
+  background: #fbfcfe;
+}
+
+.jobs-admin-table th,
+.jobs-admin-table td {
+  padding: 13px 14px;
+}
+
+.jobs-title-cell {
+  min-width: 280px;
+}
+
+.jobs-title-cell strong,
+.jobs-title-cell span,
+.jobs-title-cell small,
+.jobs-table-meta strong,
+.jobs-table-meta span {
+  display: block;
+}
+
+.jobs-title-cell a strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.jobs-title-cell a:hover strong {
+  color: var(--brand-strong);
+}
+
+.jobs-title-cell span,
+.jobs-title-cell small,
+.jobs-table-meta span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.jobs-table-meta {
+  display: grid;
+  gap: 4px;
+  min-width: 130px;
+}
+
+.jobs-table-meta strong {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.admin-status-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 122px;
+}
+
+.row-renew-form {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) auto;
+  gap: 7px;
+  min-width: 230px;
+}
+
+.row-renew-form select {
+  min-height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink-soft);
+  padding: 7px 30px 7px 9px;
+  font-size: 12px;
+}
+
+.jobs-warning-row.compact {
+  margin-top: 7px;
+  gap: 5px;
+}
+
+.jobs-warning-row.compact span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  font-size: 11px;
+}
+
+.jobs-action-strip.compact {
+  flex-wrap: nowrap;
+}
+
+.admin-record-tabs {
+  position: sticky;
+  top: 18px;
+  z-index: 11;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow-soft);
+  padding: 8px;
+  backdrop-filter: blur(12px);
+}
+
+.admin-record-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 780;
+}
+
+.admin-record-tabs a:hover {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+
+.job-admin-overview-grid {
+  align-items: stretch;
+}
+
+.job-admin-overview-grid .admin-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.job-admin-overview-grid .admin-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.job-admin-overview-grid .admin-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.review-panel {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+}
+
+.review-actions-grid {
+  align-items: stretch;
+}
+
+.review-action-card .button {
+  justify-self: start;
+}
+
 .client-auth-page {
   width: min(var(--max), calc(100% - 40px));
   margin: 0 auto;
@@ -2467,12 +2839,14 @@ a.nav-click-pending,
 
 .review-panel {
   margin: 18px 0;
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
 }
 
 .review-actions-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-items: stretch;
   margin: 16px 0;
 }
 
@@ -2483,6 +2857,10 @@ a.nav-click-pending,
   border-radius: var(--radius);
   background: var(--surface-soft);
   padding: 12px;
+}
+
+.review-action-card .button {
+  justify-self: start;
 }
 
 .status-submitted,
@@ -2576,6 +2954,7 @@ a.nav-click-pending,
 
   .admin-stat-grid,
   .admin-stat-grid.compact,
+  .jobs-kpi-grid.admin-stat-grid.compact,
   .admin-tile-grid,
   .quick-grid,
   .company-grid,
@@ -2759,6 +3138,16 @@ a.nav-click-pending,
     grid-template-columns: 1fr;
   }
 
+  .admin-record-tabs,
+  .jobs-command-panel {
+    position: static;
+  }
+
+  .row-renew-form {
+    grid-template-columns: 1fr;
+    min-width: 190px;
+  }
+
   .dictionary-edit-row {
     grid-template-columns: 1fr;
   }
@@ -2811,6 +3200,7 @@ a.nav-click-pending,
   .commercial-grid,
   .admin-stat-grid,
   .admin-stat-grid.compact,
+  .jobs-kpi-grid.admin-stat-grid.compact,
   .admin-tile-grid,
   .jobs-ops-sections,
   .placement-slot-grid,

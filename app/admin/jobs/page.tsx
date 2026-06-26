@@ -9,17 +9,19 @@ import {
   Eye,
   FilePenLine,
   Flame,
-  Gauge,
-  PackageCheck,
   Plus,
-  RotateCw,
   Search,
   Send,
   ShieldOff,
   Sparkles
 } from "lucide-react";
 import { expireJob, renewJob } from "@/lib/actions/jobs";
+import { AdminDataTable } from "@/components/AdminDataTable";
+import { AdminEmptyState } from "@/components/AdminEmptyState";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { AdminShell } from "@/components/AdminShell";
+import { AdminStatusPill } from "@/components/AdminStatusPill";
+import { AdminToolbar } from "@/components/AdminToolbar";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { dateCs, money, salaryRange } from "@/lib/format";
 import { requirePermission } from "@/lib/auth";
@@ -47,6 +49,12 @@ const viewTabs = [
   { key: "top", label: "Topované", icon: Flame },
   { key: "EXPIRED", label: "Expirované", icon: ShieldOff }
 ];
+
+const paymentStatusLabels: Record<PaymentStatus, string> = {
+  UNPAID: "Nezaplaceno",
+  PAID: "Zaplaceno",
+  CANCELLED: "Storno"
+};
 
 function withParams(params: JobsSearchParams, patch: JobsSearchParams) {
   const next = new URLSearchParams();
@@ -79,6 +87,28 @@ function jobWarnings(job: {
   if (job.isTop && job.topUntil && job.topUntil < new Date()) warnings.push("Topování skončilo");
   if (!job.contactEmail) warnings.push("Chybí kontaktní e-mail");
   return warnings;
+}
+
+function jobStatusTone(status: JobStatus) {
+  if (status === JobStatus.ACTIVE) return "success";
+  if (status === JobStatus.PENDING_PAYMENT || status === JobStatus.DRAFT) return "warning";
+  if (status === JobStatus.EXPIRED || status === JobStatus.ARCHIVED) return "danger";
+  return "neutral";
+}
+
+function reviewStatusTone(status: JobReviewStatus) {
+  if (status === JobReviewStatus.APPROVED) return "success";
+  if (status === JobReviewStatus.SUBMITTED || status === JobReviewStatus.IN_REVIEW) return "info";
+  if (status === JobReviewStatus.CHANGES_REQUESTED || status === JobReviewStatus.DRAFT) return "warning";
+  if (status === JobReviewStatus.REJECTED) return "danger";
+  return "neutral";
+}
+
+function paymentStatusTone(status?: PaymentStatus) {
+  if (status === PaymentStatus.PAID) return "success";
+  if (status === PaymentStatus.UNPAID) return "warning";
+  if (status === PaymentStatus.CANCELLED) return "danger";
+  return "neutral";
 }
 
 export default async function AdminJobsPage({ searchParams }: { searchParams: Promise<JobsSearchParams> }) {
@@ -168,18 +198,18 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
 
   return (
     <AdminShell>
-      <div className="admin-page-head">
-        <div>
-          <span className="admin-kicker">Pracovní nabídky</span>
-          <h1>Inzeráty</h1>
-          <p>Operační přehled publikace, balíčků, topování, výkonu a rychlých akcí pro redakci.</p>
-        </div>
-        <Link className="button" href="/admin/jobs/new">
-          <Plus size={18} /> Přidat inzerát
-        </Link>
-      </div>
+      <AdminPageHeader
+        actions={
+          <Link className="button" href="/admin/jobs/new">
+            <Plus size={18} /> Přidat inzerát
+          </Link>
+        }
+        description="Kompaktní provozní přehled publikace, schvalování, plateb, výkonu a rychlých akcí."
+        eyebrow="Pracovní nabídky"
+        title="Inzeráty"
+      />
 
-      <section className="admin-stat-grid compact">
+      <section className="admin-stat-grid compact jobs-kpi-grid">
         <article className="admin-stat"><span>Aktivní</span><strong>{jobCounts.active}</strong><small>veřejně dostupné nabídky</small></article>
         <article className="admin-stat"><span>Na homepage</span><strong>{jobCounts.homepage}</strong><small>vybrané pro titulní stranu</small></article>
         <article className="admin-stat"><span>Čeká platba</span><strong>{pendingJobs}</strong><small>potřebuje obchodní kontrolu</small></article>
@@ -188,7 +218,7 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
         <article className="admin-stat"><span>Topované</span><strong>{topJobs}</strong><small>aktivní zvýraznění</small></article>
       </section>
 
-      <section className="jobs-command-panel">
+      <AdminToolbar className="jobs-command-panel">
         <nav className="jobs-status-tabs" aria-label="Stavy inzerátů">
           {viewTabs.map((tab) => {
             const Icon = tab.icon;
@@ -237,99 +267,122 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
           <Link className="button secondary" href="/admin/jobs">Vyčistit</Link>
         </form>
         <p className="jobs-result-note">Zobrazeno {jobs.length} z {totalMatches} nalezených inzerátů. Přehled je omezený na prvních 100 položek.</p>
-      </section>
+      </AdminToolbar>
 
-      <section className="jobs-board">
+      <section className="jobs-board jobs-table-board">
         <div className="jobs-board-head">
           <div>
             <span className="admin-kicker">Správa inzerátů</span>
-            <h2>Publikace, balíčky a výkon</h2>
+            <h2>Operační tabulka</h2>
           </div>
           <span>{jobs.length} položek</span>
         </div>
 
-        <div className="jobs-ops-list">
-          {jobs.map((job) => {
-            const warnings = jobWarnings(job);
-            const remaining = daysUntil(job.activeUntil);
-            const invoice = job.invoices[0];
-            return (
-              <article className="jobs-ops-card" key={job.id}>
-                <header className="jobs-ops-title">
-                  <div>
-                    <span className={`status-pill status-${job.status.toLowerCase()}`}>{jobStatusLabels[job.status]}</span>
-                    {job.source === JobSource.CLIENT && <span className={`status-pill status-${job.reviewStatus.toLowerCase()}`}>{jobReviewStatusLabels[job.reviewStatus]}</span>}
-                    {job.isTop && <span className="status-pill status-active"><Flame size={13} /> TOP do {dateCs(job.topUntil)}</span>}
-                    {warnings.length > 0 && <span className="status-pill status-waiting"><AlertTriangle size={13} /> {warnings[0]}</span>}
-                    <h3>{job.title}</h3>
-                    <p>{job.company.name} · {job.city.name} · {salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}{job.submittedByClient ? ` · zadal ${job.submittedByClient.email}` : ""}</p>
-                  </div>
-                  <div className="jobs-action-strip" aria-label={`Akce pro ${job.title}`}>
-                    <Link className="job-action-icon" href={`/admin/jobs/${job.id}/edit`} title="Editovat inzerát"><FilePenLine size={18} /></Link>
-                    <Link className="job-action-icon" href={`/jobs/${job.slug}`} target="_blank" title="Otevřít veřejný náhled"><Eye size={18} /></Link>
-                    <form action={expireJob}>
-                      <input name="id" type="hidden" value={job.id} />
-                      <ConfirmSubmitButton className="job-action-icon danger" message={`Opravdu skrýt inzerát „${job.title}“ z veřejného webu?`}>
-                        <ShieldOff size={18} />
-                      </ConfirmSubmitButton>
-                    </form>
-                  </div>
-                </header>
-
-                <div className="jobs-ops-sections">
-                  <section>
-                    <span><CalendarDays size={15} /> Publikace</span>
-                    <strong>{dateCs(job.activeFrom)} → {dateCs(job.activeUntil)}</strong>
-                    <small>{remaining == null ? "Bez konce" : remaining >= 0 ? `zbývá ${remaining} dní` : "po termínu"}</small>
-                  </section>
-                  <section>
-                    <span><PackageCheck size={15} /> Obchod</span>
-                    <strong>{job.package?.name ?? "Bez balíčku"}</strong>
-                    <small>{invoice ? `${invoice.status} · ${money(invoice.amountCzk)}` : "bez faktury"}</small>
-                  </section>
-                  <section>
-                    <span><Gauge size={15} /> Výkon</span>
-                    <strong>{job.views} zobrazení · {job._count.applications} reakcí</strong>
-                    <small>{job.showOnHomepage ? "na homepage" : "mimo homepage"}</small>
-                  </section>
-                  <section>
-                    <span><BriefcaseBusiness size={15} /> Obsah</span>
-                    <strong>{job.shortIntro}</strong>
-                    <small>{job.contactEmail ?? "chybí kontaktní e-mail"}</small>
-                  </section>
-                </div>
-
-                {warnings.length > 1 && (
-                  <div className="jobs-warning-row">
-                    {warnings.slice(1).map((warning) => <span key={warning}>{warning}</span>)}
-                  </div>
-                )}
-
-                <form action={renewJob} className="jobs-renew-bar">
-                  <input name="id" type="hidden" value={job.id} />
-                  <div className="jobs-renew-icon">
-                    <RotateCw size={18} />
-                  </div>
-                  <label>
-                    <span>Prodloužení podle balíčku</span>
-                    <select name="packageId" defaultValue={job.packageId ?? packages[0]?.id ?? ""}>
-                      {packages.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name} · {item.durationDays} dní · {money(item.priceCzk)}{item.isTopPlacement ? ` · TOP ${item.topDays ?? 0} dní` : ""}
-                        </option>
-                      ))}
-                    </select>
-                    <small>Délka, cena a případné TOP zvýraznění se převezmou z vybraného balíčku.</small>
-                  </label>
-                  <button className="renew-package-button" type="submit">
-                    Použít balíček
-                  </button>
-                </form>
-              </article>
-            );
-          })}
-          {jobs.length === 0 && <p className="admin-empty">Pro vybrané filtry tu nejsou žádné inzeráty.</p>}
-        </div>
+        <AdminDataTable>
+          <table className="table admin-table jobs-admin-table">
+            <thead>
+              <tr>
+                <th>Nabídka</th>
+                <th>Stavy</th>
+                <th>Publikace</th>
+                <th>Obchod</th>
+                <th>Výkon</th>
+                <th>Obnova</th>
+                <th>Akce</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => {
+                const warnings = jobWarnings(job);
+                const remaining = daysUntil(job.activeUntil);
+                const invoice = job.invoices[0];
+                return (
+                  <tr key={job.id}>
+                    <td className="jobs-title-cell">
+                      <Link href={`/admin/jobs/${job.id}/edit`}>
+                        <strong>{job.title}</strong>
+                      </Link>
+                      <span>{job.company.name} · {job.city.name}</span>
+                      <small>{salaryRange(job.salaryMinCzk, job.salaryMaxCzk)}{job.submittedByClient ? ` · zadal ${job.submittedByClient.email}` : ""}</small>
+                      {warnings.length > 0 && (
+                        <div className="jobs-warning-row compact">
+                          {warnings.map((warning) => (
+                            <span key={warning}><AlertTriangle size={12} /> {warning}</span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div className="admin-status-stack">
+                        <AdminStatusPill tone={jobStatusTone(job.status)}>{jobStatusLabels[job.status]}</AdminStatusPill>
+                        {job.source === JobSource.CLIENT && <AdminStatusPill tone={reviewStatusTone(job.reviewStatus)}>{jobReviewStatusLabels[job.reviewStatus]}</AdminStatusPill>}
+                        {job.isTop && <AdminStatusPill icon={<Flame size={13} />} tone="success">TOP do {dateCs(job.topUntil)}</AdminStatusPill>}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="jobs-table-meta">
+                        <strong>{dateCs(job.activeFrom)} → {dateCs(job.activeUntil)}</strong>
+                        <span>{remaining == null ? "bez konce" : remaining >= 0 ? `zbývá ${remaining} dní` : "po termínu"}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="jobs-table-meta">
+                        <strong>{job.package?.name ?? "Bez balíčku"}</strong>
+                        {invoice ? (
+                          <span><AdminStatusPill tone={paymentStatusTone(invoice.status)}>{paymentStatusLabels[invoice.status]}</AdminStatusPill> {money(invoice.amountCzk)}</span>
+                        ) : (
+                          <span>bez faktury</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="jobs-table-meta">
+                        <strong>{job.views} zobrazení</strong>
+                        <span>{job._count.applications} reakcí · {job.showOnHomepage ? "homepage" : "mimo homepage"}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <form action={renewJob} className="row-renew-form">
+                        <input name="id" type="hidden" value={job.id} />
+                        <select name="packageId" defaultValue={job.packageId ?? packages[0]?.id ?? ""}>
+                          {packages.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} · {item.durationDays} dní · {money(item.priceCzk)}
+                            </option>
+                          ))}
+                        </select>
+                        <button className="button secondary compact" type="submit">Použít</button>
+                      </form>
+                    </td>
+                    <td>
+                      <div className="jobs-action-strip compact" aria-label={`Akce pro ${job.title}`}>
+                        <Link className="job-action-icon" href={`/admin/jobs/${job.id}/edit`} title="Editovat inzerát"><FilePenLine size={18} /></Link>
+                        <Link className="job-action-icon" href={`/jobs/${job.slug}`} target="_blank" title="Otevřít veřejný náhled"><Eye size={18} /></Link>
+                        <form action={expireJob}>
+                          <input name="id" type="hidden" value={job.id} />
+                          <ConfirmSubmitButton className="job-action-icon danger" message={`Opravdu skrýt inzerát „${job.title}“ z veřejného webu?`}>
+                            <ShieldOff size={18} />
+                          </ConfirmSubmitButton>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {jobs.length === 0 && (
+                <tr>
+                  <td colSpan={7}>
+                    <AdminEmptyState
+                      action={<Link className="button secondary compact" href="/admin/jobs">Vyčistit filtry</Link>}
+                      text="Zkuste upravit filtr nebo vytvořit nový pracovní inzerát."
+                      title="Pro vybrané filtry tu nejsou žádné inzeráty."
+                    />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </AdminDataTable>
       </section>
 
       <section className="admin-card">
