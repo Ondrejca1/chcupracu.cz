@@ -2770,6 +2770,32 @@ a.nav-click-pending,
   position: sticky;
   bottom: 14px;
   z-index: 10;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, #fff);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.client-savebar > span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.client-savebar .client-form-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.client-savebar .button {
+  white-space: nowrap;
 }
 
 .client-alert,
@@ -3148,6 +3174,15 @@ a.nav-click-pending,
     min-width: 190px;
   }
 
+  .client-savebar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .client-savebar .client-form-actions {
+    justify-content: flex-start;
+  }
+
   .dictionary-edit-row {
     grid-template-columns: 1fr;
   }
@@ -3230,6 +3265,22 @@ a.nav-click-pending,
     grid-template-columns: 1fr;
     gap: 10px;
     padding: 14px;
+  }
+
+  .client-savebar {
+    right: 0;
+    bottom: 10px;
+    left: 0;
+    padding: 10px;
+  }
+
+  .client-savebar .client-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .client-savebar .button {
+    width: 100%;
   }
 
   .filter-panel-head {
