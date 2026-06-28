@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { ApplicationStatus, JobStatus, PaymentStatus } from "@prisma/client";
-import { AlertTriangle, ArrowUpRight, BarChart3, BriefcaseBusiness, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, Send, UsersRound } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, BarChart3, Bell, BriefcaseBusiness, Building2, CalendarClock, CircleDollarSign, FilePlus2, Inbox, Megaphone, Newspaper, Plus, Send, UsersRound } from "lucide-react";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { AdminShell } from "@/components/AdminShell";
+import { AdminStatusPill } from "@/components/AdminStatusPill";
 import { dateCs, dateTimeCs, money } from "@/lib/format";
 import { hasPermission, requirePermission, type AdminPermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentIssue, getFeaturedAds } from "@/lib/queries";
 import { activeAdWhere, activeJobWhere, expiringJobWhere, jobStatusLabels, syncExpiredBusinessState } from "@/lib/business-rules";
 import { getOperationalWarnings } from "@/lib/admin-insights";
+import { getAdminNotifications } from "@/lib/admin-notifications";
 
 const dashboardTiles = [
   {
@@ -23,6 +26,13 @@ const dashboardTiles = [
     href: "/admin/jalovec",
     icon: Newspaper,
     permission: "jalovec:write"
+  },
+  {
+    title: "Firmy a klienti",
+    text: "CRM přehled firem, aktivních klientů, obnov a otevřených plateb.",
+    href: "/admin/companies",
+    icon: Building2,
+    permission: "companies:write"
   },
   {
     title: "Reakce uchazečů",
@@ -67,7 +77,8 @@ export default async function AdminDashboardPage() {
     monthRevenue,
     totalViews,
     latestActivities,
-    warnings
+    warnings,
+    notifications
   ] = await Promise.all([
     prisma.jobPost.count({ where: activeJobWhere(now) }),
     prisma.jobPost.count({ where: { status: JobStatus.DRAFT } }),
@@ -98,7 +109,8 @@ export default async function AdminDashboardPage() {
     prisma.invoice.aggregate({ where: { status: PaymentStatus.PAID, paidAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } }, _sum: { amountCzk: true } }),
     prisma.jobPost.aggregate({ _sum: { views: true } }),
     prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    getOperationalWarnings()
+    getOperationalWarnings(),
+    getAdminNotifications()
   ]);
 
   const stats = [
@@ -114,16 +126,12 @@ export default async function AdminDashboardPage() {
 
   return (
     <AdminShell>
-      <div className="admin-page-head">
-        <div>
-          <span className="admin-kicker">Přehled redakce</span>
-          <h1>Dashboard</h1>
-          <p>Rychlý provozní pohled na inzeráty, reakce, finance, Jalovec a reklamní plochy.</p>
-        </div>
-        <Link className="button" href="/admin/jobs/new">
-          <Plus size={18} /> Přidat inzerát
-        </Link>
-      </div>
+      <AdminPageHeader
+        actions={<Link className="button" href="/admin/jobs/new"><Plus size={18} /> Přidat inzerát</Link>}
+        description="Provozní cockpit pro 1.1: notifikace, inzeráty, klienti, reakce, finance, Jalovec a reklama."
+        eyebrow="Přehled redakce"
+        title="Dashboard"
+      />
 
       <section className="admin-stat-grid">
         {stats.map((item) => {
@@ -137,6 +145,26 @@ export default async function AdminDashboardPage() {
             </article>
           );
         })}
+      </section>
+
+      <section className="admin-card dashboard-alert-strip">
+        <div className="admin-card-head">
+          <div>
+            <h2>Upozornění</h2>
+            <p>Nejdůležitější věci, které čekají na zásah redakce, obchodu nebo financí.</p>
+          </div>
+          <Link className="button secondary compact" href="/admin/notifications"><Bell size={16} /> Všechna upozornění</Link>
+        </div>
+        <div className="dashboard-alert-list">
+          {notifications.items.slice(0, 4).map((item) => (
+            <Link className={`dashboard-alert-item tone-${item.tone}`} href={item.href} key={item.id}>
+              <AdminStatusPill tone={item.tone}>{item.category}</AdminStatusPill>
+              <strong>{item.title}</strong>
+              <span>{item.count}</span>
+            </Link>
+          ))}
+          {notifications.items.length === 0 && <p className="admin-empty">Teď tu není žádná urgentní notifikace.</p>}
+        </div>
       </section>
 
       <section className="admin-tile-grid">

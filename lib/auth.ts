@@ -12,6 +12,7 @@ export type LoginResult = { ok: true; forcePasswordChange: boolean } | { ok: fal
 export type AdminPermission =
   | "dashboard:view"
   | "tasks:view"
+  | "companies:write"
   | "jobs:write"
   | "applications:write"
   | "ads:write"
@@ -26,6 +27,7 @@ const rolePermissions: Record<AdminRole, AdminPermission[]> = {
   ADMIN: [
     "dashboard:view",
     "tasks:view",
+    "companies:write",
     "jobs:write",
     "applications:write",
     "ads:write",
@@ -36,8 +38,8 @@ const rolePermissions: Record<AdminRole, AdminPermission[]> = {
     "users:manage",
     "health:view"
   ],
-  EDITOR: ["dashboard:view", "tasks:view", "jobs:write", "applications:write", "ads:write", "jalovec:write", "dictionaries:write"],
-  SALES: ["dashboard:view", "tasks:view", "jobs:write", "applications:write", "ads:write", "finance:write", "packages:write"],
+  EDITOR: ["dashboard:view", "tasks:view", "companies:write", "jobs:write", "applications:write", "ads:write", "jalovec:write", "dictionaries:write"],
+  SALES: ["dashboard:view", "tasks:view", "companies:write", "jobs:write", "applications:write", "ads:write", "finance:write", "packages:write"],
   VIEWER: ["dashboard:view", "tasks:view", "health:view"]
 };
 
