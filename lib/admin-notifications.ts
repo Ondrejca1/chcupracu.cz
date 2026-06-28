@@ -1,5 +1,6 @@
 import { AdPlacementStatus, ApplicationStatus, JobReviewStatus, JobSource, JobStatus, PaymentStatus } from "@prisma/client";
-import { activeJobWhere, expiringJobWhere, syncExpiredBusinessState } from "@/lib/business-rules";
+import { unstable_cache } from "next/cache";
+import { activeJobWhere, expiringJobWhere } from "@/lib/business-rules";
 import { prisma } from "@/lib/prisma";
 
 export type AdminNotificationTone = "info" | "warning" | "danger";
@@ -31,8 +32,7 @@ export type AdminNotificationSummary = {
 
 const soonFrom = (date: Date) => new Date(date.getTime() + 7 * 86_400_000);
 
-export async function getAdminNotificationSummary(): Promise<AdminNotificationSummary> {
-  await syncExpiredBusinessState();
+async function computeAdminNotificationSummary(): Promise<AdminNotificationSummary> {
   const now = new Date();
   const soon = soonFrom(now);
 
@@ -87,6 +87,12 @@ export async function getAdminNotificationSummary(): Promise<AdminNotificationSu
     }
   };
 }
+
+export const getAdminNotificationSummary = unstable_cache(
+  computeAdminNotificationSummary,
+  ["admin-notification-summary-v1"],
+  { revalidate: 20 }
+);
 
 export async function getAdminNotifications() {
   const summary = await getAdminNotificationSummary();

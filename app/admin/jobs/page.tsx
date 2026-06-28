@@ -356,12 +356,12 @@ export default async function AdminJobsPage({ searchParams }: { searchParams: Pr
                     </td>
                     <td>
                       <div className="jobs-action-strip compact" aria-label={`Akce pro ${job.title}`}>
-                        <Link className="job-action-icon" href={`/admin/jobs/${job.id}/edit`} title="Editovat inzerát"><FilePenLine size={18} /></Link>
-                        <Link className="job-action-icon" href={`/jobs/${job.slug}`} target="_blank" title="Otevřít veřejný náhled"><Eye size={18} /></Link>
+                        <Link aria-label="Editovat inzerát" className="job-action-icon labeled" href={`/admin/jobs/${job.id}/edit`} title="Editovat inzerát"><FilePenLine size={18} /><span>Edit</span></Link>
+                        <Link aria-label="Otevřít admin náhled" className="job-action-icon labeled" href={`/jobs/${job.slug}?preview=admin`} rel="noreferrer" target="_blank" title="Otevřít admin náhled"><Eye size={18} /><span>Náhled</span></Link>
                         <form action={expireJob}>
                           <input name="id" type="hidden" value={job.id} />
-                          <ConfirmSubmitButton className="job-action-icon danger" message={`Opravdu skrýt inzerát „${job.title}“ z veřejného webu?`}>
-                            <ShieldOff size={18} />
+                          <ConfirmSubmitButton className="job-action-icon danger labeled" message={`Opravdu skrýt inzerát „${job.title}“ z veřejného webu?`}>
+                            <ShieldOff size={18} /><span>Skrýt</span>
                           </ConfirmSubmitButton>
                         </form>
                       </div>

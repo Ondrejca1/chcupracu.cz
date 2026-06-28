@@ -168,6 +168,51 @@ button:disabled {
   gap: 18px;
 }
 
+.hero-signal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-signal-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink-soft);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.hero-signal-row strong {
+  color: var(--brand-strong);
+}
+
+.admin-preview-banner {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--warning) 24%, var(--line));
+  background: var(--warning-soft);
+  color: var(--warning);
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.admin-preview-banner strong {
+  color: var(--warning);
+  font-weight: 900;
+}
+
 .eyebrow,
 .admin-kicker,
 .admin-form-intro span {
@@ -479,6 +524,23 @@ a.nav-click-pending,
   border-color: var(--brand-strong);
 }
 
+.hero .button:hover,
+.search-box .button:hover,
+.empty-marketing .button:hover,
+.detail-layout .button:hover,
+.apply-panel .button:hover {
+  box-shadow: 0 8px 18px rgba(200, 30, 30, 0.18);
+  transform: translateY(-1px);
+}
+
+.hero .button:active,
+.search-box .button:active,
+.empty-marketing .button:active,
+.detail-layout .button:active,
+.apply-panel .button:active {
+  transform: translateY(0);
+}
+
 .button.secondary,
 .button.ghost {
   border-color: var(--line);
@@ -587,6 +649,15 @@ a.nav-click-pending,
 
 .job-card:hover {
   border-color: rgba(200, 30, 30, 0.36);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.quick-card:hover,
+.commercial-slot:hover,
+.company-tile:hover,
+.side-ad:hover {
+  border-color: rgba(200, 30, 30, 0.28);
   box-shadow: var(--shadow);
   transform: translateY(-2px);
 }
@@ -1641,6 +1712,241 @@ a.nav-click-pending,
   margin-bottom: 18px;
 }
 
+.dashboard-priority-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(320px, 0.72fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.dashboard-priority-card,
+.dashboard-actions-card,
+.dashboard-list-widget {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.dashboard-widget-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dashboard-widget-head h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.dashboard-widget-head > strong {
+  display: inline-flex;
+  min-width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  font-size: 20px;
+}
+
+.dashboard-priority-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-priority-item,
+.dashboard-clear-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  padding: 10px;
+}
+
+.dashboard-priority-item.tone-danger {
+  border-left: 4px solid var(--danger);
+}
+
+.dashboard-priority-item.tone-warning {
+  border-left: 4px solid var(--warning);
+}
+
+.dashboard-priority-item.tone-info {
+  border-left: 4px solid var(--accent);
+}
+
+.dashboard-priority-item span {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.dashboard-priority-item > strong {
+  display: inline-flex;
+  min-width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.dashboard-action-grid,
+.dashboard-widget-grid,
+.dashboard-work-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-action-button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 820;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.dashboard-action-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.dashboard-widget-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.dashboard-widget {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-widget > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.dashboard-widget strong {
+  font-size: 25px;
+  line-height: 1;
+}
+
+.dashboard-widget small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-widget.tone-success {
+  border-left-color: var(--success);
+}
+
+.dashboard-widget.tone-success svg {
+  color: var(--success);
+}
+
+.dashboard-widget.tone-warning {
+  border-left-color: var(--warning);
+}
+
+.dashboard-widget.tone-warning svg {
+  color: var(--warning);
+}
+
+.dashboard-widget.tone-danger {
+  border-left-color: var(--danger);
+}
+
+.dashboard-widget.tone-danger svg {
+  color: var(--danger);
+}
+
+.dashboard-widget.tone-info {
+  border-left-color: var(--accent);
+}
+
+.dashboard-widget.tone-info svg {
+  color: var(--accent);
+}
+
+.dashboard-widget.tone-neutral {
+  border-left-color: var(--line-strong);
+}
+
+.dashboard-work-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.dashboard-row {
+  min-height: 58px;
+}
+
+.dashboard-row .status-pill {
+  justify-self: end;
+}
+
+.dashboard-mini-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboard-mini-metrics div {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  padding: 11px;
+}
+
+.dashboard-mini-metrics span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.dashboard-mini-metrics strong {
+  font-size: 17px;
+}
+
+.admin-feature-box.compact {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
 .admin-list {
   display: grid;
   gap: 10px;
@@ -2467,6 +2773,17 @@ a.nav-click-pending,
   padding: 0;
 }
 
+.job-action-icon.labeled {
+  width: auto;
+  min-width: 78px;
+  padding: 0 10px;
+}
+
+.job-action-icon.labeled span {
+  font-size: 12px;
+  font-weight: 840;
+}
+
 .status-pill {
   min-height: 24px;
   border: 1px solid transparent;
@@ -2624,13 +2941,15 @@ a.nav-click-pending,
 
 .row-renew-form {
   display: grid;
-  grid-template-columns: minmax(130px, 1fr) auto;
+  grid-template-columns: minmax(160px, 1fr) auto;
   gap: 7px;
-  min-width: 230px;
+  min-width: 280px;
+  max-width: 360px;
 }
 
 .row-renew-form select {
   min-height: 34px;
+  min-width: 0;
   border: 1px solid var(--line-strong);
   border-radius: 7px;
   background: #fff;
@@ -2654,6 +2973,11 @@ a.nav-click-pending,
 
 .jobs-action-strip.compact {
   flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+.jobs-action-strip.compact form {
+  display: inline-flex;
 }
 
 .finance-toolbar,
@@ -3351,6 +3675,15 @@ a.nav-click-pending,
   .admin-tile-grid {
     margin-bottom: 18px;
   }
+
+  .dashboard-priority-grid,
+  .dashboard-work-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-widget-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 860px) {
@@ -3412,6 +3745,11 @@ a.nav-click-pending,
   .job-grid,
   .detail-grid,
   .admin-dashboard-grid,
+  .dashboard-priority-grid,
+  .dashboard-widget-grid,
+  .dashboard-work-grid,
+  .dashboard-action-grid,
+  .dashboard-mini-metrics,
   .client-auth-grid,
   .client-dashboard-grid,
   .client-detail-grid,
@@ -3537,6 +3875,7 @@ a.nav-click-pending,
   .row-renew-form {
     grid-template-columns: 1fr;
     min-width: 190px;
+    max-width: none;
   }
 
   .finance-status-form,

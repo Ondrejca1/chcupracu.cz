@@ -11,11 +11,22 @@ import { dateCs, salaryRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAdForSlot, getSimilarJobs } from "@/lib/queries";
 import { activeJobWhere } from "@/lib/business-rules";
+import { requirePermission } from "@/lib/auth";
 
-export default async function JobDetail({ params }: { params: Promise<{ slug: string }> }) {
+export default async function JobDetail({
+  params,
+  searchParams
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
+}) {
   const { slug } = await params;
+  const query = await searchParams;
+  const isAdminPreview = query.preview === "admin";
+  if (isAdminPreview) await requirePermission("jobs:write");
+
   const job = await prisma.jobPost.findFirst({
-    where: { slug, ...activeJobWhere() },
+    where: isAdminPreview ? { slug } : { slug, ...activeJobWhere() },
     include: {
       company: true,
       city: true,
@@ -33,8 +44,14 @@ export default async function JobDetail({ params }: { params: Promise<{ slug: st
 
   return (
     <>
-      <JobViewTracker slug={job.slug} />
+      {!isAdminPreview && <JobViewTracker slug={job.slug} />}
       <SiteHeader />
+      {isAdminPreview && (
+        <div className="admin-preview-banner">
+          <strong>Admin náhled</strong>
+          <span>Inzerát vidíte i mimo veřejnou publikaci. Zobrazení se nezapočítává.</span>
+        </div>
+      )}
       <main className="detail-page-shell" style={{ "--company-color": companyColor } as CSSProperties}>
         <section className="container detail-hero">
           <div>

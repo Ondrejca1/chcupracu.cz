@@ -58,16 +58,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<Job
         <div className="hero-inner">
           <div className="hero-copy">
             <span className="eyebrow">Lokální práce pro Vsetínsko</span>
-            <h1>Práce na Vsetíně a okolí bez zbytečného hledání</h1>
-            <p>Aktuální nabídky z Valašska na jednom místě. Rychle najděte práci ve Vsetíně, Rožnově, Valmezu, Velkých Karlovicích i okolních obcích.</p>
+            <h1>Najděte práci ve Valašsku</h1>
+            <p>Aktuální nabídky z Vsetína, Rožnova, Valmezu a okolí. Vyberte pozici, město a hned vidíte relevantní inzeráty.</p>
+            <div className="hero-signal-row">
+              <span><strong>{jobCounts.active}</strong> aktivních nabídek</span>
+              <span><strong>{jobCounts.homepage}</strong> doporučených</span>
+              <span><strong>Lokální</strong> firmy a nábor</span>
+            </div>
             <SearchForm filters={filters} suggestions={suggestions} values={params} />
           </div>
           <aside className="hero-promo" aria-label="Regionální pracovní portál">
             <SmartImage alt="Práce a zaměstnavatelé na Vsetínsku" className="hero-promo-image" priority sizes="(max-width: 1180px) 100vw, 430px" src="/preview-assets/hero-workers.png" />
             <div>
               <span>Pro firmy</span>
-              <h2>Nábor v regionu bez složité administrativy</h2>
-              <p>Firmám pomůžeme s textem nabídky, zvýrazněním i propagací v lokálním médiu.</p>
+              <h2>Inzerce bez složité administrativy</h2>
+              <p>Text nabídky, zvýraznění i lokální propagace na jednom místě.</p>
               <div className="promo-badges">
                 <strong>Web + tisk</strong>
                 <strong>Top pozice</strong>

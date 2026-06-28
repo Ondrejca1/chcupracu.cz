@@ -68,7 +68,7 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
         actions={
           <>
             <Link className="button secondary" href="/admin/jobs"><ArrowLeft size={17} /> Zpět na inzeráty</Link>
-            <Link className="button ghost" href={`/jobs/${job.slug}`} target="_blank"><Eye size={17} /> Veřejný náhled</Link>
+            <Link className="button ghost" href={`/jobs/${job.slug}?preview=admin`} rel="noreferrer" target="_blank"><Eye size={17} /> Náhled</Link>
           </>
         }
         description={`${job.company.name} · ${job.city.name} · ${job.category.name}`}
